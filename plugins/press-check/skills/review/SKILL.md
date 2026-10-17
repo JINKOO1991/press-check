@@ -257,6 +257,12 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
    | `NUMBER_REMOVED`, `NUMBER_UNIT_CHANGED`, `NEW_NUMBER` | 숫자가 빠지거나 단위가 바뀌거나 원문에 없는 숫자가 들어감 |
    | `DIRECT_QUOTE_CHANGED`, `SINGLE_QUOTE_CHANGED`, `NEW_QUOTE`, `NEW_SINGLE_QUOTE` | 인용부호 안 문구가 바뀌거나 새 인용이 생김 |
    | `OVERLAP` | 먼저 적용한 다른 수정과 위치가 겹침 |
+   | `NEW_NUMBER_ASSEMBLED` | 수정을 합치면 원문에 없던 숫자가 생김 |
+   | `NEW_NUMBER_UNIT_ASSEMBLED` | 수정을 합치면 원문에 없던 숫자·단위 조합이 생김 |
+   | `NEW_QUOTE_ASSEMBLED`, `NEW_QUOTE_IN_EDIT`, `UNPAIRED_QUOTE_ASSEMBLED` | 수정으로 원문에 없던 직접 인용이 생기거나 따옴표 짝이 깨짐 |
+   | `NEGATION_ASSEMBLED` | 수정을 합치면 부정 표현 수가 바뀌어 뜻이 달라질 수 있음 |
+   | `NEW_PROPER_NOUN_ASSEMBLED` | 수정을 합치면 원문에 없던 이름·기관명 후보가 생김 |
+   | `UNKNOWN_FINDING_ID` | 보고서에 없는 항목 번호 |
    | 그 밖의 코드 | 코드를 그대로 적고 "서버 검사로 제외됨" |
 
 7. `flow_warnings`가 있으면 경고마다 `code`를 적고 "적용된 수정 뒤 제목·부제와 본문의 절차 단계 어휘가 맞지 않을 수 있습니다. 기자가 확인하세요."라고 쓴다. 문제면 기자가 고칠 문장을 정하게 하고, 호스트가 변경본을 따로 고쳐 쓰지 않는다.

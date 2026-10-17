@@ -40,6 +40,7 @@ MCP 도구(서버 `press-review`, 전부 stdio 로컬):
 | `search_cases` | `query`, 선택 `authority_types[]`, `risk_channel`, `as_of`, `limit`(≤10) | passages[] (`source_id`,`passage_id`,`url`,`locator`,`authority_type`,`decision_date`,`text`,`is_fixture`) | 코퍼스에 있는 레코드만 반환. 결과 0건이면 그렇게 말한다 |
 | `submit_report` | `article_handle`, `findings[]`(review.schema finding에서 `evidence[].verified` 제외 가능), `explanations{finding_id: {...}}`, 선택 `overall_status`, `coverage_notes[]` | 통과 시 `report_id`, 렌더링된 표(markdown), 검증 경고. 실패 시 finding별 오류 목록 | 서버가 메타데이터(report_id, article_sha256, policy_version, corpus_snapshot_id, analyzed_at, legal_as_of, retention, hidden_finding_count)를 채운다. 서버만 `verified: true`를 붙인다(코퍼스에 source_id+passage_id 존재, url·locator 일치 시) |
 | `explain_finding` | `report_id`, `finding_id` | 상세 설명 markdown | 같은 세션 TTL 안에서만. 만료면 원고 재제출 안내 |
+| `build_revision` | `report_id`, `article_sha256`, 선택 `finding_ids[]` (대체문은 받지 않음) | 변경본 블록(`revised_blocks`), 적용 목록(`applied`), 미적용 제안(`proposals`)과 제외 사유(`skipped`), `unresolved_count`, 흐름 경고 | 읽기 전용. 별 2개 이상·`replace`·서버 재검사 통과 수정안만 보고서에 저장된 대체문으로 적용. 원본·디스크 무변경, TTL 안에서만 |
 | `corpus_status` | 없음 | 코퍼스 snapshot id, 자료군별 건수, 기준일, 누락·권리보류 요약, fixture 여부 | |
 
 ## D3. 엔진 모듈(패키지 `press_review`, 런타임은 표준 라이브러리만)
