@@ -3,7 +3,7 @@ name: review
 description: 한국어 기사 원고(제목·부제·본문·사진 설명)를 발행 전에 검토해 언론분쟁(정정·반론·추후보도, 민사·형사, 선거심의, 개인정보·초상·저작권) 쟁점이 될 수 있는 구체적 표현과 확인 사항을 찾고, 기사 취지를 유지하는 최소 수정안을 별(★1~3) 검토 필요도 표로 보여 준다.
 when_to_use: 사용자가 기사·원고·제목을 붙여 넣거나 파일로 주며 "검토", "분쟁 소지", "정정보도 위험", "명예훼손 확인", "발행 전 점검"을 요청할 때.
 argument-hint: "[원고 파일 경로 또는 비워 두고 원고 붙여넣기]"
-allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin_press-check_press-review__search_cases mcp__plugin_press-check_press-review__submit_report mcp__plugin_press-check_press-review__corpus_status
+allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin_press-check_press-review__search_cases mcp__plugin_press-check_press-review__submit_report mcp__plugin_press-check_press-review__corpus_status mcp__plugin_press-check_press-review__build_revision
 ---
 
 # 기사 발행 전 분쟁 소지 검토
@@ -18,6 +18,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 - `mcp__plugin_press-check_press-review__search_cases`
 - `mcp__plugin_press-check_press-review__submit_report`
 - `mcp__plugin_press-check_press-review__corpus_status`
+- `mcp__plugin_press-check_press-review__build_revision`
 
 필드 계약, 위험 경로 판단표, 쟁점 분류 예시는 같은 폴더의 [reference.md](reference.md)에 있다. 판단이 애매하면 그 파일을 먼저 읽는다.
 
@@ -212,7 +213,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 
 서버는 finding별 오류 목록을 돌려준다(예: quote와 span 불일치, replace인데 replacement 없음, 코퍼스에 없는 passage_id, 직접 인용 내부 변경, 원문에 없는 숫자).
 
-1. 오류를 하나씩 고친다. span은 blocks `text`에서 quote를 그대로 복사하고 code point 기준 `[start, end)`로 다시 잡는다. 같은 구절이 여러 번 나오면 의도한 위치를 고른다.
+1. 오류를 하나씩 고친다. span은 blocks `text`에서 quote를 그대로 복사하고 code point 기준 `[start, end)`로 다시 잡는다. 같은 구절이 여러 번 나오면 의도한 위치를 고른다. 위치를 눈으로 세지 말고 코드로 계산한다(예: `text.index(quote)`가 시작값, `시작 + len(quote)`가 끝값). `related_edits`의 span도 제출 전에 같은 방식으로 계산한다. `reason_short`는 100자 안의 한 문장으로 쓰고 문장 중간에 마침표를 두지 않는다.
 2. 근거가 코퍼스에 없다는 오류면 그 evidence를 지운다. 남은 근거가 없으면 9단계의 `needs_information` 규칙을 적용한다.
 3. 수정안 검사 오류(새 숫자, 직접 인용 변경 등)는 수정안을 고치거나 `verify_first`로 바꾼다. 검사를 피하려고 의미를 바꾸지 않는다.
 4. 고친 내용으로 다시 제출한다. 같은 오류가 3번 반복되면 그 finding을 빼거나 `verify_first`/`none`으로 낮추고, 무엇을 뺐는지 사용자에게 알린다.
@@ -231,4 +232,38 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
   - 블록 자동 판정 여부, 합성 코퍼스 사용 여부
   - "항목별 상세 근거는 `/press-check:explain <report_id> <finding_id>`로 볼 수 있음(30분 안)"
   - "이 결과는 편집 보조이며 법률 자문이 아님"
-- 원고 파일을 자동으로 덮어쓰지 않는다. 사용자가 수정 적용을 요청하면 원본과 대조해 고친 사본 또는 diff를 따로 만든다.
+- 원고 파일을 덮어쓰거나 대체하지 않는다. 수정안을 적용한 변경본은 13단계에서 자동으로 대화에 보여 주고, 파일 저장은 기자가 요청할 때만 새 이름으로 한다.
+
+## 13. 변경본 자동 제시 — build_revision
+
+`submit_report`가 성공하면 사용자 확인을 기다리지 않고 같은 응답에서 `build_revision`을 호출한다. 이 절은 review와 draft가 함께 쓰는 변경본 절차다. `overall_status`가 `no_actionable_findings`나 `partial`이어도 호출한다(적용 0건일 수 있다).
+
+1. 입력은 `report_id`(`submit_report` 값)와 `article_sha256`(`prepare_article` 값 그대로) 둘만 넣는다. `finding_ids`는 넣지 않는다. 대체문은 넘기지 않는다. 서버는 보고서에 저장된 수정안만 쓴다.
+2. 서버는 별 2개 이상, `mode: replace`, 서버 자동검사(숫자·인용·직접인용 내부·부정어·고유명사 후보)에 걸리지 않은 수정안만 적용한다. 나머지는 `proposals`로 돌려준다. 이 기준을 호스트가 바꾸거나, 제외된 수정안을 호스트가 직접 문장에 넣어 변경본에 섞지 않는다.
+3. `unresolved_count`가 0보다 크면 변경본 맨 위에 "미해결 확인 항목 N건이 남아 있어 이 변경본은 완성본이 아닙니다"를 쓴다. N은 `unresolved_count` 값 그대로다.
+4. **변경본 전문**: `revised_blocks`를 순서대로, 블록마다 한 번만 보여 준다. 블록 앞에 `block_id`(`section`)를 적고 `text`는 한 글자도 바꾸지 않는다(띄어쓰기·문장부호 정리 금지). 같은 전문을 두 번 싣지 않는다.
+5. **적용된 수정 요약**: `applied`의 finding마다 `finding_id`, 별, 구간별 `original` → `replacement`를 한 줄씩 쓴다.
+6. **제안(미적용)**: `proposals`의 항목마다 `finding_id`, 별, `reason_short`, 미적용 사유를 쓴다. 같은 finding이 `skipped`에도 있으면 한 번만 쓰고, 사유는 `skipped`의 `reason_code`를 아래 표의 쉬운 말로 바꾼다. `skipped`에 없으면 별과 `mode`로 사유를 고른다.
+
+   | 근거 | 쉬운 말 |
+   |---|---|
+   | 별 1개(`STARS_BELOW_2`) | 검토 필요도가 낮아 자동 적용 대상이 아님 |
+   | `mode: verify_first` | 발행 전 사실 확인이 먼저 필요함(검토 표의 "발행 전 확인" 참조) |
+   | `mode: none` 등 replace가 아님(`MODE_NOT_REPLACE`) | 최소 수정으로 해결하기 어려워 기자 판단이 필요함 |
+   | `REPLACEMENT_EMPTY`, `EMPTY_REPLACEMENT`, `EDIT_INVALID` | 수정안 형식이 맞지 않아 적용하지 않음 |
+   | `QUOTE_MISMATCH` | 수정 위치가 원문과 맞지 않아 적용하지 않음 |
+   | `NEGATION_CHANGED` | 수정 전후 부정 표현이 달라져 뜻이 바뀔 수 있음 |
+   | `NEW_PROPER_NOUN` | 원문에 없는 이름·기관명 후보가 들어감 |
+   | `NUMBER_REMOVED`, `NUMBER_UNIT_CHANGED`, `NEW_NUMBER` | 숫자가 빠지거나 단위가 바뀌거나 원문에 없는 숫자가 들어감 |
+   | `DIRECT_QUOTE_CHANGED`, `SINGLE_QUOTE_CHANGED`, `NEW_QUOTE`, `NEW_SINGLE_QUOTE` | 인용부호 안 문구가 바뀌거나 새 인용이 생김 |
+   | `OVERLAP` | 먼저 적용한 다른 수정과 위치가 겹침 |
+   | 그 밖의 코드 | 코드를 그대로 적고 "서버 검사로 제외됨" |
+
+7. `flow_warnings`가 있으면 경고마다 `code`를 적고 "적용된 수정 뒤 제목·부제와 본문의 절차 단계 어휘가 맞지 않을 수 있습니다. 기자가 확인하세요."라고 쓴다. 문제면 기자가 고칠 문장을 정하게 하고, 호스트가 변경본을 따로 고쳐 쓰지 않는다.
+8. **한계 문구**(매번 그대로 쓴다):
+   - "자동 흐름 검사는 절차 단계 어휘만 봅니다. 제목·부제·본문의 대상·시점·수치가 서로 맞는지는 기자가 확인하세요."
+   - "변경본은 서버가 받은 사본을 블록 단위로 다시 조립한 것이며 원본 파일은 수정되지 않았습니다."
+   - "별(★)은 분쟁 발생 확률이 아니라 검토 우선순위입니다."
+   - 서버 `notes`가 있으면 그대로 덧붙인다.
+9. **저장**: 변경본은 대화에만 보여 준다. 기자가 저장을 명시로 요청할 때만 원본 파일 이름에 `.변경본`을 붙인 새 이름(예: `기사.txt` → `기사.변경본.txt`)으로 저장한다. 그 이름의 파일이 이미 있으면 덮어쓰지 않고 다른 이름을 묻는다. 붙여 넣은 원고라 원본 파일이 없으면 저장 경로를 묻는다. 저장 내용은 `revised_blocks`의 `text`를 순서대로 빈 줄로 이은 것이다. 원본 파일은 어떤 경우에도 대체하거나 덮어쓰지 않는다. 기자가 "원본에 적용해 달라"고 해도 원본은 바꾸지 않고, 변경본을 새 이름으로 저장할 수 있다고 안내한다.
+10. **오류**: `HASH_MISMATCH`면 `prepare_article`가 돌려준 `article_sha256`을 그대로 넣어 한 번 다시 호출한다. `REPORT_NOT_FOUND_OR_EXPIRED`·`ARTICLE_EXPIRED`면 보관 시간(30분)이 지난 것이므로 원고를 다시 받아 1단계부터 한다. 오류가 나도 호스트가 수정안을 직접 적용한 변경본을 대신 만들어 보여 주지 않는다.
