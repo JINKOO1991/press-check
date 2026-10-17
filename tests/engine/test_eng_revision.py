@@ -400,3 +400,200 @@ def test_flow_warning_holds_no_article_text():
     assert r["flow_warnings"]
     s = json.dumps(r["flow_warnings"], ensure_ascii=False) + "".join(r["notes"])
     assert all(t not in s for _, _, t in BLOCKS) and "횡령 의혹" not in s and "횡령 기소" not in s
+
+
+# --- 조립 결과 검사(F1, F2) ----------------------------------------------
+
+B_NUM = [("title", "title", "사업비 보고"), ("p1", "body", "사업비는 1억여 원이다. 별도 예산은 2억원이다."), ("p2", "body", "담당자는 일정을 설명했다.")]
+B_Q = [("title", "title", "조사 경과"), ("p1", "body", "조사는 계속된다고 했다."), ("p2", "body", "관계자가 설명했다고 한다.")]
+
+
+def test_assembled_new_number_across_edit_boundary_is_dropped():
+    env = Env([fnd("F-1", 3, "p1", "억여", "2억", arts=B_NUM)], blocks=B_NUM)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "NEW_NUMBER_ASSEMBLED"
+    assert next(b["text"] for b in r["revised_blocks"] if b["block_id"] == "p1") == B_NUM[1][2]
+    assert "12" not in json.dumps(r["skipped"])
+
+
+def test_assembled_new_direct_quote_is_dropped():
+    env = Env([fnd("F-1", 3, "p1", "조사는 계속된다", "“조사는 계속된다”", arts=B_Q)], blocks=B_Q)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "NEW_QUOTE_ASSEMBLED"
+
+
+def test_quote_marks_split_across_findings_are_dropped():
+    env = Env([fnd("F-1", 3, "p1", "조사는", "“조사는", arts=B_Q), fnd("F-2", 3, "p2", "설명했다고", "설명했다고”", arts=B_Q)], blocks=B_Q)
+    r = env.build()
+    assert r["applied"] == []
+    assert {s["reason_code"] for s in r["skipped"]} == {"UNPAIRED_QUOTE_ASSEMBLED"}
+    assert all(b["text"] == t for b, (_, _, t) in zip(r["revised_blocks"], B_Q))
+
+
+def test_assembled_check_still_allows_normal_edits_in_different_blocks():
+    env = Env([fnd("F-1", 3, "p1", "별도 예산은 2억원이다", "별도 예산은 2억원이다만", arts=B_NUM), fnd("F-2", 2, "p2", "일정을 설명했다", "일정을 밝혔다", arts=B_NUM)], blocks=B_NUM)
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1", "F-2"] and r["skipped"] == []
+
+
+# --- 만료 경쟁·마스킹 키(F3, F4) ------------------------------------------
+
+def test_expiry_during_build_releases_masking_and_rejects(monkeypatch):
+    env = Env([fnd("F-1", 3, "p1", "빼돌린 것으로 보고 있다고", "빼돌렸다는 취지로 새롭게 밝혔다고")])
+    real = logsafe.register_article
+
+    def slow(key, art, **kw):
+        real(key, art, **kw)
+        env.clock.t = 1801          # 등록 직후 원고가 만료된 경쟁
+    monkeypatch.setattr(logsafe, "register_article", slow)
+    r = env.build()
+    assert r["ok"] is False and r["error_code"] == "ARTICLE_EXPIRED"
+    env.clock.t = 3601
+    env.store.purge_expired()
+    assert not logsafe.contains_sensitive("로그 빼돌렸다는 취지로 새롭게 밝혔다고 문장")
+
+
+def test_second_build_keeps_first_revision_masked_until_article_expires():
+    env = Env([fnd("F1", 3, "p1", "빼돌린 것으로 보고 있다고", "빼돌렸다는 취지로 첫번째 문구입니다"), fnd("F2", 3, "p2", "회사는 입장을 내지 않았다", "회사는 두번째 문구를 밝히지 않았다")])
+    env.build(finding_ids=["F1"])
+    env.build(finding_ids=["F2"])
+    assert logsafe.contains_sensitive("로그 첫번째 문구입니다 끝")
+    assert logsafe.contains_sensitive("로그 두번째 문구를 밝히지 끝")
+    env.clock.t = 1801
+    env.store.purge_expired()
+    assert not logsafe.contains_sensitive("로그 첫번째 문구입니다 끝")
+    assert not logsafe.contains_sensitive("로그 두번째 문구를 밝히지 끝")
+
+
+# --- 2회차 보강 ----------------------------------------------------------
+
+B_MOVE = [("title", "title", "조사 경과"), ("p1", "body", "관계자는 “조사는 계속된다”고 했다."), ("p2", "body", "그는 조사는 계속된다고 전했다.")]
+B_DATE = [("title", "title", "회의 소식"), ("p1", "body", "회의는 2026.10.17 열렸다고 밝혔다. 예산은 1,234만 원이고 3.5퍼센트 올랐다고 밝혔다. 응답률은 45%였다."),]
+B_UNIT = [("title", "title", "설문 결과"), ("p1", "body", "응답자는 2명으로 집계됐다. 비율은 5%였다.")]
+
+
+def test_quote_moved_inside_one_finding_is_dropped():
+    env = Env([fnd("F-1", 3, "p2", "조사는 계속된다", "“조사는 계속된다”", related=[("p1", "“조사는 계속된다”", "조사는 계속된다")], arts=B_MOVE)], blocks=B_MOVE)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "NEW_QUOTE_IN_EDIT"
+
+
+def test_edit_keeping_its_own_quote_is_allowed():
+    env = Env([fnd("F-1", 3, "p1", "관계자는 “조사는 계속된다”고 했다", "관계자는 “조사는 계속된다”고 밝혔다", arts=B_MOVE)], blocks=B_MOVE)
+    assert ids(env.build()["applied"]) == ["F-1"]
+
+
+@pytest.mark.parametrize("quote,rep", [("밝혔다. 예산", "설명했다. 예산"), ("올랐다고 밝혔다", "올랐다고 설명했다"), ("열렸다고 밝혔다", "열렸다고 설명했다")])
+def test_existing_numbers_with_dots_commas_percent_do_not_block_edit(quote, rep):
+    env = Env([fnd("F-1", 3, "p1", quote, rep, arts=B_DATE)], blocks=B_DATE)
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1"], r["skipped"]
+
+
+def test_assembled_new_number_unit_pair_is_dropped():
+    env = Env([fnd("F-1", 3, "p1", "명으로", "%로", arts=B_UNIT)], blocks=B_UNIT)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "NEW_NUMBER_UNIT_ASSEMBLED"
+
+
+def test_many_revisions_use_one_masking_slot(monkeypatch):
+    names = "일이삼사오육칠팔"
+    p1 = " ".join(f"원래구절{n}번입니다" for n in names)
+    blocks = [("title", "title", "제목입니다"), ("p1", "body", p1), ("p2", "body", "항상바뀌는원래문장입니다")]
+    fs = [fnd("F0", 3, "p2", "항상바뀌는원래문장입니다", "항상바뀐새로운문장입니다", arts=blocks)]
+    fs += [fnd(f"G{n}", 3, "p1", f"원래구절{n}번입니다", f"새로바꾼문구{n}번입니다", arts=blocks) for n in names]
+    env = Env(fs, blocks=blocks)
+    monkeypatch.setattr(logsafe, "MAX_REGISTERED", 5)
+    for n in names:
+        assert env.build(finding_ids=["F0", f"G{n}"])["ok"]
+    assert logsafe.contains_sensitive("로그 항상바뀌는원래문장입니다 끝")       # 원문 색인이 밀려나지 않는다
+    for n in names:
+        assert logsafe.contains_sensitive(f"로그 새로바꾼문구{n}번입니다 끝")
+    env.clock.t = 1801
+    env.store.purge_expired()
+    assert not logsafe.contains_sensitive("로그 새로바꾼문구일번입니다 끝")
+
+
+# --- 3회차: 조립 후 부정어·고유명사, 제출 TTL 경계 ------------------------
+
+from conftest import make_article as _mk
+from press_review import edit_checks as _ec
+
+B_NEG = [("title", "title", "회의 소식"), ("p1", "body", "잘간다.")]
+B_NAME = [("title", "title", "회의 소식"), ("p1", "body", "담당자는 갑을 병이라고 했다.")]
+
+
+def test_assembled_negation_created_by_adjacent_edits_is_dropped():
+    env = Env([fnd("F-1", 2, "p1", "잘", "못", arts=B_NEG), fnd("F-2", 2, "p1", "간다", "했다", arts=B_NEG)], blocks=B_NEG)
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1"]                                   # 앞선 F-1 이 먼저 수락되고 F-2 가 탈락한다
+    assert [(s["finding_id"], s["reason_code"]) for s in r["skipped"]] == [("F-2", "NEGATION_ASSEMBLED")]
+    rb = {b["block_id"]: b["text"] for b in r["revised_blocks"]}
+    assert "못했다" not in rb["p1"]
+    for bid, _, t in B_NEG:
+        assert _ec.count_negations(rb[bid]) == _ec.count_negations(t)
+
+
+def test_assembled_proper_noun_created_by_adjacent_edits_is_dropped():
+    env = Env([fnd("F-1", 2, "p1", "갑", "김", arts=B_NAME), fnd("F-2", 2, "p1", "을", "씨", arts=B_NAME)], blocks=B_NAME)
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1"]
+    assert [(s["finding_id"], s["reason_code"]) for s in r["skipped"]] == [("F-2", "NEW_PROPER_NOUN_ASSEMBLED")]
+    assert "김씨" not in next(b["text"] for b in r["revised_blocks"] if b["block_id"] == "p1")
+
+
+def test_balanced_negation_edits_and_existing_names_are_not_dropped():
+    env = Env([fnd("F-1", 2, "p2", "회사는 입장을 내지 않았다", "회사는 입장을 내지 않았다고 밝혔다"),
+               fnd("F-2", 2, "p1", "김씨는 혐의를 모두 인정했다고 한다", "김씨는 혐의를 인정했다고 한다"),
+               fnd("F-3", 2, "p1", "경찰은 김씨가", "수사팀은 김씨가")])
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1", "F-2", "F-3"] and r["skipped"] == []
+
+
+def test_two_negation_balanced_edits_in_one_block_are_allowed():
+    blocks = [("title", "title", "소식"), ("p1", "body", "그는 가지 않았다. 그는 오지 않았다.")]
+    env = Env([fnd("F-1", 2, "p1", "가지 않았다", "향하지 않았다", arts=blocks), fnd("F-2", 2, "p1", "오지 않았다", "들르지 않았다", arts=blocks)], blocks=blocks)
+    assert ids(env.build()["applied"]) == ["F-1", "F-2"]
+
+
+def _raw_submit(env_store, handle, findings):
+    return review.submit_report(env_store, corpus_mod.FixtureCorpus(), article_handle=handle, findings=findings, now=NOW)
+
+
+def _prep():
+    clock = Clock()
+    logsafe.reset()
+    store = review.new_store(clock=clock)
+    prep = review.prepare_article(store, article=make_article(BLOCKS))
+    return clock, store, prep["article_handle"]
+
+
+def test_submit_rejects_when_article_just_expired(monkeypatch):
+    clock, store, h = _prep()
+    monkeypatch.setattr(store, "remaining_ttl", lambda key: None)
+    out = _raw_submit(store, h, [F_OK()])
+    assert out["ok"] is False and "unknown or expired" in out["errors"][0]
+    assert not any(k.startswith("report:") for k in store._items)
+
+
+def test_submit_removes_report_if_article_expires_right_after_put(monkeypatch):
+    clock, store, h = _prep()
+    real_put = store.put
+
+    def put(key, value, ttl_seconds=None):
+        exp = real_put(key, value, ttl_seconds)
+        if key.startswith("report:"):
+            clock.t = 1801
+        return exp
+    monkeypatch.setattr(store, "put", put)
+    out = _raw_submit(store, h, [F_OK()])
+    assert out["ok"] is False and "unknown or expired" in out["errors"][0]
+    assert not any(k.startswith("report:") for k in store._items)
+
+
+def test_submit_normal_path_report_ttl_follows_article():
+    clock, store, h = _prep()
+    clock.t = 600
+    out = _raw_submit(store, h, [F_OK()])
+    assert out["ok"] is True
+    assert store.remaining_ttl(f"report:{out['report_id']}") <= store.remaining_ttl(f"article:{h}") + 1e-6

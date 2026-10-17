@@ -33,11 +33,15 @@ def _shingles(text: str) -> set[str]:
     return {text[i:i + MIN_MATCH] for i in range(0, len(text) - MIN_MATCH + 1)}
 
 
-def register_article(key: str, article: Any) -> None:
+def register_article(key: str, article: Any, *, extend: bool = False) -> None:
+    """extend=True 면 같은 키가 있을 때 조각을 합집합으로 누적한다(자리 이동·추가 소모 없음). 변경본 색인용."""
     sh: set[str] = set()
     for b in article.get("blocks", []):
         sh |= _shingles(b["text"])
     with _lock:
+        if extend and key in _articles:
+            _articles[key] |= sh
+            return
         _articles.pop(key, None)
         _articles[key] = sh
         while len(_articles) > MAX_REGISTERED:
@@ -47,6 +51,13 @@ def register_article(key: str, article: Any) -> None:
 def forget_article(key: str) -> None:
     with _lock:
         _articles.pop(key, None)
+
+
+def forget_prefix(prefix: str) -> None:
+    """키가 prefix 로 시작하는 원고 색인을 모두 지운다(변경본 색인 정리용)."""
+    with _lock:
+        for k in [k for k in _articles if k.startswith(prefix)]:
+            del _articles[k]
 
 
 def register_secret(value: str, *, context_only: bool = False) -> None:

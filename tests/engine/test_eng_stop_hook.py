@@ -34,7 +34,10 @@ def _slash(name="press-check:draft"):
     return _u(f"<command-message>{name}</command-message>\n<command-name>/{name}</command-name>\n<command-args>{ARTICLE_TEXT}</command-args>")
 
 
-def _meta(path="/x/plugins/press-check/skills/draft"):
+ROOT = str(HOOK_DIR.parent)
+
+
+def _meta(path=ROOT + "/skills/draft"):
     return _u([{"type": "text", "text": f"Base directory for this skill: {path}\n\n본문"}], isMeta=True)
 
 
@@ -122,33 +125,64 @@ def test_header_format_mismatch_blocks(tmp_path):
     _assert_block(_hook(tmp_path, [_slash(), _meta()] + _review_calls(), bad2))
 
 
-def test_bare_slash_alias_recognised(tmp_path):
-    _assert_block(_hook(tmp_path, [_slash("draft"), _meta()], "머리말 없음"))
+def test_bare_slash_draft_not_recognised(tmp_path):
+    _assert_allow(_hook(tmp_path, [_slash("draft")], "머리말 없음"))
+    _assert_allow(_hook(tmp_path, [_slash("letter:draft")], "머리말 없음"))
 
 
 def test_skill_tool_call_recognised(tmp_path):
-    for name in ("press-check:draft", "draft"):
-        e = [_u("보도자료로 기사 써줘"), _tool("Skill", skill=name), _result(), _meta()]
-        _assert_block(_hook(tmp_path, e, "머리말 없음"))
-        _assert_allow(_hook(tmp_path, e + _review_calls(), DONE))
-
-
-def test_skill_tool_other_skill_ignored(tmp_path):
-    e = [_u("검토해줘"), _tool("Skill", skill="press-check:review"), _result()]
-    _assert_allow(_hook(tmp_path, e, "검토 결과"))
-
-
-def test_meta_entry_after_prompt_is_not_user_input(tmp_path):
-    # 마지막 사용자 입력은 슬래시 명령 항목이고 isMeta 항목이 그 뒤에 온다. 메타를 입력으로 잡으면 draft 호출을 놓친다.
-    e = [_u("이전 대화"), _a([{"type": "text", "text": "응답"}]), _slash(), _meta()]
+    e = [_u("보도자료로 기사 써줘"), _tool("Skill", skill="press-check:draft"), _result(), _meta()]
     _assert_block(_hook(tmp_path, e, "머리말 없음"))
+    _assert_allow(_hook(tmp_path, e + _review_calls(), DONE))
 
 
-def test_meta_skill_dir_only_detects_draft(tmp_path):
-    e = [_u("검토해줘"), _meta("/x/plugins/press-check/skills/review")]
-    _assert_allow(_hook(tmp_path, e, "검토 결과"))
-    e = [_u("초안 써줘"), _meta("/x/plugins/press-check/skills/draft")]
-    _assert_block(_hook(tmp_path, e, "머리말 없음"))
+def test_skill_tool_other_plugin_or_bare_draft_allows(tmp_path):
+    for name in ("letter:draft", "draft"):
+        e = [_u("편지 써줘"), _tool("Skill", skill=name), _result(), _meta("/cache/letter/skills/draft")]
+        _assert_allow(_hook(tmp_path, e, "편지 본문"))
+
+
+def test_meta_path_matching(tmp_path):
+    ok = [ROOT + "/skills/draft", ROOT + "/skills/draft/", ROOT + "/skills/../skills/draft"]
+    for path in ok:
+        _assert_block(_hook(tmp_path, [_u("초안"), _meta(path)], "머리말 없음"))
+    no = ["/cache/letter/skills/draft", "/x/press-check/letter/skills/draft", "/x/press-check-extra/skills/draft",
+          "/x/press-check/skills/draft", ROOT + "/skills/review", ROOT + "/skills/draft-more", ROOT + "x/skills/draft"]
+    for path in no:
+        _assert_allow(_hook(tmp_path, [_u("초안"), _meta(path)], "머리말 없음"))
+
+
+def _run_at(script, env_extra, tmp_path, meta_path):
+    tp = _write(tmp_path, [_u("초안"), _meta(meta_path)])
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PLUGIN_ROOT"}
+    env.update(env_extra)
+    return subprocess.run([sys.executable, str(script)], capture_output=True, text=True, encoding="utf-8", timeout=20, env=env,
+                          input=json.dumps({"stop_hook_active": False, "last_assistant_message": "머리말 없음", "transcript_path": str(tp)}))
+
+
+def test_meta_arbitrary_plugin_dir_by_script_location(tmp_path):
+    import shutil
+    root = tmp_path / "arbitrary-name"
+    (root / "hooks").mkdir(parents=True)
+    shutil.copy(HOOK, root / "hooks" / "stop_check.py")
+    script = root / "hooks" / "stop_check.py"
+    _assert_block(_run_at(script, {}, tmp_path, str(root / "skills" / "draft")))
+    _assert_allow(_run_at(script, {}, tmp_path, "/cache/letter/skills/draft"))
+
+
+def test_meta_arbitrary_plugin_dir_by_env(tmp_path):
+    root = tmp_path / "dev-copy"
+    _assert_block(_run_at(HOOK, {"CLAUDE_PLUGIN_ROOT": str(root)}, tmp_path, str(root) + "/skills/draft/"))
+    _assert_block(_run_at(HOOK, {"CLAUDE_PLUGIN_ROOT": str(root)}, tmp_path, ROOT + "/skills/draft"))
+    _assert_allow(_run_at(HOOK, {"CLAUDE_PLUGIN_ROOT": str(root)}, tmp_path, str(root) + "-x/skills/draft"))
+
+
+def test_meta_path_normcase_logic(monkeypatch):
+    m = _load_module()
+    monkeypatch.setattr(m.os.path, "normcase", lambda p: p.replace("/", "\\").lower())
+    assert m._is_press_check_draft_dir(ROOT.upper() + "/Skills/Draft")
+    assert m._is_press_check_draft_dir(ROOT.replace("/", "\\") + "\\skills\\draft\\")
+    assert not m._is_press_check_draft_dir(ROOT.upper() + "/Skills/Review")
 
 
 def test_sidechain_entries_not_user_input(tmp_path):
@@ -215,3 +249,45 @@ def test_hooks_json_command_matches_server_python_resolution():
     assert cmd["timeout"] == 10
     mcp = json.loads((paths.REPO / "plugins" / "press-check" / ".mcp.json").read_text(encoding="utf-8"))
     assert "${PRESS_REVIEW_PYTHON:-python3}" == mcp["mcpServers"]["press-review"]["command"]
+
+
+def _load_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("stop_check_mod", HOOK)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def _reread_decision(monkeypatch, tmp_path, second):
+    m = _load_module()
+    monkeypatch.setattr(m, "RETRY_WAIT_S", 0)
+    first_p = _write(tmp_path, [_slash(), _meta()])
+    reads = []
+
+    def fake_read(path):
+        reads.append(1)
+        if len(reads) == 1:
+            return [_slash(), _meta()]
+        if second == "error":
+            raise OSError("boom")
+        if second == "calls":
+            return [_slash(), _meta()] + _review_calls()
+        return [_slash(), _meta()]
+
+    monkeypatch.setattr(m, "_read_entries", fake_read)
+    r = m._decide({"stop_hook_active": False, "last_assistant_message": DONE, "transcript_path": str(first_p)})
+    assert len(reads) == 2
+    return r
+
+
+def test_reread_failure_allows(monkeypatch, tmp_path):
+    assert _reread_decision(monkeypatch, tmp_path, "error") is None
+
+
+def test_reread_no_calls_blocks(monkeypatch, tmp_path):
+    assert _reread_decision(monkeypatch, tmp_path, "none")
+
+
+def test_reread_with_calls_allows(monkeypatch, tmp_path):
+    assert _reread_decision(monkeypatch, tmp_path, "calls") is None

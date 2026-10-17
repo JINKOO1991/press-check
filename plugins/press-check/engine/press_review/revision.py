@@ -10,11 +10,12 @@
 from __future__ import annotations
 
 import copy
+from collections import Counter
 from typing import Any
 
 from . import edit_checks, hashing, logsafe
 
-REV_SUFFIX = "~rev"        # 변경본 마스킹 색인 키: 원고 handle + 접미사. 원고가 만료되면 함께 지운다(review._forget_expired).
+REV_SUFFIX = "~rev"        # 변경본 마스킹 색인 키: 원고 handle + 접미사(원고당 1개). 원고가 만료되면 함께 지운다(review._forget_expired).
 MIN_STARS = 2
 
 
@@ -56,6 +57,61 @@ def _ineligible(f: dict) -> str | None:
 
 def _overlaps(taken: dict[str, list[tuple[int, int]]], bid: str, s: int, e: int) -> bool:
     return any(s < te and ts < e for ts, te in taken.get(bid, ()))
+
+
+def _direct_inners(text: str) -> list[str]:
+    return [text[a + 1:z - 1] for a, z, kind in edit_checks.scan_quotes(text) if kind == "direct"]
+
+
+def _assembled_violation(article: dict, texts: dict[str, str], trial: dict[str, list[dict]]) -> str | None:
+    """잠정 수락 집합을 조립한 결과를 원본 전체 기사와 대조한다. 위반 코드 또는 None.
+
+    숫자: 조립된 블록의 숫자 토큰이 원본 전체에 있어야 한다. 인용: 직접 인용 안쪽 문자열 다중집합이 원본의 부분집합이어야 한다.
+    짝: 원본 블록에 없던 짝 없는 직접 인용 부호가 새로 생기면 안 된다.
+    """
+    asm = dict(texts)
+    for bid, items in trial.items():
+        out, pos = [], 0
+        for e in sorted(items, key=lambda e: e["start"]):
+            out += [texts[bid][pos:e["start"]], e["replacement"]]
+            pos = e["end"]
+        out.append(texts[bid][pos:])
+        asm[bid] = "".join(out)
+    # 같은 토크나이저로 원본 전체의 토큰 집합을 만들어 부분집합을 본다(num_in 의 경계 판정은 2026.10.17 같은 원문 토큰을 못 찾는다).
+    # 한계: 한글 수량(여러 명 -> 두 명)과 작은따옴표 강조는 보지 않는다.
+    orig_full = edit_checks._nocomma("\n".join(texts.values()))
+    orig_tokens, orig_pairs = set(edit_checks._NUM.findall(orig_full)), edit_checks._num_unit_pairs(orig_full)
+    for bid in trial:
+        if set(edit_checks._NUM.findall(edit_checks._nocomma(asm[bid]))) - orig_tokens:
+            return "NEW_NUMBER_ASSEMBLED"
+    for bid in trial:
+        if edit_checks._num_unit_pairs(asm[bid]) - orig_pairs:
+            return "NEW_NUMBER_UNIT_ASSEMBLED"
+
+    def inner_counts(tx: dict[str, str]) -> Counter:
+        resets, pos, prev, parts = set(), 0, None, []
+        for b in article["blocks"]:
+            if prev is not None and b.get("section") != prev:
+                resets.add(pos)
+            prev = b.get("section")
+            parts.append(tx[b["block_id"]])
+            pos += len(tx[b["block_id"]]) + 1
+        full = "\n".join(parts)
+        return Counter(full[a + 1:z - 1] for a, z, kind in edit_checks.scan_quotes(full, resets) if kind == "direct")
+
+    if inner_counts(asm) - inner_counts(texts):
+        return "NEW_QUOTE_ASSEMBLED"
+    for bid in trial:
+        if edit_checks.has_unpaired_direct_mark(asm[bid]) and not edit_checks.has_unpaired_direct_mark(texts[bid]):
+            return "UNPAIRED_QUOTE_ASSEMBLED"
+    full = "\n".join(texts.values())
+    for bid in trial:
+        if edit_checks.count_negations(asm[bid]) != edit_checks.count_negations(texts[bid]):
+            return "NEGATION_ASSEMBLED"
+    for bid in trial:
+        if any(c not in full for c in edit_checks.proper_noun_candidates(asm[bid])):
+            return "NEW_PROPER_NOUN_ASSEMBLED"
+    return None
 
 
 def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_ids: list[str] | None = None) -> dict:
@@ -136,6 +192,14 @@ def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_i
         if clash:
             skip(fid, "OVERLAP", "다른 적용 수정과 같은 블록에서 구간이 겹침")
             continue
+        trial = {bid: [x for _, es in accepted for x in es if x["block_id"] == bid] + [e for e in edits if e["block_id"] == bid] for bid in local}
+        bad_asm = _assembled_violation(article, texts, trial)
+        if bad_asm:
+            skip(fid, bad_asm, "수정을 조립한 결과가 원본 기사에 없던 숫자·직접 인용·인용 부호를 만듦")
+            continue
+        if any(Counter(_direct_inners(e["replacement"])) - Counter(_direct_inners(e["quote"])) for e in edits):
+            skip(fid, "NEW_QUOTE_IN_EDIT", "수정 대체문에 원래 구간에 없던 직접 인용이 생김")
+            continue
         for bid, spans in local.items():
             taken.setdefault(bid, []).extend(spans)
         accepted.append((fid, edits))
@@ -164,7 +228,11 @@ def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_i
         b["text"] = revised[b["block_id"]]
     revision_sha = hashing.article_sha256(revised_article)[0]
     if accepted:
-        logsafe.register_article(f"{entry['article_handle']}{REV_SUFFIX}", revised_article)
+        rev_key = f"{entry['article_handle']}{REV_SUFFIX}"      # 원고당 키 하나: 변경본 조각을 합집합으로 누적해 전역 색인 칸을 1개만 쓴다
+        logsafe.register_article(rev_key, revised_article, extend=True)
+        if store.get(f"article:{entry['article_handle']}") is None:       # 등록 중에 원고가 만료됐으면 방금 만든 색인을 바로 푼다
+            logsafe.forget_article(rev_key)
+            return _fail("ARTICLE_EXPIRED", "변경본을 만드는 동안 원고 보관 시간이 끝났습니다. 원고를 다시 제출해 분석해 주세요.")
 
     applied = []
     for fid, edits in accepted:

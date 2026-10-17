@@ -5,13 +5,15 @@
 파일을 쓰지 않고, 기사 원문을 출력하지 않는다. 표준 라이브러리만 쓴다.
 """
 import json
+import os
 import re
 import sys
 import time
 
 TAIL_BYTES = 3 * 1024 * 1024
 RETRY_WAIT_S = 1.5
-DRAFT_NAMES = ("press-check:draft", "draft")
+DRAFT_NAMES = ("press-check:draft",)
+META_PREFIX = "Base directory for this skill:"
 UNDONE_RE = re.compile(r"^\[press-check 검토 미완료\] 사유=\S.*")
 DONE_RE = re.compile(r"^\[press-check 검토 완료\] report_id=\S+ 적용 \d+건 미해결 \d+건 흐름경고 \d+건")
 
@@ -96,6 +98,23 @@ def _tool_uses(turn):
                     yield b
 
 
+def _norm(path):
+    p = os.path.normcase(os.path.realpath(path.strip().replace("\\", "/")))
+    return p.rstrip("/\\")
+
+
+def _draft_dirs():
+    roots = {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}
+    env_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if env_root:
+        roots.add(env_root)
+    return {_norm(os.path.join(r, "skills", "draft")) for r in roots}
+
+
+def _is_press_check_draft_dir(raw):
+    return bool(raw.strip()) and _norm(raw) in _draft_dirs()
+
+
 def _draft_called(turn):
     first = _text_of(turn[0])
     for n in DRAFT_NAMES:
@@ -108,7 +127,7 @@ def _draft_called(turn):
     for e in turn:
         if e.get("type") == "user" and e.get("isMeta"):
             t = _text_of(e).lstrip()
-            if t.startswith("Base directory for this skill:") and "/skills/draft" in t.split("\n", 1)[0]:
+            if t.startswith(META_PREFIX) and _is_press_check_draft_dir(t[len(META_PREFIX):].split("\n", 1)[0]):
                 return True
     return False
 
@@ -147,7 +166,7 @@ def _decide(payload):
             return None
         time.sleep(RETRY_WAIT_S)
         turn = _load_turn(path)
-        if turn and _review_tools_called(turn):
+        if not turn or _review_tools_called(turn):
             return None
         return REASON_NO_CALLS
     return REASON_BASE

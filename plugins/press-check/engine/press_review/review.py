@@ -327,7 +327,7 @@ def _forget_expired(key: str) -> None:
     if key.startswith(_ARTICLE_PREFIX):
         handle = key[len(_ARTICLE_PREFIX):]
         logsafe.forget_article(handle)
-        logsafe.forget_article(handle + revision.REV_SUFFIX)
+        logsafe.forget_prefix(handle + revision.REV_SUFFIX)
 
 
 def new_store(ttl_seconds: float = config.DEFAULT_TTL_SECONDS, clock: Any = None) -> EphemeralStore:
@@ -431,7 +431,10 @@ def submit_report(
         return {"ok": False, "errors": ["article_handle is unknown or expired; call prepare_article again with the manuscript"]}
     now = now or _dt.datetime.now().astimezone()
     # 보고서(원고 인용 포함)가 원고보다 늦게 만료돼 원고 조각이 남지 않도록 보고서 만료를 원고 만료에 맞춘다(F3)
-    report_ttl = min(store.ttl_seconds, store.remaining_ttl(f"article:{article_handle}") or store.ttl_seconds)
+    left = store.remaining_ttl(f"article:{article_handle}")
+    if left is None:             # 방금 만료: 보고서에 새 TTL 을 주지 않는다
+        return {"ok": False, "errors": ["article_handle is unknown or expired; call prepare_article again with the manuscript"]}
+    report_ttl = min(store.ttl_seconds, left)
     res = build_report_ex(
         entry["article"], findings, explanations, corpus, now=now, raw_bytes=entry.get("raw_bytes"),
         overall_status=overall_status, coverage_notes=coverage_notes, ttl_seconds=report_ttl,
@@ -441,6 +444,9 @@ def submit_report(
     table = render.render_table(res.report)             # 렌더가 실패해도 보고서가 보관소에 남지 않도록 먼저 한다
     store.put(f"report:{res.report['report_id']}", {"report": res.report, "explanations": res.explanations, "article_handle": article_handle},
               ttl_seconds=report_ttl)
+    if store.get(f"article:{article_handle}") is None:       # 저장 직후 원고가 만료된 경쟁: 보고서만 남기지 않는다
+        store.delete(f"report:{res.report['report_id']}")
+        return {"ok": False, "errors": ["article_handle is unknown or expired; call prepare_article again with the manuscript"]}
     return {
         "ok": True,
         "report_id": res.report["report_id"],
