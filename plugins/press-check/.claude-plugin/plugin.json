@@ -1,9 +1,9 @@
 {
-  "name": "press-dispute-review",
+  "name": "press-check",
   "version": "0.1.0",
   "description": "Reviews Korean news drafts before publication, flags expressions that may lead to press disputes, and suggests minimal edits with checked evidence. Editorial aid, not legal advice.",
   "author": {
-    "name": "press-dispute-review contributors"
+    "name": "press-check contributors"
   },
   "homepage": "https://github.com/JINKOO1991/press-check",
   "repository": "https://github.com/JINKOO1991/press-check",

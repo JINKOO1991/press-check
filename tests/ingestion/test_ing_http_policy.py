@@ -146,7 +146,7 @@ def test_user_agent_and_no_gzip(make_client):
     t = FakeTransport(routes_with_robots(**{P: (200, b"ok", {})}))
     make_client(t).get(P)
     for h in t.seen_headers:
-        assert h["User-Agent"] == "press-dispute-review/0.1 (+research; non-commercial index)"
+        assert h["User-Agent"] == "press-check/0.1 (+research; non-commercial index)"
         assert "Accept-Encoding" not in h
 
 

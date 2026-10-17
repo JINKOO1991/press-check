@@ -1,4 +1,4 @@
-# press-dispute-review
+# press-check
 
 한국어 기사 원고(제목·부제·본문·사진 설명)를 발행 전에 검토해, 언론분쟁 쟁점이 될 수 있는 구체적 표현과 확인 사항을 찾고 기사 취지를 유지하는 최소 수정안을 제안하는 Claude Code 플러그인입니다.
 
@@ -7,7 +7,7 @@
 ## 현재 상태 (버전 0.1.0, P0)
 
 - 저장소에 들어 있는 근거 코퍼스는 **기능 시험용 합성(fixture) 자료뿐**입니다. 실제 판례·언론중재위원회 조정·심의 자료는 사용자가 수집 CLI로 로컬 색인을 만들어야 쓸 수 있습니다(아래 '검색 색인').
-- 로컬 색인이 없으면 MCP 서버는 기동하지만 `search_cases`와 `submit_report`가 합성 근거 대신 오류를 돌려줍니다. 기능 시험을 위해 `PRESS_REVIEW_ALLOW_SYNTHETIC=1`을 설정하면 합성 자료로 동작하며, 그때 나오는 근거는 실제 사례가 아니므로 인용하거나 법적 판단에 쓰면 안 됩니다. `/press-dispute-review:corpus-status`는 색인이 없어도 동작해 상태를 보여 줍니다.
+- 로컬 색인이 없으면 MCP 서버는 기동하지만 `search_cases`와 `submit_report`가 합성 근거 대신 오류를 돌려줍니다. 기능 시험을 위해 `PRESS_REVIEW_ALLOW_SYNTHETIC=1`을 설정하면 합성 자료로 동작하며, 그때 나오는 근거는 실제 사례가 아니므로 인용하거나 법적 판단에 쓰면 안 됩니다. `/press-check:corpus-status`는 색인이 없어도 동작해 상태를 보여 줍니다.
 - 법률 전문가 2명이 일부 항목을 검토했고, 검증 범위와 한계는 아래 '한계와 사용 범위'에 적었습니다. 테스트 통과는 법적 안전성 인증이 아닙니다.
 - 신규 설치의 수집 자료 권리 기본값은 모두 `unknown`입니다. 기관 이용 문의 회신 전이므로 공개본은 허용 상태를 기본으로 제공하지 않으며, 사용자가 `rights set`으로 직접 기록해야 외부 API 반출이 열립니다(아래 '코퍼스 만들기').
 
@@ -23,18 +23,18 @@ Claude Code 안에서:
 
 ```text
 /plugin marketplace add JINKOO1991/press-check
-/plugin install press-dispute-review@press-dispute
+/plugin install press-check@press-check
 ```
 
 셸에서:
 
 ```bash
 claude plugin marketplace add JINKOO1991/press-check
-claude plugin install press-dispute-review@press-dispute
+claude plugin install press-check@press-check
 ```
 
 - 저장소는 `JINKOO1991/press-check`입니다.
-- 마켓 이름은 `press-dispute`, 플러그인 이름은 `press-dispute-review`입니다.
+- 마켓 이름은 `press-check`, 플러그인 이름은 `press-check`입니다.
 - 설치 확인: `/plugin`의 Installed·Errors 탭, `/mcp`에서 `press-review` 서버 연결 상태.
 - 비공식 마켓은 자동 업데이트가 기본으로 꺼져 있습니다. `/plugin`의 Marketplaces에서 켜거나 `claude plugin update`를 쓰세요.
 
@@ -42,9 +42,9 @@ claude plugin install press-dispute-review@press-dispute
 
 | 명령 | 하는 일 |
 |---|---|
-| `/press-dispute-review:review [파일]` | 원고를 검토해 검토 필요도 표를 보여 줍니다. 파일 경로를 주거나, 비워 두고 원고를 붙여 넣으세요 |
-| `/press-dispute-review:explain <report_id> <finding_id>` | 표의 한 항목에 대한 상세 근거와 반대 근거를 보여 줍니다(30분 안) |
-| `/press-dispute-review:corpus-status` | 근거 코퍼스의 건수·기준일·합성 여부를 보여 줍니다 |
+| `/press-check:review [파일]` | 원고를 검토해 검토 필요도 표를 보여 줍니다. 파일 경로를 주거나, 비워 두고 원고를 붙여 넣으세요 |
+| `/press-check:explain <report_id> <finding_id>` | 표의 한 항목에 대한 상세 근거와 반대 근거를 보여 줍니다(30분 안) |
+| `/press-check:corpus-status` | 근거 코퍼스의 건수·기준일·합성 여부를 보여 줍니다 |
 
 기본 출력은 다음 네 칸의 표입니다.
 
@@ -60,7 +60,7 @@ claude plugin install press-dispute-review@press-dispute
 
 저장소에는 코퍼스가 없습니다. 실제 근거를 쓰려면 아래 순서로 로컬에 만듭니다. 각 기관 자료의 이용정책·권리 표시는 사용자가 직접 확인해야 하며, 수집물은 사용자 로컬에만 보관되고 저장소에 포함되지 않습니다. 신규 설치의 권리 기본값은 `unknown`이며 사용자가 `rights set`으로 직접 기록해야 외부 API 반출이 열립니다.
 
-- 실행 위치: 저장소 루트에서 `PYTHONPATH=plugins/press-dispute-review/engine python3 -m press_review.ingestion <target>`. 수집물은 `<data>/corpus/`, 색인은 `<data>/index/`에 생기며 `<data>`는 `PRESS_DISPUTE_DATA_DIR`(기본 `~/.local/share/press-dispute-review`)입니다.
+- 실행 위치: 저장소 루트에서 `PYTHONPATH=plugins/press-check/engine python3 -m press_review.ingestion <target>`. 수집물은 `<data>/corpus/`, 색인은 `<data>/index/`에 생기며 `<data>`는 `PRESS_DISPUTE_DATA_DIR`(기본 `~/.local/share/press-dispute-review`)입니다. 데이터 폴더 기본 이름은 이전 호환을 위해 press-dispute-review를 유지한다.
 - 수집·추출 target: `pac`, `iendc`, `lawapi`, `lawapi_body`, `fetch`, `extract`, `withhold`, `robots_check`. 상태 확인은 `status`, `export-inventory`, `export-coverage`, `admission`. 전체 목록은 `--help`로 확인하세요. 이 단계에는 DeepSeek 키가 필요하지 않습니다.
 - **권리 기록** `rights show`는 소스별 현재 권리 값과 기록자·시각·근거를 보여 줍니다. `rights set <source_family> --external-api allowed --note "근거 한 줄"`는 그 계열로 등록된 소스(수집 target을 한 번 실행해 소스가 장부에 있어야 합니다)에 결정을 기록합니다. 다른 권리 항목은 `--read`, `--store-raw`, `--create-derivatives`, `--redistribute-raw`, `--redistribute-derivatives`, `--fine-tune`이고 값은 `allowed|forbidden|permission_required|unknown`입니다. 지정하지 않은 항목은 그대로 두며, `forbidden`은 풀 수 없고, `unknown`을 허용으로 바꾸는 자동 경로는 없습니다. 이 결정은 법률 판단이 아니라 사용자의 기록이며 근거 메모에 책임이 따릅니다.
 - **구조화** `python3 -m press_review.ingestion.structure`: 색인은 구조화가 만든 chunk만 읽으므로, 구조화 없이는 색인에 자료가 들어가지 않습니다(코드 확인, 실행해 보지는 않았습니다). 심의기준·위원회 규정·PAC 연구자료는 모델 호출 없이 chunk만 만들 수 있고, PAC 사례집·IENDC·판례는 `DEEPSEEK_API_KEY`가 필요합니다. 이 단계는 소스의 `rights.external_api`가 `allowed`일 때만 외부로 전송하며, 신규 설치에서는 `unknown`이라 `rights set` 전에는 전송하지 않습니다.

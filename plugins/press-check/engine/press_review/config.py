@@ -17,11 +17,11 @@ FIXTURES_DIR = PACKAGE_DIR / "fixtures"
 
 
 def _own_plugin_data(raw: str) -> bool:
-    """CLAUDE_PLUGIN_DATA 가 이 플러그인의 것인지: 경로 구성요소 중 하나에 'press-dispute-review' 가 있어야 한다.
+    """CLAUDE_PLUGIN_DATA 가 이 플러그인의 것인지: 경로 구성요소 중 하나에 'press-check' 가 있어야 한다.
 
     Claude Code 셸에는 다른 플러그인의 CLAUDE_PLUGIN_DATA 가 상속될 수 있다(2026-10-08 실측: codex 플러그인 경로).
     """
-    return any("press-dispute-review" in part for part in Path(raw).parts)
+    return any("press-check" in part for part in Path(raw).parts)
 
 
 def default_data_dir() -> Path:
@@ -32,7 +32,7 @@ def default_data_dir() -> Path:
 def data_dir() -> Path:
     """코퍼스 등 영속 자료의 위치(저장소 밖). 만들지는 않는다. 엔진과 수집 CLI가 이 함수 하나를 쓴다.
 
-    우선순위: PRESS_DISPUTE_DATA_DIR -> CLAUDE_PLUGIN_DATA(경로에 press-dispute-review 가 있을 때만)
+    우선순위: PRESS_DISPUTE_DATA_DIR -> CLAUDE_PLUGIN_DATA(경로에 press-check 가 있을 때만)
     -> ~/.local/share/press-dispute-review
     """
     v = os.environ.get("PRESS_DISPUTE_DATA_DIR", "").strip()

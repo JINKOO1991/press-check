@@ -1,12 +1,12 @@
-# press-dispute-review
+# press-check
 
 한국어 기사 원고(제목·부제·본문·사진 설명)를 발행 전에 검토해, 언론분쟁 쟁점이 될 수 있는 구체적 표현과 확인 사항을 찾고 기사 취지를 유지하는 최소 수정안을 제안하는 Claude Code 플러그인입니다. 기사 분석은 호스트 모델이 하고, 로컬 MCP 서버는 원문 위치·해시·근거 인용·수정안 검사만 합니다.
 
-> **법률 자문이 아닙니다.** 검토 보조 도구입니다. 별(★)은 검토 우선순위이며 분쟁·패소 확률이 아닙니다. 검증 범위와 수집 자료의 한계는 [플러그인 README의 '한계와 사용 범위'](plugins/press-dispute-review/README.md#한계와-사용-범위)를 읽으세요.
+> **법률 자문이 아닙니다.** 검토 보조 도구입니다. 별(★)은 검토 우선순위이며 분쟁·패소 확률이 아닙니다. 검증 범위와 수집 자료의 한계는 [플러그인 README의 '한계와 사용 범위'](plugins/press-check/README.md#한계와-사용-범위)를 읽으세요.
 
 ## 구성
 
-- `plugins/press-dispute-review/`: 플러그인 본체(MCP 서버, 스킬, 수집·색인 엔진). 설치와 사용법은 [플러그인 README](plugins/press-dispute-review/README.md)에 있습니다.
+- `plugins/press-check/`: 플러그인 본체(MCP 서버, 스킬, 수집·색인 엔진). 설치와 사용법은 [플러그인 README](plugins/press-check/README.md)에 있습니다.
 - `.claude-plugin/`: 마켓플레이스 정의.
 - 코퍼스(판례·심의·정정 자료 등)는 저장소에 들어 있지 않습니다. 각자 수집 CLI로 로컬에 만듭니다(플러그인 README의 '코퍼스 만들기').
 

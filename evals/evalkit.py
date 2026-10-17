@@ -19,7 +19,7 @@ from typing import Any, Callable
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-ENGINE = REPO / "plugins" / "press-dispute-review" / "engine"
+ENGINE = REPO / "plugins" / "press-check" / "engine"
 if str(ENGINE) not in sys.path:
     sys.path.insert(0, str(ENGINE))
 

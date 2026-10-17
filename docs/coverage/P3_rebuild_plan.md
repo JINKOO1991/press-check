@@ -25,7 +25,7 @@
 0. 사전 점검(읽기 전용). 모두 통과해야 진행한다.
    - 보존 사본 확인: `~/.local/share/press-dispute-review/baseline/corpus-idx-34b8367d1dfe423d.sqlite`(1,303,506,944바이트, 읽기 전용 파일)와 `index/` 안 원본의 sha256이 일치함을 이번에 확인했다(`8fa481dc…b7625f22`, 두 파일 동일).
    - 동시 실행 확인: `pgrep`에 수신·구조화 프로세스 없음(이번 확인 시점). 실행 직전 다시 본다. 판례 P-T3 수신은 2026-10-10 폐기·중단 상태다.
-   - 테스트 기준: `PYTHONPATH=plugins/press-dispute-review/engine python3 -m pytest tests -q`(마지막 확인 1,173 passed·1 xfailed, 2026-10-10)를 구현 후 다시 돌린다.
+   - 테스트 기준: `PYTHONPATH=plugins/press-check/engine python3 -m pytest tests -q`(마지막 확인 1,173 passed·1 xfailed, 2026-10-10)를 구현 후 다시 돌린다.
 1. ①·②·③·④ 구현과 단위 테스트(코드 변경은 이 계획 밖의 별도 작업). 색인 형식 `INDEX_FORMAT`을 `pdr-index-3`에서 올린다. snapshot 해시가 형식 문자열과 passage 정본에서 나오므로(corpus_sqlite.py build_index) 새 snapshot id가 보장된다. `get_passage`·`submit_report` 증거 검증(passage_id·url·locator 일치)과의 호환은 ①에서 따로 정한다(결정 2).
 2. 기준선 재측정 1회(선택, 권고). 기준선의 지연 값은 `loop.sh lawT3`(판례 수신) 동시 실행 중에 쟀다고 기준선 JSON `env.note`에 적혀 있다. 지금은 수신이 없으므로 같은 하네스로 보존 사본에서 지연을 다시 재야 전후 지연 비교가 공정하다: `python evals/run_search_evals.py run --index <baseline 사본> --latency`. 라벨 없는 지표·순위는 같은 색인·같은 코드이므로 변하지 않아야 한다.
 3. 빌드. 현행 `build_index`는 빌드가 끝나면 `CURRENT` 포인터를 바로 새 파일로 바꾼다(`_write_pointer` 후 `_prune`). 즉 승격이 빌드에 붙어 있다. 되돌릴 수 있게 하려면 기본 경로에 쓰지 말고 `build_index(manifest, <임시 out_dir>)`를 파이썬으로 호출해 별도 폴더에 만든다(어댑터 CLI `python -m press_review.ingestion build_index`는 출력 폴더를 고정(`<data>/index/`)하고 `--out-dir` 인자가 없다). 이 방식과 대안은 결정 4.

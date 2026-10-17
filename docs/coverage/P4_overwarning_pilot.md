@@ -22,7 +22,7 @@
 ```
 ENABLE_CLAUDEAI_MCP_SERVERS=false PRESS_DISPUTE_DATA_DIR=~/.local/share/press-dispute-review \
 timeout 900 claude -p "<고정 지시문 + article JSON>" --restricted --tools Skill \
-  --plugin-dir <저장소>/plugins/press-dispute-review \
+  --plugin-dir <저장소>/plugins/press-check \
   --model claude-sonnet-5-5 --effort high \
   --output-format stream-json --verbose --no-session-persistence \
   --permission-mode dontAsk \

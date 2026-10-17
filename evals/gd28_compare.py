@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "plugins" / "press-dispute-review" / "engine"))
+sys.path.insert(0, str(ROOT / "plugins" / "press-check" / "engine"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import extractor_compare as xc  # noqa: E402

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-ENGINE = REPO / "plugins" / "press-dispute-review" / "engine"
+ENGINE = REPO / "plugins" / "press-check" / "engine"
 
 if str(ENGINE) not in sys.path:
     sys.path.insert(0, str(ENGINE))

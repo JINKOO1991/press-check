@@ -32,11 +32,11 @@
 - 불명: 작성자 본인의 발행 기사 풀(비공개)의 실제 기사 문장이 `P4_overwarning_pilot.md`나 다른 문서에 짧게 인용됐는지는 자동으로 대조하지 못했다(원본 풀에 접근하지 않았다). 비교 스크립트 없이 판정하지 않았다.
 
 ## 4. 라이선스·고지: FAIL
-- 존재: 루트 `LICENSE`(MIT, "press-dispute-review contributors", 2026), `plugins/press-dispute-review/LICENSE`. README 라이선스 절이 MIT 명시.
+- 존재: 루트 `LICENSE`(MIT, "press-check contributors", 2026), `plugins/press-check/LICENSE`. README 라이선스 절이 MIT 명시.
 - 없음: NOTICE·THIRD_PARTY 파일. 재사용 출처는 별도 이식 장부(비공개)에만 있다(이식은 `is_subtitle_block`·`_NUM` 계열 등 소량이며 코드 주석에 `이식:` 출처 표기). 이 원본 저장소들에는 LICENSE가 없고 사용자 소유라 MIT 재배포는 가능하나, 공개 배포물 루트에 출처 고지 파일이 없다. 권고: NOTICE 1개 추가(이식 목록과 소유자 동의 명시).
 - 제3자 코드: 런타임 외부 패키지 없음(README 주장, `pyproject`·requirements 추적 파일 0건과 일치). 추출은 외부 도구(pdftotext, kordoc, tesseract)를 호출하나 번들하지 않음. 이 도구 설치 안내는 README에 없다.
-- `.claude-plugin/marketplace.json`: name `press-dispute`, owner.name, plugins[0] source `./plugins/press-dispute-review` 있음. `plugin.json`: name, version `0.1.0`, description, author.name, license, keywords 있음. **`repository`·`homepage` 필드 없음**, author에 url·email 없음, owner에도 없음(필수 아님, 배포 품질상 결함).
-- placeholder: `plugins/press-dispute-review/README.md:24,31,35`의 `<REPO_URL>` 잔존(공개 후 실제 `owner/repo`로 치환 필요). 루트 README.md는 없음(저장소 첫 화면이 비어 있음).
+- `.claude-plugin/marketplace.json`: name `press-check`, owner.name, plugins[0] source `./plugins/press-check` 있음. `plugin.json`: name, version `0.1.0`, description, author.name, license, keywords 있음. **`repository`·`homepage` 필드 없음**, author에 url·email 없음, owner에도 없음(필수 아님, 배포 품질상 결함).
+- placeholder: `plugins/press-check/README.md:24,31,35`의 `<REPO_URL>` 잔존(공개 후 실제 `owner/repo`로 치환 필요). 루트 README.md는 없음(저장소 첫 화면이 비어 있음).
 
 ## 5. 공개 사용자 경로: FAIL
 - `python -m press_review --help`는 동작(review/validate/corpus-status). `python -m press_review.ingestion --help`는 `PYTHONPATH=<plugin>/engine` 지정 시 동작하며 사용법은 `<target>`(어댑터 이름: pac, iendc, lawapi, lawapi_body, fetch, extract, build_index, withhold, robots_check, 예약어 status·export-inventory·export-coverage·admission)이다. `build_index`는 서브커맨드가 아니라 target이고 `build_index --help`는 상위 도움말을 출력한다. `build_index` 자체 옵션은 `--keep`(sources/build_index.py:12)뿐.

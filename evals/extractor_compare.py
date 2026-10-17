@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "plugins" / "press-dispute-review" / "engine"))
+sys.path.insert(0, str(ROOT / "plugins" / "press-check" / "engine"))
 
 from press_review import config  # noqa: E402
 from press_review.ingestion import stage  # noqa: E402

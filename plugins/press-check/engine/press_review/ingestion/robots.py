@@ -6,7 +6,7 @@
 - 4xx(404·410 포함): 규칙 없음(허용), purpose_status=``no_rules``.
 - 5xx·timeout·연결 실패(재시도 소진): ``unknown`` 이고 그 호스트는 전부 막는다(fail-closed). 다음 실행에서 다시 받는다.
 - robots.txt 자체를 받는 요청은 robots 검사를 받지 않는다. 신선도(24시간)는 robots 표의 fetched_at 으로 판단하고 http_cache는 본문 보관에만 쓴다.
-- User-agent 매칭: 우리 UA 제품 토큰(press-dispute-review)을 포함하는 그룹이 있으면 그 그룹만, 없으면 ``*`` 그룹. 가장 긴 패턴이 이기고 동률이면 Allow. ``*`` 와 ``$`` 지원.
+- User-agent 매칭: 우리 UA 제품 토큰(press-check)을 포함하는 그룹이 있으면 그 그룹만, 없으면 ``*`` 그룹. 가장 긴 패턴이 이기고 동률이면 Allow. ``*`` 와 ``$`` 지원.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from typing import Any, Optional
 from .context import TimeBudgetExceeded, iso, parse_iso
 from .http import DryRunMiss, FetchFailed, ResponseTooLarge, RobotsDisallowed
 
-UA_TOKEN = "press-dispute-review"
+UA_TOKEN = "press-check"
 TTL = timedelta(hours=24)
 _AI_PURPOSE_RE = re.compile(r"(?i)(ai[\s-]*training|retrieval[\s-]*augmented|\brag\b|machine[\s-]*learning|ai\s*학습|인공지능\s*학습)")
 _PROHIBIT_RE = re.compile(r"(?i)(prohibit|forbid|not\s+(?:be\s+)?(?:permitted|allowed)|금지|불허)")

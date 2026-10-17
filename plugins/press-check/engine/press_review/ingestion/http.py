@@ -44,7 +44,7 @@ except ImportError:  # pragma: no cover
 ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr"})
 DRF_HOST = "www.law.go.kr"
 DRF_PATH_PREFIX = "/DRF/"
-USER_AGENT = "press-dispute-review/0.1 (+research; non-commercial index)"
+USER_AGENT = "press-check/0.1 (+research; non-commercial index)"
 MIN_INTERVAL_SECONDS = 2.0
 MAX_RETRIES = 4
 BACKOFF_BASE_SECONDS = 2.0

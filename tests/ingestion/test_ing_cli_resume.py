@@ -219,7 +219,7 @@ def test_corpus_dir_ignores_foreign_plugin_data_env(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / ".claude/plugins/data/codex-openai-codex"))
     assert corpus_dir() == tmp_path / ".local/share/press-dispute-review/corpus"
-    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data/press-dispute-review-market"))
-    assert corpus_dir() == tmp_path / "data/press-dispute-review-market/corpus"
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data/press-check-market"))
+    assert corpus_dir() == tmp_path / "data/press-check-market/corpus"
     monkeypatch.setenv("PRESS_DISPUTE_DATA_DIR", str(tmp_path / "x"))
     assert corpus_dir() == tmp_path / "x/corpus"

@@ -7,16 +7,16 @@
 공식 사양상 마켓 설치 시 `plugins/<name>/` 폴더만 캐시에 복사되고 밖의 파일은 복사되지 않는다(plugin_spec.md §6, §7 #2). 그래서 Python 코어를 플러그인 폴더 안에 둔다.
 
 ```text
-.claude-plugin/marketplace.json          # 마켓 이름 "press-dispute", 엔트리 source "./plugins/press-dispute-review"
+.claude-plugin/marketplace.json          # 마켓 이름 "press-check", 엔트리 source "./plugins/press-check"
 LICENSE                                  # MIT
-plugins/press-dispute-review/
-  .claude-plugin/plugin.json             # name "press-dispute-review", version "0.1.0", license "MIT"
+plugins/press-check/
+  .claude-plugin/plugin.json             # name "press-check", version "0.1.0", license "MIT"
   .mcp.json                              # 서버 이름 "press-review"
   LICENSE                                # MIT 사본(캐시 복사본에도 고지 유지)
   README.md                              # 사용자용 설치·사용·한계
-  skills/review/SKILL.md                 # /press-dispute-review:review
-  skills/explain/SKILL.md                # /press-dispute-review:explain
-  skills/corpus-status/SKILL.md          # /press-dispute-review:corpus-status
+  skills/review/SKILL.md                 # /press-check:review
+  skills/explain/SKILL.md                # /press-check:explain
+  skills/corpus-status/SKILL.md          # /press-check:corpus-status
   engine/press_review/                   # Python 패키지(아래 D3)
     schemas/                             # (개발 중 문서, 공개본에 미포함) 사본
     fixtures/                            # 합성 기사·합성 코퍼스(공개 가능 자료만)
@@ -62,7 +62,7 @@ Python 3.10 이상. Windows·macOS·Linux 경로는 `pathlib`.
 | `review.py` | `build_report(article, findings, explanations, corpus, *, now, raw_bytes=None) -> (report, errors)` — submit_report와 CLI가 공유 |
 | `secrets.py` | `load_secret(name)`: `DEEPSEEK_API_KEY` → env, 없으면 `~/.config/deepseek/api_key`; `LAW_OPEN_DATA_OC` → env, 없으면 `~/.config/press-dispute-review/law_oc`. 파일 권한 0600 아니면 거부. 값은 반환만, 로그·예외 메시지에 넣지 않는다 |
 | `logsafe.py` | 로거 필터: 등록된 기사 블록 텍스트(8자 이상 부분)가 포함된 메시지는 `[redacted]`로 치환. 기본 로그는 요청 ID·해시·건수만 |
-| `config.py` | 데이터 디렉터리: env `PRESS_DISPUTE_DATA_DIR` → env `CLAUDE_PLUGIN_DATA`(경로에 `press-dispute-review`가 있을 때만, P2 §8) → `~/.local/share/press-dispute-review`. 코퍼스는 저장소 밖 |
+| `config.py` | 데이터 디렉터리: env `PRESS_DISPUTE_DATA_DIR` → env `CLAUDE_PLUGIN_DATA`(경로에 `press-check`가 있을 때만, P2 §8) → `~/.local/share/press-dispute-review`. 코퍼스는 저장소 밖 |
 | `cli.py` (`python -m press_review`) | `review --input F [--provider mock] [--format table|json]`, `validate --article F [--report F]`, `corpus-status` |
 | `mcp_server.py` (`python -m press_review.mcp_server`) | 표준 라이브러리 JSON-RPC 2.0 stdio(줄 단위 JSON). `initialize`(클라이언트가 보낸 protocolVersion을 지원 목록에서 협상), `notifications/initialized`, `tools/list`, `tools/call`, `ping`. stdout에는 프로토콜 메시지만, 진단은 stderr. 도구 인자와 기사 텍스트를 로그에 쓰지 않는다 |
 

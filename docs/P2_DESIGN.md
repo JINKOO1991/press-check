@@ -74,7 +74,7 @@ P1 실측 규모: PAC 18개 메뉴 736건·첨부 3,852개(약 10GB), IENDC 227�
 
 - 법원이 아닌 출처(`non_court_source` 9,635건)는 판례로 처리하지 않는다. 장부에는 남긴다.
 - IENDC의 POST 전용 HWP 5건: `http.py`에 POST를 추가한다. POST는 허용 호스트의 `/fileDownload.do` 경로에서만 허용한다. 추출은 kordoc으로 한다(UDEC-6).
-- 데이터 경로 일원화: `config.data_dir()`과 수집 CLI의 `context.data_root()`를 같은 함수로 합친다. `CLAUDE_PLUGIN_DATA`는 경로에 `press-dispute-review`가 들어 있을 때만 믿는다(다른 플러그인의 값이 상속된 사고, P1).
+- 데이터 경로 일원화: `config.data_dir()`과 수집 CLI의 `context.data_root()`를 같은 함수로 합친다. `CLAUDE_PLUGIN_DATA`는 경로에 `press-check`가 들어 있을 때만 믿는다(다른 플러그인의 값이 상속된 사고, P1).
 - OC 마스킹: OC 값이 평범한 단어라 경로 문자열과 겹친다. 마스킹은 `OC=` 파라미터 문맥과 응답 되울림 위치를 기준으로 하고, 단순 부분문자열 치환으로 메시지 전체를 지우지 않는다.
 
 ## 9. 게이트 후 결정 (2026-10-09, 오케스트레이터 판정)

@@ -3,7 +3,7 @@ name: review
 description: 한국어 기사 원고(제목·부제·본문·사진 설명)를 발행 전에 검토해 언론분쟁(정정·반론·추후보도, 민사·형사, 선거심의, 개인정보·초상·저작권) 쟁점이 될 수 있는 구체적 표현과 확인 사항을 찾고, 기사 취지를 유지하는 최소 수정안을 별(★1~3) 검토 필요도 표로 보여 준다.
 when_to_use: 사용자가 기사·원고·제목을 붙여 넣거나 파일로 주며 "검토", "분쟁 소지", "정정보도 위험", "명예훼손 확인", "발행 전 점검"을 요청할 때.
 argument-hint: "[원고 파일 경로 또는 비워 두고 원고 붙여넣기]"
-allowed-tools: mcp__plugin_press-dispute-review_press-review__prepare_article mcp__plugin_press-dispute-review_press-review__search_cases mcp__plugin_press-dispute-review_press-review__submit_report mcp__plugin_press-dispute-review_press-review__corpus_status
+allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin_press-check_press-review__search_cases mcp__plugin_press-check_press-review__submit_report mcp__plugin_press-check_press-review__corpus_status
 ---
 
 # 기사 발행 전 분쟁 소지 검토
@@ -14,10 +14,10 @@ allowed-tools: mcp__plugin_press-dispute-review_press-review__prepare_article mc
 
 도구 전체 이름(MCP 서버 `press-review`):
 
-- `mcp__plugin_press-dispute-review_press-review__prepare_article`
-- `mcp__plugin_press-dispute-review_press-review__search_cases`
-- `mcp__plugin_press-dispute-review_press-review__submit_report`
-- `mcp__plugin_press-dispute-review_press-review__corpus_status`
+- `mcp__plugin_press-check_press-review__prepare_article`
+- `mcp__plugin_press-check_press-review__search_cases`
+- `mcp__plugin_press-check_press-review__submit_report`
+- `mcp__plugin_press-check_press-review__corpus_status`
 
 필드 계약, 위험 경로 판단표, 쟁점 분류 예시는 같은 폴더의 [reference.md](reference.md)에 있다. 판단이 애매하면 그 파일을 먼저 읽는다.
 
@@ -223,12 +223,12 @@ allowed-tools: mcp__plugin_press-dispute-review_press-review__prepare_article mc
 
 - 서버가 준 markdown 표를 **고치지 않고 그대로** 보여 준다. 첫 줄 고지 "별(★)은 실제 분쟁 발생 확률이 아니라 검토 우선순위입니다."도 그대로 둔다.
 - 표는 기본 5건만 보인다. `hidden_finding_count`가 0보다 크면 "검토 필요도가 낮은 항목 N건이 더 있음(더 보기 가능)"을 알린다.
-- 사용자가 더 보기를 요청하면, 표에 없는 나머지 제출 finding을 `finding_id`와 문제 요소(quote)·별·사유 그대로 나열하고, 상세는 `/press-dispute-review:explain <report_id> <finding_id>`로 볼 수 있다고 안내한다. 제출하지 않은 항목을 새로 만들어 넣지 않는다.
+- 사용자가 더 보기를 요청하면, 표에 없는 나머지 제출 finding을 `finding_id`와 문제 요소(quote)·별·사유 그대로 나열하고, 상세는 `/press-check:explain <report_id> <finding_id>`로 볼 수 있다고 안내한다. 제출하지 않은 항목을 새로 만들어 넣지 않는다.
 - 표 아래에 짧게 덧붙인다.
   - 검색 색인 정보(`coverage_notes`의 색인 구축일·최신 결정일·passage 수)와 분석 기준일(`legal_as_of` = 기사 발행(예정)일). 색인 기준일과 분석 기준일은 다른 날짜다.
   - `report_id`
   - 서버 검증 경고(있으면 그대로)
   - 블록 자동 판정 여부, 합성 코퍼스 사용 여부
-  - "항목별 상세 근거는 `/press-dispute-review:explain <report_id> <finding_id>`로 볼 수 있음(30분 안)"
+  - "항목별 상세 근거는 `/press-check:explain <report_id> <finding_id>`로 볼 수 있음(30분 안)"
   - "이 결과는 편집 보조이며 법률 자문이 아님"
 - 원고 파일을 자동으로 덮어쓰지 않는다. 사용자가 수정 적용을 요청하면 원본과 대조해 고친 사본 또는 diff를 따로 만든다.

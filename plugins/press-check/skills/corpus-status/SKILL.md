@@ -1,13 +1,13 @@
 ---
 name: corpus-status
-description: press-dispute-review가 근거 검색에 쓰는 코퍼스(판례·심의·조정 자료)의 스냅샷 ID, 자료군별 건수, 기준일, 누락·권리보류 현황, 합성(fixture) 여부를 보여 준다.
+description: press-check가 근거 검색에 쓰는 코퍼스(판례·심의·조정 자료)의 스냅샷 ID, 자료군별 건수, 기준일, 누락·권리보류 현황, 합성(fixture) 여부를 보여 준다.
 when_to_use: 사용자가 "어떤 자료로 검토하나", "판례 몇 건", "코퍼스 상태", "자료 기준일"을 묻거나, 검토 결과의 근거 범위를 확인하려 할 때.
-allowed-tools: mcp__plugin_press-dispute-review_press-review__corpus_status
+allowed-tools: mcp__plugin_press-check_press-review__corpus_status
 ---
 
 # 근거 코퍼스 상태
 
-도구: `mcp__plugin_press-dispute-review_press-review__corpus_status` (입력 없음)
+도구: `mcp__plugin_press-check_press-review__corpus_status` (입력 없음)
 
 ## 절차
 

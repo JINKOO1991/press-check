@@ -45,7 +45,7 @@ ALLOWED_HOST = "api.deepseek.com"
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 _ALLOWED_BASE_PATHS = ("", "/v1")
 PRICES_PATH = Path(__file__).resolve().parent.parent / "prices" / "deepseek_prices.json"
-USER_AGENT = "press-dispute-review/0.1 (+research; non-commercial index)"
+USER_AGENT = "press-check/0.1 (+research; non-commercial index)"
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 DEFAULT_MAX_TOKENS = 16384
 OUTPUT_TOKEN_CAP = 65536          # finish_reason=length 재시도에서 max_tokens 를 올리는 상한(모델 한도 384K 보다 훨씬 작게)

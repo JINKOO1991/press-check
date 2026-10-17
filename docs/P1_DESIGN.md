@@ -8,7 +8,7 @@
 
 ## 배치
 
-- 코드: `plugins/press-dispute-review/engine/press_review/ingestion/`. 수집은 운영 CLI(`python -m press_review.ingestion ...`)로만 실행하고 MCP 도구로 노출하지 않는다.
+- 코드: `plugins/press-check/engine/press_review/ingestion/`. 수집은 운영 CLI(`python -m press_review.ingestion ...`)로만 실행하고 MCP 도구로 노출하지 않는다.
 - 데이터: `config.py`의 데이터 디렉터리(기본 `~/.local/share/press-dispute-review`) 아래 `corpus/`. 저장소 안에는 쓰지 않는다.
   - `corpus/manifest.sqlite`: 수집 장부(아래 표)
   - `corpus/http_cache/<host>/<sha256(url)[:16]>.{body,meta.json}`: 응답 캐시
@@ -22,7 +22,7 @@
 - 사설 IP·loopback·자격증명 포함 URL은 차단한다. 리다이렉트도 같은 검사를 거친다.
 - 호스트별 최소 간격 2초, 동시성 1. 429·5xx·timeout이면 지수 백오프(최대 4회), 그 뒤 실패 장부에 기록한다.
 - robots.txt는 호스트별로 하루 1회 받아 원문 해시와 함께 장부에 기록한다. Disallow 경로는 요청하지 않는다.
-- User-Agent: `press-dispute-review/0.1 (+research; non-commercial index)`.
+- User-Agent: `press-check/0.1 (+research; non-commercial index)`.
 - 캐시 적중이면 네트워크를 쓰지 않는다(`--refresh`로 무시).
 - HTTP 200이어도 오류 페이지일 수 있다(IENDC bare 주소 사례). 어댑터가 본문 표지로 성공을 판정한다.
 

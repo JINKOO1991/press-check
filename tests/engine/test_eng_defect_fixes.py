@@ -250,7 +250,7 @@ def test_sec06_cli_exits_2_on_device(tmp_path):
 # ---- V-LOAD-1: 스킬이 안내하는 설명 키와 서버 키의 일치 --------------------------------------------------
 
 def _skill_keys():
-    text = (paths.REPO / "plugins" / "press-dispute-review" / "skills" / "review" / "SKILL.md").read_text(encoding="utf-8")
+    text = (paths.REPO / "plugins" / "press-check" / "skills" / "review" / "SKILL.md").read_text(encoding="utf-8")
     sect = text.split("## 10.", 1)[1].split("## 11.", 1)[0]
     return re.findall(r"^\| `([a-z_]+)` \|", sect, flags=re.M)
 

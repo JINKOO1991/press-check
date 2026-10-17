@@ -1,6 +1,6 @@
 # P4 과잉 경고 점검 설계 — 작성자 본인의 발행 기사 풀(비공개) 비분쟁 기사
 
-작성 2026-10-17. 근거: `docs/P4_DESIGN.md`(§3.2·§3.5·§4.2·§4.3·§7.1·§10), `docs/P4_SCENARIO_PLAN.md`, `evals/p4_metrics.py`, `evals/evalkit.py`, `evals/README.md`, `plugins/press-dispute-review/skills/review/SKILL.md`·`reference.md`, (개발 중 문서, 공개본에 미포함), (개발 중 문서, 공개본에 미포함) §4·§6·§7, 프로젝트 `CLAUDE.md`, 사용자 진술(2026-10-16, 프로젝트 메모리). 충돌하면 근거 문서와 사용자 결정이 우선한다.
+작성 2026-10-17. 근거: `docs/P4_DESIGN.md`(§3.2·§3.5·§4.2·§4.3·§7.1·§10), `docs/P4_SCENARIO_PLAN.md`, `evals/p4_metrics.py`, `evals/evalkit.py`, `evals/README.md`, `plugins/press-check/skills/review/SKILL.md`·`reference.md`, (개발 중 문서, 공개본에 미포함), (개발 중 문서, 공개본에 미포함) §4·§6·§7, 프로젝트 `CLAUDE.md`, 사용자 진술(2026-10-16, 프로젝트 메모리). 충돌하면 근거 문서와 사용자 결정이 우선한다.
 
 이 문서는 설계다. 기사 검토를 실행하지 않았고 외부 API를 호출하지 않았다. 결과 수치는 없다. 기사 본문·제목 문자열은 이 문서에 옮기지 않았다.
 
@@ -134,11 +134,11 @@ F의 칸별 건수(§0 집계, 근사):
 
 ```
 timeout 900 claude -p "<고정 지시문>" \
-  --bare --plugin-dir <저장소>/plugins/press-dispute-review \
+  --bare --plugin-dir <저장소>/plugins/press-check \
   --model <고정 모델 ID> --effort <고정 effort> \
   --output-format stream-json --verbose --no-session-persistence \
   --permission-mode dontAsk \
-  --allowed-tools "Skill mcp__plugin_press-dispute-review_press-review__prepare_article mcp__plugin_press-dispute-review_press-review__search_cases mcp__plugin_press-dispute-review_press-review__submit_report" \
+  --allowed-tools "Skill mcp__plugin_press-check_press-review__prepare_article mcp__plugin_press-check_press-review__search_cases mcp__plugin_press-check_press-review__submit_report" \
   --disallowed-tools "Bash WebSearch WebFetch Agent Edit Write NotebookEdit" \
   --max-budget-usd <기사당 상한> < <입력 JSON>
 ```
@@ -148,7 +148,7 @@ timeout 900 claude -p "<고정 지시문>" \
 - 웹 검색·셸·서브에이전트를 막는다. 원고 내용이 담긴 웹 질의는 P4_DESIGN §4.2의 전송 실패다.
 - `--max-turns`가 없으므로 턴 상한 대신 기사당 비용 상한(`--max-budget-usd`)과 벽시계 상한(`timeout`)으로 묶는다. OAuth 경로에서 `--max-budget-usd`가 실제로 막는지는 확인하지 않았다.
 - 동시 실행: 2~3. 속도 제한을 공유하므로 파일럿 뒤 정한다.
-- 고정 지시문 원칙: 스킬 호출(`/press-dispute-review:review`), 입력은 article.schema JSON이며 `article`로 넘길 것, `publication_date` 값, 블록 확인 없이 진행할 것, 표 출력 뒤 종료할 것만 담는다. 이 기사가 분쟁 이력이 없다는 사실, 평가 목적, 분야 폴더는 알리지 않는다(맹검). 지시문 sha256을 meta에 기록한다. 지시문을 바꾸면 새 run_id다.
+- 고정 지시문 원칙: 스킬 호출(`/press-check:review`), 입력은 article.schema JSON이며 `article`로 넘길 것, `publication_date` 값, 블록 확인 없이 진행할 것, 표 출력 뒤 종료할 것만 담는다. 이 기사가 분쟁 이력이 없다는 사실, 평가 목적, 분야 폴더는 알리지 않는다(맹검). 지시문 sha256을 meta에 기록한다. 지시문을 바꾸면 새 run_id다.
 
 ### 3.3 출력 추출
 

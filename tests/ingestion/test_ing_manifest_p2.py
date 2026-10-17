@@ -310,7 +310,7 @@ def test_data_dir_is_one_function_and_checks_plugin_name(monkeypatch, tmp_path):
     for foreign in (".claude/plugins/data/codex-openai-codex", "data/press-dispute"):
         monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / foreign))
         assert config.data_dir() == default == context.data_root(), foreign
-    own = tmp_path / ".claude/plugins/data/press-dispute-review-market"
+    own = tmp_path / ".claude/plugins/data/press-check-market"
     monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(own))
     assert config.data_dir() == own == context.data_root() and context.corpus_dir() == own / "corpus"
     monkeypatch.setenv("PRESS_DISPUTE_DATA_DIR", str(tmp_path / "x"))

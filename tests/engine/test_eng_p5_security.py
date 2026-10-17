@@ -12,7 +12,7 @@ from pdr_engine_paths import ENGINE, REPO  # noqa: F401  (sys.path 설정 포함
 from press_review import config, review
 from press_review.store import EphemeralStore
 
-PLUGIN = REPO / "plugins" / "press-dispute-review"
+PLUGIN = REPO / "plugins" / "press-check"
 
 
 class Clock:

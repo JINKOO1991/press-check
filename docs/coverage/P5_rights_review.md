@@ -76,7 +76,7 @@ unknown이 허용으로 바뀌는 경로:
 
 ## 5. 의존·고지
 
-- LICENSE와 plugins/press-dispute-review/LICENSE는 같다(diff 0). MIT, 저작권자는 'press-dispute-review contributors'.
+- LICENSE와 plugins/press-check/LICENSE는 같다(diff 0). MIT, 저작권자는 'press-check contributors'.
 - poppler-utils: 로컬 패키지 copyright 파일은 'GPL-2 or GPL-3'이다. 다른 작업자가 바꾼 NOTICE의 'GPL'과 맞는다. subprocess 호출만 한다.
 - tesseract와 kor·eng traineddata: 로컬 copyright 파일은 Apache-2.0이다. NOTICE와 일치한다.
 - kordoc: 로컬 설치본 4.18.3의 package.json·LICENSE는 MIT다. NOTICE와 일치한다. 실행 파일을 찾아 호출만 한다(`extract/tools.py:55`).
@@ -95,7 +95,7 @@ unknown이 허용으로 바뀌는 경로:
 
 ## 7. 상표·사칭
 
-- README.md, plugins/press-dispute-review/README.md, plugin.json, marketplace description에 '공식'·'인증'·'제휴' 문구가 없다. 첫 줄에 '법률 자문 아님'을 적었다.
+- README.md, plugins/press-check/README.md, plugin.json, marketplace description에 '공식'·'인증'·'제휴' 문구가 없다. 첫 줄에 '법률 자문 아님'을 적었다.
 - 기관명은 자료 출처와 수집 대상 설명에만 나온다. 로고·이미지 파일은 없다.
 - 권고(선택, 소): README 한계 절에 '언론중재위원회·인터넷선거보도심의위원회·법제처와 무관한 비공식 도구'를 한 줄 추가한다.
 

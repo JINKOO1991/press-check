@@ -21,7 +21,7 @@ def test_parser_longest_match_wildcard_and_anchor():
 
 
 def test_parser_specific_group_wins_over_star_and_empty_disallow_means_allow():
-    txt = ("User-agent: *\nDisallow: /\n\nUser-agent: press-dispute-review\nDisallow:\n\n"
+    txt = ("User-agent: *\nDisallow: /\n\nUser-agent: press-check\nDisallow:\n\n"
            "User-agent: GPTBot\nDisallow: /\n")
     rules, _, _ = parse_robots(txt)
     assert rules.allowed("/anything")
