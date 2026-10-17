@@ -1,0 +1,16 @@
+{
+  "description": "press-check: draft 스킬을 호출한 턴이 고정 머리말 없이 끝나면 한 번 되돌려 분쟁 검토를 수행하게 한다.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${PRESS_REVIEW_PYTHON:-python3}\" \"${CLAUDE_PLUGIN_ROOT}/hooks/stop_check.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
