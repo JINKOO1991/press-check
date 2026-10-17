@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-outdated_election_rule",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "후보 공약 비교 보도"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "본지는 2026년 지방선거 후보 두 명의 공약을 표로 비교했다. 인터넷 매체 보도 기준은 과거 총선 때 다른 기관이 적용한 기준을 참고했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": "2026 지방선거 / 인터넷매체 보도",
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다.",
+      "참고한 기준은 다른 기관·다른 선거·과거 시기의 것일 수 있음"
+    ],
+    "sensitive_material": false
+  }
+}

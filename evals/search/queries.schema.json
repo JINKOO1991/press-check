@@ -1,0 +1,116 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "검색 평가 질의 세트(P4_DESIGN §5)",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "queries"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": 1
+  },
+  "queries": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "set",
+     "kind",
+     "text",
+     "params",
+     "split",
+     "tune"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "세트 안에서 유일한 안정 ID"
+     },
+     "set": {
+      "type": "string",
+      "description": "질의 세트 이름(결과를 이 단위로 모은다)"
+     },
+     "kind": {
+      "enum": [
+       "general",
+       "exact_check",
+       "Q1",
+       "Q2",
+       "Q6",
+       "Q7",
+       "load_common2",
+       "load_long",
+       "load_counter",
+       "load_filter"
+      ]
+     },
+     "text": {
+      "type": "string",
+      "minLength": 1
+     },
+     "params": {
+      "type": "object",
+      "description": "search() 키워드 인자: authority_types, risk_channel, as_of, limit(<=10), institution, stance",
+      "additionalProperties": false,
+      "properties": {
+       "authority_types": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "risk_channel": {
+        "type": "string"
+       },
+       "as_of": {
+        "type": "string"
+       },
+       "limit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10
+       },
+       "institution": {
+        "type": "string"
+       },
+       "stance": {
+        "enum": [
+         "support",
+         "counter",
+         "both"
+        ]
+       }
+      }
+     },
+     "split": {
+      "enum": [
+       "tune",
+       "dev",
+       "test"
+      ]
+     },
+     "tune": {
+      "type": "boolean",
+      "description": "순위 상수를 정하는 데 쓰였으면 true. true 이면 split 은 tune 이고 test gold 로 쓰지 않는다"
+     },
+     "gold": {
+      "type": "object",
+      "description": "자동 gold(있으면). Q1: case_number, Q2: cite, Q6: target·hosts, Q7: absent_words. passage 본문·발췌는 넣지 않는다",
+      "additionalProperties": true
+     },
+     "label_source": {
+      "enum": [
+       "auto",
+       "llm_preliminary",
+       "human"
+      ],
+      "description": "LLM 예비 라벨은 llm_preliminary 로 표시하고 최종은 human(사용자 결정 2026-10-10)"
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,32 @@
+{
+  "note": "합성 기준 출력. 규칙 자체 점검용이며 정답 라벨이 아니다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p1",
+        "start": 33,
+        "end": 44,
+        "quote": "내부 직원이 주장했다"
+      },
+      "priority_stars": 2,
+      "risk_channels": [
+        "reply"
+      ],
+      "issue_category": "response_status_unknown",
+      "review_confidence": "low",
+      "reason_short": "당사자 측 입장 취재 여부가 기사에 나타나 있지 않습니다.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "당사자 측에 취재 요청을 했는지와 그 결과를 확인해 기록한다."
+        ]
+      },
+      "evidence": [],
+      "counter_considerations": []
+    }
+  ],
+  "explanations": {}
+}

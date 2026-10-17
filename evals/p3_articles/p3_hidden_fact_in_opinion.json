@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-hidden-fact-in-opinion",
+  "publication_date": "2026-09-28",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "F씨의 처신, 석연치 않다"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "F씨는 지난해 시 사업을 따낸 업체의 행사에 두 차례 참석했다. 그는 “지인 초청이었다”고 설명했다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "이쯤 되면 F씨와 업체 사이에 오간 뒷거래가 있었을 것이라는 의심을 거두기 어렵다. 시민은 그런 처신을 용납하지 않는다."
+    }
+  ],
+  "context": {
+    "genre": "opinion",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

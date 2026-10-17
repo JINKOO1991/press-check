@@ -1,0 +1,3 @@
+{"_note": "매체 별칭표(P4_DESIGN §3.4-4). 키는 build_splits.py 의 정규화 결과이고 값은 대표 키다. needs_human_confirmation=true 인 항목은 사람이 확인하기 전의 후보다. 사람이 확인한 항목만 confirmed 로 바꾼다.",
+ "needs_human_confirmation": true,
+ "aliases": {"조선닷컴": "조선일보", "위키트리wikitree": "위키트리"}}

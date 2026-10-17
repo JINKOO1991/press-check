@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-reply-vs-correction",
+  "publication_date": "2026-09-24",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "D병원 신규 장비 도입 놓고 의료계 시각차"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "도입 일정은 공시 기준…효용 평가는 엇갈려"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "D병원은 지난 6월 신규 영상 장비 도입 계획을 공시했다. 공시 문서에는 도입 시기가 올해 4분기로 기재돼 있다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "한 의료계 인사는 “효용 검증이 충분하지 않다”고 평가했고, D병원 측은 “임상 근거를 바탕으로 도입을 결정했다”고 밝혔다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

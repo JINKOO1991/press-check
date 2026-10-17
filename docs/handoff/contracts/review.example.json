@@ -1,0 +1,66 @@
+{
+  "schema_version": "0.1",
+  "execution_mode": "synthetic_example",
+  "report_id": "example-report-001",
+  "article_id": "synthetic-001",
+  "article_sha256": "ac38fd558f61269d67393bec0f1705bf1ef0739dfec84488a5e3de10043c7869",
+  "policy_version": "draft-0.1",
+  "corpus_snapshot_id": "no-corpus-loaded-example-only",
+  "analyzed_at": "2026-10-05T12:00:00+09:00",
+  "legal_as_of": "2026-10-05",
+  "overall_status": "findings",
+  "coverage_notes": [
+    "설계 설명용 가상 결과이며 실제 분석 서비스의 실행 결과가 아니다.",
+    "아래 판례는 기사 전체 인상을 살피는 일반 기준을 연결한 예시다. 횡령 기사에 대한 개별 판단 사례는 아니다."
+  ],
+  "retention": {
+    "mode": "ephemeral",
+    "expires_at": null
+  },
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "title",
+        "start": 0,
+        "end": 18,
+        "quote": "회사 돈 빼돌린 대표, 경찰 수사"
+      },
+      "priority_stars": 3,
+      "risk_channels": [
+        "civil",
+        "correction"
+      ],
+      "issue_category": "headline_body_certainty_mismatch",
+      "review_confidence": "medium",
+      "reason_short": "제목이 본문에 기재된 혐의 수사보다 범행을 확정합니다.",
+      "suggested_edit": {
+        "mode": "replace",
+        "replacement": "회사 돈 빼돌린 혐의…경찰, 대표 수사",
+        "related_edits": [],
+        "required_verification": [
+          "실제 수사 대상과 혐의 및 취재 내용을 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "law-prec-194652",
+          "passage_id": "summary-2",
+          "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=194652",
+          "locator": {
+            "kind": "html_section",
+            "value": "판결요지 [2]: 기사 전체 인상에 따른 판단"
+          },
+          "authority_type": "judgment",
+          "verified": true
+        }
+      ],
+      "counter_considerations": [
+        "기업의 자금 집행에 대한 공익적 취재와 본문의 혐의·부인 설명은 유지한다."
+      ],
+      "detailed_explanation_ref": "example-report-001/finding-001",
+      "validation_status": "verified"
+    }
+  ],
+  "hidden_finding_count": 0
+}

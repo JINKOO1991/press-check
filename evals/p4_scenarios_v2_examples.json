@@ -1,0 +1,173 @@
+{
+ "purpose": "P4 스키마 v2 검증용 최소 예시 3건. 모두 가상 합성이며 실제 기사 문장이 아니다. 평가셋 본문이 아니고 법률 정답도 아니다.",
+ "version": "p4-v2-examples",
+ "categories": [],
+ "min_per_category": 0,
+ "cases": [
+  {
+   "version": 2,
+   "id": "p4_v2_title_assertion",
+   "category": "reply_vs_truth",
+   "scenario": "스키마 v2 예시: 수사 단계 혐의를 제목에서 확정 사실로 쓴 가상 기사",
+   "article": "p4_articles/p4_v2_title.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "fully_invented",
+    "source_group_id": "G-example-1"
+   },
+   "split": "dev",
+   "future_window": false,
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "경찰이 내사에 착수했다",
+     "basis": "record",
+     "verified": true
+    }
+   ],
+   "reply_request": "unknown",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "title",
+       "start": 14,
+       "end": 20,
+       "quote": "금품 받았다"
+      }
+     ],
+     "channels": [
+      "civil"
+     ],
+     "action": "replace",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "rationale_ref": null
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p2",
+     "start": 6,
+     "end": 21,
+     "quote": "“금품을 받은 사실이 없다”"
+    }
+   ],
+   "canary": "CANARY-p4v2-title-0001"
+  },
+  {
+   "version": 2,
+   "id": "p4_v2_preserve_criticism",
+   "category": "public_interest_no_edit",
+   "scenario": "스키마 v2 예시: 근거 있는 공익 비판 논평(보존이 정답)",
+   "article": "p4_articles/p4_v2_preserve.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 2
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "fully_invented",
+    "source_group_id": "G-example-2"
+   },
+   "split": "dev",
+   "future_window": false,
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "공개된 심의 회의록에 삭감 사유가 기록돼 있다",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "not_requested",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "p2",
+     "start": 7,
+     "end": 32,
+     "quote": "우선순위를 잘못 정한 무책임한 결정이라고 본다"
+    }
+   ],
+   "canary": "CANARY-p4v2-preserve-0002"
+  },
+  {
+   "version": 2,
+   "id": "p4_v2_title_pair_verified",
+   "category": "reply_vs_truth",
+   "scenario": "스키마 v2 예시: 위 제목 단정 시나리오의 최소쌍(장부만 다름)",
+   "article": "p4_articles/p4_v2_title.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "minimal_pair_of",
+    "pair_of": "p4_v2_title_assertion",
+    "source_group_id": "G-example-1"
+   },
+   "split": "dev",
+   "future_window": false,
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "경찰이 내사에 착수했다",
+     "basis": "record",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "E씨에게 반론을 요청했고 입장을 받았다",
+     "basis": "interview",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "title",
+       "start": 14,
+       "end": 20,
+       "quote": "금품 받았다"
+      }
+     ],
+     "channels": [
+      "civil"
+     ],
+     "action": "replace",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "rationale_ref": null
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p2",
+     "start": 6,
+     "end": 21,
+     "quote": "“금품을 받은 사실이 없다”"
+    }
+   ],
+   "canary": "CANARY-p4v2-pair-0003"
+  }
+ ]
+}

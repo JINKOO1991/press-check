@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-reply_truth",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "가상구청, 지난해 보조금 2억원 특정 단체에 지급"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "가상구청은 지난해 청년 지원 보조금 2억원을 한 단체에 지급했다. 구청 회계 공개자료로 확인된 사실이다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "지급 단체의 대표는 이 보도의 대상이 되는 당사자다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다.",
+      "회계 공개자료로 지급 사실 확인",
+      "당사자 반론 가능성은 별도 검토 대상"
+    ],
+    "sensitive_material": false
+  }
+}

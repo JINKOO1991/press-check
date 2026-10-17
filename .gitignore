@@ -1,0 +1,34 @@
+# Private data, credentials and generated corpora must stay out of public Git.
+.env
+.env.*
+!.env.example
+work/
+private-reference/
+private-corpora/
+corpora/raw/
+corpora/extracted/
+corpora/index/
+data/
+http_cache/
+private_docs/
+eval/responses/
+*.jsonl
+articles/
+!/evals/articles/
+runs/
+logs/
+*.sqlite
+*.sqlite3
+*.db
+*.faiss
+*.key
+*.pem
+.venv/
+__pycache__/
+node_modules/
+.claude/settings.local.json
+
+# eval outputs
+evals/out/
+.pytest_cache/
+evals/out/

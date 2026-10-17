@@ -1,0 +1,816 @@
+{
+  "generated_at": "2026-10-08T16:42:28+00:00",
+  "not_collected": [
+    {
+      "entry_url": "https://news.naver.com/ombudsman/errorArticleList",
+      "reason": "robots.txt가 AI 학습·RAG 목적의 봇 접근을 명시적으로 금지한다. collection_enabled=false (UDEC-1). 요청하지 않았다.",
+      "review_status": "verified",
+      "rights": {
+        "create_derivatives": "forbidden",
+        "external_api": "forbidden",
+        "fine_tune": "forbidden",
+        "read": "forbidden",
+        "redistribute_derivatives": "forbidden",
+        "redistribute_raw": "forbidden",
+        "store_raw": "forbidden"
+      },
+      "rights_basis": [
+        {
+          "review_status": "verified",
+          "scope": "robots.txt: AI 학습·RAG 목적 접근 금지 명시, collection_enabled=false (UDEC-1)",
+          "url": "https://news.naver.com/robots.txt"
+        }
+      ],
+      "source_family": "naver",
+      "source_id": "naver_ombudsman",
+      "status": "not_collected",
+      "title": "네이버 뉴스 옴부즈만(고침·정정·불공정 선거보도)"
+    },
+    {
+      "entry_url": "https://news.daum.net/correct",
+      "reason": "이용 정책 확인 전이다. 허용 호스트 목록에 넣지 않았고 요청하지 않았다. 권리는 unknown.",
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "unknown",
+        "external_api": "unknown",
+        "fine_tune": "unknown",
+        "read": "unknown",
+        "redistribute_derivatives": "unknown",
+        "redistribute_raw": "unknown",
+        "store_raw": "unknown"
+      },
+      "rights_basis": [],
+      "source_family": "daum",
+      "source_id": "daum_correct",
+      "status": "on_hold",
+      "title": "다음 뉴스 정정보도 모음"
+    },
+    {
+      "entry_url": "https://www.kci.go.kr/",
+      "reason": "robots 금지로 기록된 호스트다(P1_DESIGN). 요청하지 않았다. 권리는 unknown.",
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "unknown",
+        "external_api": "unknown",
+        "fine_tune": "unknown",
+        "read": "unknown",
+        "redistribute_derivatives": "unknown",
+        "redistribute_raw": "unknown",
+        "store_raw": "unknown"
+      },
+      "rights_basis": [],
+      "source_family": "research",
+      "source_id": "kci_papers",
+      "status": "not_collected",
+      "title": "KCI 논문 서지"
+    },
+    {
+      "entry_url": "",
+      "reason": "출판사·저자별 이용 조건이 소스마다 다르고 확인하지 않았다. 권리는 unknown, 수집 보류.",
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "unknown",
+        "external_api": "unknown",
+        "fine_tune": "unknown",
+        "read": "unknown",
+        "redistribute_derivatives": "unknown",
+        "redistribute_raw": "unknown",
+        "store_raw": "unknown"
+      },
+      "rights_basis": [],
+      "source_family": "research",
+      "source_id": "research_papers",
+      "status": "on_hold",
+      "title": "학술 논문 본문(언론법 관련)"
+    }
+  ],
+  "sources": [
+    {
+      "checked_at": "2026-10-08T13:17:57+00:00",
+      "document_overrides": [],
+      "documents": 227,
+      "documents_inheriting": 227,
+      "enabled": true,
+      "entry_url": "https://www.iendc.go.kr/home/kor/board.do?menuPos=45&pageIndex=1",
+      "record_validation": {
+        "checked": 227,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:00:02+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-10-08T13:00:02+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.iendc.go.kr/home/kor/contents.do?menuPos=66"
+        }
+      ],
+      "robots_host": "www.iendc.go.kr",
+      "robots_purpose_status_raw": "allowed",
+      "source_family": "iendc",
+      "source_id": "iendc_review_results",
+      "title": "IENDC 심의결과 내역"
+    },
+    {
+      "checked_at": "2026-10-08T16:42:27+00:00",
+      "document_overrides": [],
+      "documents": 73237,
+      "documents_inheriting": 73237,
+      "enabled": true,
+      "entry_url": "https://www.law.go.kr/DRF/lawSearch.do?target=prec&org=400201",
+      "record_validation": {
+        "checked": 73237,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:05:48+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.law.go.kr",
+      "robots_purpose_status_raw": "allowed",
+      "source_family": "law_go_kr",
+      "source_id": "lawgo_prec_supreme",
+      "title": "법제처 국가법령정보 판례(대법원, 본문검색 사전)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:20+00:00",
+      "document_overrides": [],
+      "documents": 21,
+      "documents_inheriting": 21,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=207&magazine_new=M03&cate=MA04",
+      "record_validation": {
+        "checked": 21,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:07:44+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_cases",
+      "source_id": "pac_adjustment_casebooks",
+      "title": "언론조정중재사례집"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 4,
+      "documents_inheriting": 4,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=159&b=B_1_7&cate=",
+      "record_validation": {
+        "checked": 4,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:02:48+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_board_committee_rules",
+      "title": "위원회 규칙(관련 법규 게시판)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 275,
+      "documents_inheriting": 275,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=195&b=B_1_6&cate=PD03",
+      "record_validation": {
+        "checked": 275,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T15:31:17+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_cases",
+      "source_id": "pac_board_correction_status",
+      "title": "시정권고 현황(자료실 게시판)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:20+00:00",
+      "document_overrides": [],
+      "documents": 9,
+      "documents_inheriting": 9,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=208&magazine_new=M03&cate=MA09",
+      "record_validation": {
+        "checked": 9,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:22:45+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_cases",
+      "source_id": "pac_correction_casebooks",
+      "title": "시정권고사례집"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:20+00:00",
+      "document_overrides": [],
+      "documents": 19,
+      "documents_inheriting": 19,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=209&magazine_new=M03&cate=MA08",
+      "record_validation": {
+        "checked": 19,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:17:14+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_election",
+      "source_id": "pac_election_whitepapers",
+      "title": "선거기사심의백서"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 21,
+      "documents_inheriting": 21,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=210&magazine_new=M04&cate=MA06",
+      "record_validation": {
+        "checked": 21,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T15:25:45+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_other_annual_reports",
+      "title": "기타 자료(연간보고서)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 25,
+      "documents_inheriting": 25,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=214&magazine_new=M04&cate=EM06",
+      "record_validation": {
+        "checked": 25,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:06:34+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_other_mediation_persuasion",
+      "title": "기타 자료(조정을 위한 설득과 수사)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 9,
+      "documents_inheriting": 9,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=213&magazine_new=M04&cate=EM03",
+      "record_validation": {
+        "checked": 9,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:05:33+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_other_misc_reports",
+      "title": "기타 자료(각종 보고서 등)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 5,
+      "documents_inheriting": 5,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=212&magazine_new=M04&cate=EM05",
+      "record_validation": {
+        "checked": 5,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:04:47+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_other_promo_publications",
+      "title": "기타 자료(홍보 간행물)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 2,
+      "documents_inheriting": 2,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=229&magazine_new=M01&cate=EM08",
+      "record_validation": {
+        "checked": 2,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T14:57:51+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_commissioned",
+      "title": "연구용역보고서"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 9,
+      "documents_inheriting": 9,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=202&magazine_new=M01&cate=EM07",
+      "record_validation": {
+        "checked": 9,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T15:23:05+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_foreign_law",
+      "title": "해외언론법제연구보고서/해외언론관계판결집"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 7,
+      "documents_inheriting": 7,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=228&magazine_new=M01&cate=MA10",
+      "record_validation": {
+        "checked": 7,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T15:21:56+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_issue_reports",
+      "title": "연구보고서/현안보고서"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:20+00:00",
+      "document_overrides": [],
+      "documents": 27,
+      "documents_inheriting": 27,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=223&magazine_new=M01&cate=ST01",
+      "record_validation": {
+        "checked": 27,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:25:38+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_journal",
+      "title": "학술지 미디어와 인격권(학술지 자료)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 32,
+      "documents_inheriting": 32,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=201&magazine_new=M01&cate=MA05",
+      "record_validation": {
+        "checked": 32,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T14:50:51+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_judgment_analysis",
+      "title": "언론관련판결분석보고서"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 180,
+      "documents_inheriting": 180,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=200&magazine_new=M01&cate=MA02",
+      "record_validation": {
+        "checked": 180,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T13:32:41+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_quarterly",
+      "title": "계간 언론중재"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 89,
+      "documents_inheriting": 89,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=203&magazine_new=M01&cate=EM01",
+      "record_validation": {
+        "checked": 89,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T14:58:10+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_research_seminars",
+      "title": "세미나/토론회 자료집"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 1,
+      "documents_inheriting": 1,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=12",
+      "record_validation": {
+        "checked": 1,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:03:55+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_standards_correction_page",
+      "title": "시정권고 심의기준(고정 페이지)"
+    },
+    {
+      "checked_at": "2026-10-08T16:41:21+00:00",
+      "document_overrides": [],
+      "documents": 1,
+      "documents_inheriting": 1,
+      "enabled": true,
+      "entry_url": "https://www.pac.or.kr/kor/pages/?p=16",
+      "record_validation": {
+        "checked": 1,
+        "first_invalid": [],
+        "invalid": 0
+      },
+      "review_status": "pending",
+      "rights": {
+        "create_derivatives": "allowed",
+        "external_api": "allowed",
+        "fine_tune": "permission_required",
+        "read": "allowed",
+        "redistribute_derivatives": "permission_required",
+        "redistribute_raw": "permission_required",
+        "store_raw": "allowed"
+      },
+      "rights_basis": [
+        {
+          "checked_at": "2026-10-08T16:03:57+00:00",
+          "review_status": "pending",
+          "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
+          "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        }
+      ],
+      "robots_host": "www.pac.or.kr",
+      "robots_purpose_status_raw": "no_rules",
+      "source_family": "pac_other",
+      "source_id": "pac_standards_election_page",
+      "title": "선거기사 심의기준 및 대표사례(고정 페이지)"
+    }
+  ],
+  "udec": "UDEC-5 (docs/DECISIONS.md)"
+}

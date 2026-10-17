@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-unknown_response",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "가상병원 환자 정보 관리 부실 의혹 제기돼"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "가상병원의 환자 정보 접근 기록이 장기간 점검되지 않았다고 내부 직원이 주장했다. 본지는 직원이 제공한 자료 일부를 확인했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다."
+    ],
+    "sensitive_material": false
+  }
+}

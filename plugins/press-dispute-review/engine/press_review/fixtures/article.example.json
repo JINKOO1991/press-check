@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1",
+  "article_id": "synthetic-001",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "회사 돈 빼돌린 대표, 경찰 수사"
+    },
+    {
+      "block_id": "subtitle",
+      "section": "subtitle",
+      "text": "경찰, 횡령 혐의로 사실관계 확인"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "경찰은 A사 대표 김씨의 횡령 혐의를 수사하고 있다고 밝혔다. 혐의와 관련된 금액이나 구체적인 범행 경위는 아직 확인되지 않았다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "김씨는 본지에 “횡령한 사실이 없다”고 말했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "이 예제는 모두 가상의 기사와 취재 상황이다.",
+      "판결이나 실제 분쟁 결과를 예측한 출력이 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

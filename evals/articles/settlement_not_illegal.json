@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-settlement_not_illegal",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "[정정] 가상시 행사 비용 관련 보도 정정"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "본지 9월 1일자 보도와 관련해 당사자와 조정에 합의하고 아래 정정문을 게재합니다. 이 조정은 보도의 위법 여부에 대한 본안 판단을 포함하지 않습니다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다."
+    ],
+    "sensitive_material": false
+  }
+}

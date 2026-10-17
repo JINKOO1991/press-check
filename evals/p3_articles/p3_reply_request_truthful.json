@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-reply-request-truthful",
+  "publication_date": "2026-09-22",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "C기업 납품 단가 인상 통보에 협력사 반발"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "C기업 “원자재 가격 반영”…협력사 협의회 “일방 통보”"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "C기업이 올해 협력사 3곳에 납품 단가를 5% 올리겠다고 통보했다. C기업은 본지 서면 질의에 “원자재 가격 상승분을 반영한 것”이라고 답했다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "협력사 협의회 관계자는 “협의 없이 통보됐다”고 말했다. 협의회가 제출한 통보 문서 사본은 본지가 확인했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

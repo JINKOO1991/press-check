@@ -1,0 +1,31 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-direct_quote",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "시장 “예산은 투명하게 공개할 것”"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "김시장은 4일 기자회견에서 “내년 예산안은 모든 항목을 투명하게 공개하겠다”고 말했다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "이어 “공개 시점은 다음 달 초가 될 것”이라고 덧붙였다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다.",
+      "취재 녹취와 직접 인용 문구 일치 확인"
+    ],
+    "sensitive_material": false
+  }
+}

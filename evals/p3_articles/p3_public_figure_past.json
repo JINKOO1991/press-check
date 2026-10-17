@@ -1,0 +1,40 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-public-figure-past",
+  "publication_date": "2026-09-20",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "전 구청장 출신 후보, 재직 중 수의계약 지적받았다"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "감사원 처분 요구서 확인…후보 측 “적법한 절차였다”"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "감사원이 2024년 공개한 처분 요구서에는 B구가 재직 당시 수의계약 4건을 체결하면서 비교 견적을 받지 않았다는 지적이 담겼다. 본지는 처분 요구서와 구청 계약 목록을 대조했다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "후보 측은 “당시 규정이 허용한 범위 안에서 체결한 계약”이라고 반박했다. 구청 관계자는 “지적 사항은 시정 완료됐다”고 설명했다."
+    },
+    {
+      "block_id": "p3",
+      "section": "body",
+      "text": "공직 후보자의 재직 중 계약 관행은 유권자가 알아야 할 공적 사안이다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

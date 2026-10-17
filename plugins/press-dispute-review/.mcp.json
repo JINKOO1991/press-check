@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "press-review": {
+      "command": "${PRESS_REVIEW_PYTHON:-python3}",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/engine/press_review_mcp.py"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/engine",
+        "PYTHONSAFEPATH": "1"
+      }
+    }
+  }
+}

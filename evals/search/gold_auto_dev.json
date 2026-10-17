@@ -1,0 +1,445 @@
+{
+ "schema_version": 1,
+ "_note": "자동 gold 질의(P4_DESIGN §5.2 Q1·Q2·Q6·Q7, dev 전용). `run_search_evals.py gen-gold` 로 고정 seed 에서 재생성한다. Q1 은 사건번호를 가진 passage 가 1~3개인 사건번호에서 판례·결정·조정·선거심의 유형별 2개씩, tune 기록의 정확 검색 질의는 뺐다. Q6 금지 사건은 자동 후보이며 사람 확인 전이다. test 분할과 Q3·Q4·Q5는 V1 분할 뒤에 만든다. 본문·발췌를 담지 않는다.",
+ "generated_from_snapshot": "idx-34b8367d1dfe423d",
+ "seed": 20261010,
+ "queries": [
+  {
+   "id": "Q1-01",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "82도3248",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "82도3248",
+    "stratum": "judgment"
+   }
+  },
+  {
+   "id": "Q1-02",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2015다256381",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2015다256381",
+    "stratum": "judgment"
+   }
+  },
+  {
+   "id": "Q1-03",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2008자심95",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2008자심95",
+    "stratum": "pac_decision"
+   }
+  },
+  {
+   "id": "Q1-04",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2009자심13",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2009자심13",
+    "stratum": "pac_decision"
+   }
+  },
+  {
+   "id": "Q1-05",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "05서울조정231",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "05서울조정231",
+    "stratum": "pac_settlement"
+   }
+  },
+  {
+   "id": "Q1-06",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2021서울조정1238",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2021서울조정1238",
+    "stratum": "pac_settlement"
+   }
+  },
+  {
+   "id": "Q1-07",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2010지선113",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2010지선113",
+    "stratum": "pac_election_review"
+   }
+  },
+  {
+   "id": "Q1-08",
+   "set": "gold_auto_dev",
+   "kind": "Q1",
+   "text": "2010지선156",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "case_number": "2010지선156",
+    "stratum": "pac_election_review"
+   }
+  },
+  {
+   "id": "Q2-01",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "언론중재법 제16조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "언론중재법 제16조",
+    "cites_rows": 132
+   }
+  },
+  {
+   "id": "Q2-02",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "언론중재법 제17조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "언론중재법 제17조",
+    "cites_rows": 47
+   }
+  },
+  {
+   "id": "Q2-03",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "형법 제307조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "형법 제307조",
+    "cites_rows": 349
+   }
+  },
+  {
+   "id": "Q2-04",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "형법 제310조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "형법 제310조",
+    "cites_rows": 326
+   }
+  },
+  {
+   "id": "Q2-05",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "형법 제309조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "형법 제309조",
+    "cites_rows": 189
+   }
+  },
+  {
+   "id": "Q2-06",
+   "set": "gold_auto_dev",
+   "kind": "Q2",
+   "text": "헌법 제21조",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "cite": "헌법 제21조",
+    "cites_rows": 743
+   }
+  },
+  {
+   "id": "Q6-01",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "실명",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": true,
+   "gold": {
+    "target": "실명",
+    "hosts": [
+     "금융실명"
+    ],
+    "host_passages": 23,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q6-02",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "공인",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": true,
+   "gold": {
+    "target": "공인",
+    "hosts": [
+     "공인중개사",
+     "공인인증",
+     "공인회계사",
+     "공인노무사"
+    ],
+    "host_passages": 80,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q6-03",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "사진",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": true,
+   "gold": {
+    "target": "사진",
+    "hosts": [
+     "사진기"
+    ],
+    "host_passages": 213,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q6-04",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "사과",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": true,
+   "gold": {
+    "target": "사과",
+    "hosts": [
+     "사과나무"
+    ],
+    "host_passages": 1,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q6-05",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "초상",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": true,
+   "gold": {
+    "target": "초상",
+    "hosts": [
+     "초상집"
+    ],
+    "host_passages": 3,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q6-06",
+   "set": "gold_auto_dev",
+   "kind": "Q6",
+   "text": "보도",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "tune_overlap": false,
+   "gold": {
+    "target": "보도",
+    "hosts": [
+     "보도블록"
+    ],
+    "host_passages": 4,
+    "needs_human_check": true
+   }
+  },
+  {
+   "id": "Q7-01",
+   "set": "gold_auto_dev",
+   "kind": "Q7",
+   "text": "양자역학",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "absent_words": [
+     "양자역학"
+    ],
+    "text_hits": {
+     "양자역학": 0
+    }
+   }
+  },
+  {
+   "id": "Q7-02",
+   "set": "gold_auto_dev",
+   "kind": "Q7",
+   "text": "양궁 교향곡",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "absent_words": [
+     "양궁",
+     "교향곡"
+    ],
+    "text_hits": {
+     "양궁": 0,
+     "교향곡": 0
+    }
+   }
+  },
+  {
+   "id": "Q7-03",
+   "set": "gold_auto_dev",
+   "kind": "Q7",
+   "text": "중성자 인슐린",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "absent_words": [
+     "중성자",
+     "인슐린"
+    ],
+    "text_hits": {
+     "중성자": 0,
+     "인슐린": 0
+    }
+   }
+  },
+  {
+   "id": "Q7-04",
+   "set": "gold_auto_dev",
+   "kind": "Q7",
+   "text": "소믈리에",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false,
+   "label_source": "auto",
+   "gold": {
+    "absent_words": [
+     "소믈리에"
+    ],
+    "text_hits": {
+     "소믈리에": 0
+    }
+   }
+  }
+ ]
+}

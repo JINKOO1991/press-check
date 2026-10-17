@@ -1,0 +1,30 @@
+{
+ "schema_version": "0.1",
+ "article_id": "p4-v2-preserve",
+ "publication_date": "2026-09-20",
+ "blocks": [
+  {
+   "block_id": "title",
+   "section": "title",
+   "text": "시의회 예산안, 복지 항목만 줄었다"
+  },
+  {
+   "block_id": "p1",
+   "section": "body",
+   "text": "시의회는 올해 예산안에서 복지 항목을 지난해보다 12% 줄였고, 공개된 심의 회의록에 삭감 사유가 기록돼 있다."
+  },
+  {
+   "block_id": "p2",
+   "section": "body",
+   "text": "이번 삭감은 우선순위를 잘못 정한 무책임한 결정이라고 본다."
+  }
+ ],
+ "context": {
+  "genre": "news",
+  "election_context": null,
+  "verification_notes": [
+   "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+  ],
+  "sensitive_material": false
+ }
+}

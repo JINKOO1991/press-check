@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Article input",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "article_id": {
+      "type": "string"
+    },
+    "publication_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "block_id": {
+            "type": "string"
+          },
+          "section": {
+            "enum": [
+              "title",
+              "subtitle",
+              "body",
+              "caption"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "block_id",
+          "section",
+          "text"
+        ]
+      },
+      "minItems": 1
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "genre": {
+          "enum": [
+            "news",
+            "opinion",
+            "investigation",
+            "unknown"
+          ]
+        },
+        "election_context": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verification_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sensitive_material": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "genre",
+        "election_context",
+        "verification_notes",
+        "sensitive_material"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "article_id",
+    "publication_date",
+    "blocks",
+    "context"
+  ]
+}

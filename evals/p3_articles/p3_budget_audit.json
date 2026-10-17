@@ -1,0 +1,40 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-budget-audit",
+  "publication_date": "2026-09-18",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "A시 체육시설 위탁 예산 3년간 초과 집행…감사위 “관리 부실”"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "감사 결과 공문으로 확인, 시 “절차 보완 중”"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "A시 감사위원회가 지난달 공개한 감사 결과 보고서에 따르면 시는 2023년부터 2025년까지 체육시설 위탁 사업에 승인 예산보다 많은 금액을 집행했다. 본지가 입수한 공문에는 초과 집행 3건이 기재돼 있다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "시 관계자는 “감사 지적을 수용하며 절차를 보완하고 있다”고 말했다. 위탁 업체 대표는 본지 통화에서 “집행은 계약에 따른 것”이라고 밝혔다."
+    },
+    {
+      "block_id": "p3",
+      "section": "body",
+      "text": "본지는 시 누리집에 공개된 감사 결과 원문과 시의회 회의록을 함께 확인했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

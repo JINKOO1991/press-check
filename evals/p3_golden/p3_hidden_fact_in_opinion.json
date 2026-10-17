@@ -1,0 +1,51 @@
+{
+  "note": "합성 기준 출력. 의견 형식 속 숨은 사실 암시는 확인 항목으로 제시.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p2",
+        "start": 6,
+        "end": 36,
+        "quote": "F씨와 업체 사이에 오간 뒷거래가 있었을 것이라는 의심"
+      },
+      "priority_stars": 2,
+      "risk_channels": [
+        "civil"
+      ],
+      "issue_category": "implied_fact_in_opinion",
+      "review_confidence": "medium",
+      "reason_short": "논평 형식이지만 뒷거래라는 기초 사실을 암시해 뒷받침 근거를 확인해야 합니다.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "뒷거래를 뒷받침하는 취재 근거가 있는지, 없다면 이 표현을 유지할 수 있는지 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "lawgo_prec:617163",
+          "passage_id": "lawgo_prec:617163:2022다284711,284728#c1"
+        }
+      ],
+      "counter_considerations": [
+        "공적 사업과 관련된 처신에 대한 논평이며 업체 행사 참석은 본문에 사실로 적혀 있다."
+      ]
+    }
+  ],
+  "explanations": {
+    "finding-001": {
+      "applicable_issue": "의견·논평 형식의 표현이 숨은 기초 사실을 암시하는지 본다.",
+      "article_context": "참석 사실은 본문에 있으나 뒷거래를 뒷받침하는 사실은 없다.",
+      "support": "판결 passage의 일부: “{{quote|lawgo_prec:617163:2022다284711,284728#c1|0|60}}”",
+      "differences": "인용한 판결의 사실관계와 이번 기사의 전달 구조는 다르다. 문구가 비슷하다는 이유로 결과를 예측하지 않는다.",
+      "counter_arguments": "공적 사안에 대한 비판과 논평은 폭넓게 보호된다.",
+      "required_checks": [
+        "뒷거래 암시를 뒷받침하는 취재 근거 확인"
+      ],
+      "uncertainty": "의견 형식이라는 이유만으로 면책되거나 문제가 된다고 단정하지 않는다."
+    }
+  }
+}

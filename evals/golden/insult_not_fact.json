@@ -1,0 +1,39 @@
+{
+  "note": "합성 기준 출력. 규칙 자체 점검용이며 정답 라벨이 아니다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p2",
+        "start": 0,
+        "end": 24,
+        "quote": "박의원은 인간쓰레기이고 정치판의 기생충이다."
+      },
+      "priority_stars": 2,
+      "risk_channels": [
+        "civil"
+      ],
+      "issue_category": "insulting_expression_without_factual_basis",
+      "review_confidence": "medium",
+      "reason_short": "기초 사실과 무관한 인신공격 표현이라 모욕 여부를 검토할 필요가 있습니다.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "표현이 기사의 기초 사실과 연결되는지 편집자가 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "law-prec-241789",
+          "passage_id": "summary-1"
+        }
+      ],
+      "counter_considerations": [
+        "의견 표명이라는 이유만으로 면책되지는 않는다."
+      ]
+    }
+  ],
+  "explanations": {}
+}

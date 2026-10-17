@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-public_interest_supported",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "시 홍보예산 3억원 집행, 성과보고서는 없어"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "가상시는 올해 홍보예산 3억원을 집행했지만 성과보고서를 작성하지 않은 것으로 확인됐다. 본지가 입수한 시 내부 공문에는 보고서 작성 의무가 명시돼 있다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "시 관계자는 “보고서 작성 시점을 확인 중”이라고 말했다. 본지는 별도로 계약 상대방 두 곳을 취재해 집행 사실을 확인했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다.",
+      "내부 공문 사본 확보",
+      "계약 상대방 2곳 독립 취재"
+    ],
+    "sensitive_material": false
+  }
+}

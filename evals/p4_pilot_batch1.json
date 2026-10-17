@@ -1,0 +1,1770 @@
+{
+ "purpose": "P4 pilot 시나리오 첫 배치 10개(40개 중). 모두 가상 합성이며 실제 기사 문장이 아니다. gold_issues·보존 정답은 LLM 예비 라벨(draft)이고 최종은 사람이 정한다. 법률 정확도 검증이 아니다.",
+ "version": "p4-pilot-batch1",
+ "plan": "docs/P4_SCENARIO_PLAN.md",
+ "categories": [],
+ "min_per_category": 0,
+ "cases": [
+  {
+   "version": 2,
+   "id": "p4p_F01_title_stage",
+   "category": "reply_vs_truth",
+   "p4_class": "F",
+   "p4_category": "명예훼손: 제목·본문 혐의 단계 단정",
+   "hard_negative": false,
+   "scenario": "구속 단계 혐의를 제목·본문에서 확정 사실로 쓰고, 제목이 본문(보험대리점)과 다른 대상(경쟁 보험사)을 적은 기사",
+   "article": "p4_articles/p4p_f01.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:211117:97다10215,10222#c1",
+     "source_id": "lawgo_prec:211117",
+     "role": "support",
+     "locators": [
+      {
+       "field": "legal_reasoning[3]",
+       "locator": "lawgo_prec:211117#s006:6102-6313"
+      },
+      {
+       "field": "legal_reasoning[5]",
+       "locator": "lawgo_prec:211117#s006:8390-8609"
+      }
+     ]
+    },
+    {
+     "passage_id": "lawgo_prec:211117:97다10215,10222#c1",
+     "source_id": "lawgo_prec:211117",
+     "role": "difference_case",
+     "locators": [
+      {
+       "field": "legal_reasoning[4]",
+       "locator": "lawgo_prec:211117#s006:7178-7328"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:211117#s005:11-50"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-ef57c60178eb",
+    "card_ref": "local:eval/p4_cards_v1.json#card-F01",
+    "source_case_number": "97다10215,10222"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 사회면 스트레이트. 기자는 경찰 보도자료 2건과 경찰·변호인·농협 관계자 통화로 취재했다. 대리점 측 접촉 기록은 장부에 없다.",
+   "identity_notation": {
+    "scheme": "anonymous",
+    "reason": "수사 단계의 일반인 피의자라 성+모(나이) 익명이 관행이다. 쟁점이 신원이 아니라 혐의 단계 단정이므로 익명으로 둔다",
+    "entities": [
+     {
+      "role": "피의자(농협 직원)",
+      "notation": "surname_mo",
+      "rendered": "이모(41)씨 → 이씨",
+      "reason": "일반인 피의자 익명 관행"
+     },
+     {
+      "role": "소속 기관",
+      "notation": "institution_named_fictional",
+      "rendered": "솔미농협",
+      "reason": "기관명은 가상 실명"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [],
+    "organizations": [
+     "솔미경찰서",
+     "솔미농협"
+    ],
+    "places": [
+     "경기(실제 광역)",
+     "솔미시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "솔미경찰서 보도자료: 솔미농협 직원 이모(41)씨를 개인정보 보호법 위반 혐의로 구속. 조합원 2,300여명의 연락처·가입 상품 목록을 외부 보험대리점에 건넨 혐의. 명단에 가족 연락처 포함. 26일 법원이 증거인멸 우려로 구속영장 발부",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "경찰 관계자 통화: 대가 수수 여부도 조사할 방침",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "이씨 변호인 통화: 이씨는 조사에서 “고객 명단을 외부로 보낸 적이 없다”며 혐의를 부인했다. “업무상 필요해 조회한 것”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "솔미경찰서 보도자료: 솔미농협이 지난달 자체 감사에서 이씨 계정으로 조합원 정보가 한꺼번에 조회된 기록을 발견해 고소. 20일 해당 보험대리점 사무실 압수수색, 업무용 컴퓨터 확보·분석 중. 대리점 대표 등 2명을 개인정보를 부정하게 받은 혐의로 입건",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "경찰 관계자 통화: 이씨 계정의 대량 조회 기록은 올해 3~6월에 몰려 있다",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "솔미농협 관계자 통화: 유출 가능성이 있는 조합원에게 안내 문자 발송, 이씨 직위 해제, 지난주부터 조합원 문의 전화 300건 넘게 접수, “직원별 고객정보 조회 권한을 다시 점검하고 있다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "경찰 관계자 통화: “가져온 자료는 아직 분석 중”, “명단이 대리점 영업에 쓰였는지는 확인되지 않았다”",
+     "basis": "interview",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "title",
+       "start": 0,
+       "end": 21,
+       "quote": "조합원 정보 빼돌려 경쟁 보험사에 넘긴"
+      },
+      {
+       "block_id": "p2",
+       "start": 0,
+       "end": 10,
+       "quote": "이씨가 빼돌린 명단"
+      }
+     ],
+     "channels": [
+      "civil"
+     ],
+     "action": "replace",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "장부는 경찰의 혐의 발표와 본인 부인뿐이다. 제목·본문이 혐의를 확정 행위로 쓰고, 제목의 '경쟁 보험사'는 장부·본문(보험대리점)과 다르다. 혐의 단계 표현으로 바꾸는 최소 수정이 대상",
+     "survey_core": true
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p1",
+     "start": 27,
+     "end": 48,
+     "quote": "개인정보 보호법 위반 혐의로 구속했다고",
+     "survey_core": true
+    },
+    {
+     "block_id": "p6",
+     "start": 38,
+     "end": 59,
+     "quote": "“고객 명단을 외부로 보낸 적이 없다”",
+     "survey_core": true
+    },
+    {
+     "block_id": "sub",
+     "start": 0,
+     "end": 28,
+     "quote": "경찰, 개인정보 유출 혐의로 구속…본인은 혐의 부인"
+    }
+   ],
+   "survey_core_basis": "문제 구절 1개(제목·본문 단정)와, 고칠 때 함께 지켜야 할 혐의 서술·본인 부인 인용",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "피의사실 보도에서 유죄 인상을 주는 표현을 피해야 한다는 판단 기준(legal_reasoning[3])과, 별도 취재 없이 단정적으로 쓴 기사의 위법성 조각을 부정한 원심 유지(legal_reasoning[5]). 수사기관 발표에 기댄 신문사는 위법하지 않다고 본 부분(legal_reasoning[4])도 있어 사건 결론은 매체마다 갈렸다",
+    "author_judgment": "합성 기사의 제목·본문 단정을 must_fix로 둔 것, 경로를 civil로 둔 것은 작성자 판단이다. 공식 발표에 기댄 보도라는 사정이 책임을 줄일 수 있으나 제목의 단정·대상 불일치는 편집 단계에서 고칠 대상으로 보았다",
+    "transposed": "회사 영업비밀 → 농협 고객 개인정보, 검찰 발표 → 경찰 발표, 피고 신문사 여럿 → 단일 기사"
+   },
+   "canary": "CANARY-p4p-F01-cbdb6c09"
+  },
+  {
+   "version": 2,
+   "id": "p4p_F02_rumor_identifiable",
+   "category": "reply_vs_truth",
+   "p4_class": "F",
+   "p4_category": "명예훼손·사생활: 소문 인용 단정 + 조합 식별",
+   "hard_negative": false,
+   "scenario": "확인되지 않은 소문을 인용 형식으로 전하면서 익명 당사자를 직책·퇴직 시기로 특정한 기사",
+   "article": "p4_articles/p4p_f02.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:194926:2015다45857#c1",
+     "source_id": "lawgo_prec:194926",
+     "role": "support",
+     "locators": [
+      {
+       "field": "legal_reasoning[0]",
+       "locator": "lawgo_prec:194926#s001:5-116"
+      },
+      {
+       "field": "legal_reasoning[1]",
+       "locator": "lawgo_prec:194926#s001:266-349"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:194926#s005:11-41"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-e17b61ae4f91",
+    "card_ref": "local:eval/p4_cards_v1.json#card-F02",
+    "source_case_number": "2015다45857"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 인터넷 매체 정치면. 소문 자체는 의회 사무처 직원 1명의 익명 진술뿐이다. 누리집 집행 내역·집행 기준·인사 사항은 확인했고, 당사자·의원실 접촉 여부는 장부에 없다.",
+   "identity_notation": {
+    "scheme": "anonymous_identifiable",
+    "reason": "비서는 이름을 쓰지 않았지만 의원 실명·성별·직책·퇴직 시기 조합으로 특정된다. 조합 식별 쟁점(i2)을 보존하려고 의원은 가상 실명으로 둔다",
+    "entities": [
+     {
+      "role": "소문 당사자(정책비서)",
+      "notation": "title_only",
+      "rendered": "유일한 여성 정책비서",
+      "reason": "이름 없이 조합 단서로 특정되는 구조가 시나리오 쟁점"
+     },
+     {
+      "role": "시의원",
+      "notation": "real_name_fictional",
+      "rendered": "최성균 의원",
+      "reason": "지방의원은 실명 보도가 관행. 비서 특정의 단서"
+     },
+     {
+      "role": "의회 사무처 직원",
+      "notation": "title_only",
+      "rendered": "의회 사무처의 한 직원",
+      "reason": "장부상 익명 요청"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [
+     "최성균"
+    ],
+    "organizations": [
+     "송하시의회"
+    ],
+    "places": [
+     "전남(실제 광역)",
+     "송하시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "의회 사무처 직원 통화(익명 요청): 의원실 비서가 업무추진비로 개인 물품을 샀다는 소문을 의회 안에서 여러 차례 들었다고 말함. “알 만한 사람은 다 안다”. 비서가 그만두기 한두 달 전부터 이야기가 돌았다고 말함. 소문의 출처는 모른다고 말함",
+     "basis": "interview",
+     "verified": "unknown"
+    },
+    {
+     "fact_id": "f2",
+     "text": "의회 사무처 누리집: 의원실별 업무추진비 집행 내역 분기 공개(2019년 시작, 공개 항목은 집행 일자·금액·사용처·목적)",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "의회 사무처 누리집 2분기 집행 내역: 최성균 의원실 업무추진비 카드 31건·412만원, 사용처 대부분 '간담회 식대', 구입 품목 기재 없음. 1분기는 27건·358만원. 2분기 의원실 평균 380만원",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "의회 사무처 인사 담당 통화: 정책비서 9명 중 여성 1명. 그가 최성균 의원실 소속이었고 지난달 사직서 제출, 즉시 수리",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "송하시의회 업무추진비 집행 기준(사무처 제공 문서): 개인 물품 구입 금지, 카드는 의원실별 1장 발급·의원 지시로 비서 결제 가능, 사무처가 의원실별 카드 사용 내역 월별 점검·분기마다 의장 보고",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "의회 사무처 통화: 올해 업무추진비 부당 사용 환수 사례 없음, 지난해 2건·46만원 환수, 이번 소문과 관련한 별도 조사는 하지 않음",
+     "basis": "interview",
+     "verified": true
+    }
+   ],
+   "reply_request": "unknown",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "title",
+       "start": 14,
+       "end": 35,
+       "quote": "업무추진비로 개인 물품 샀다는 말 돌아"
+      },
+      {
+       "block_id": "p1",
+       "start": 24,
+       "end": 59,
+       "quote": "업무추진비 카드로 가전제품과 상품권을 사들였다는 말이 돌고 있다"
+      }
+     ],
+     "channels": [
+      "civil",
+      "correction"
+     ],
+     "action": "verify_first",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "장부에는 소문을 들었다는 익명 진술만 있다. 소문 인용 형식이어도 구체적 사실을 암시한다. 집행 내역 대조 등 확인 전 게재 보류·범위 축소가 대상",
+     "survey_core": true
+    },
+    {
+     "issue_id": "i2",
+     "spans": [
+      {
+       "block_id": "sub",
+       "start": 9,
+       "end": 23,
+       "quote": "당사자는 지난달 돌연 사직"
+      },
+      {
+       "block_id": "p2",
+       "start": 18,
+       "end": 51,
+       "quote": "최성균 의원실에서 일하다 지난달 그만둔 유일한 여성 정책비서"
+      }
+     ],
+     "channels": [
+      "civil",
+      "privacy"
+     ],
+     "action": "replace",
+     "severity": "should_check",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "이름이 없어도 의원실·성별·직책·퇴직 시기 조합으로 주변인이 알아볼 수 있다. 식별 단서 축소가 대상",
+     "survey_core": true
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p4",
+     "start": 0,
+     "end": 41,
+     "quote": "의회 사무처는 의원실별 업무추진비 집행 내역을 분기마다 누리집에 공개한다.",
+     "survey_core": true
+    }
+   ],
+   "survey_core_basis": "경로가 다른 문제 2개(소문 단정, 조합 식별)와 확인된 제도 서술 1개",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "소문·제3자 말 인용도 사실 적시가 될 수 있다는 기준(legal_reasoning[0])과 성명 없이도 주변 사정으로 특정된다는 기준(legal_reasoning[1]). 원심의 허위·상당한 이유 없음 판단과 정정보도 명령이 유지됨(outcome)",
+    "author_judgment": "합성 기사의 소문이 사실인지는 장부로 알 수 없으므로 i1을 replace가 아니라 verify_first로 둔 것, i2를 should_check로 둔 것은 작성자 판단",
+    "transposed": "국회 의원실·성적 소문 → 시의회 의원실·업무추진비 사적 사용 소문"
+   },
+   "canary": "CANARY-p4p-F02-fd64b472"
+  },
+  {
+   "version": 2,
+   "id": "p4p_F03_private_identity",
+   "category": "reply_vs_truth",
+   "p4_class": "F",
+   "p4_category": "사생활·식별: 사인 신원 공개(실명·상호·동·나이)",
+   "hard_negative": false,
+   "scenario": "행정 점검 적발 보도에서 공인이 아닌 개인 사업자를 실명·상호·동·나이로 특정한 기사",
+   "article": "p4_articles/p4p_f03.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:68827:2006다65620#c1",
+     "source_id": "lawgo_prec:68827",
+     "role": "support",
+     "locators": [
+      {
+       "field": "legal_reasoning[2]",
+       "locator": "lawgo_prec:68827#s006:1442-1585"
+      },
+      {
+       "field": "legal_reasoning[3]",
+       "locator": "lawgo_prec:68827#s006:1641-1873"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:68827#s005:9-44"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-6dbebcfccf75",
+    "card_ref": "local:eval/p4_cards_v1.json#card-F03",
+    "source_case_number": "2006다65620"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 사회면. 시 보도자료에는 병원명이 없고, 기자가 시 관계자의 비공식 확인으로 병원·원장을 특정했다. 원장 측 접촉 여부는 장부에 없다.",
+   "identity_notation": {
+    "scheme": "real_name",
+    "reason": "공인이 아닌 개인 사업자의 신원 공개가 쟁점이므로 실명·상호·동·나이를 모두 적은 실명 보도로 둔다",
+    "entities": [
+     {
+      "role": "동물병원 원장(사인)",
+      "notation": "real_name_fictional",
+      "rendered": "한내시 은포동 누리봄동물병원 원장 강태식(52)씨(본문은 은포동부터 표기, 시 이름은 리드에 있음)",
+      "reason": "신원 공개 쟁점(i1)의 대상"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [
+     "강태식"
+    ],
+    "organizations": [
+     "한내시",
+     "누리봄동물병원",
+     "한내시수의사회"
+    ],
+    "places": [
+     "충남(실제 광역)",
+     "한내시",
+     "은포동"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "한내시 보도자료: 9월 1~19일 관내 동물병원 40곳 의약품 관리 점검, 6곳 관리 규정 위반 적발, 업무정지 등 행정처분 예정, 중대 위반은 고발 방침. 관내 전체 점검은 처음. 적발 6곳 중 4곳은 현장에서 바로 시정. 보도자료에 병원명·원장 이름 없음",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "시 관계자 비공식 확인: 적발 병원 중 하나가 은포동 누리봄동물병원이고 원장 강태식(52)씨가 면허 없는 보조 인력에게 진정제 조제를 맡긴 사례",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "한내시 보도자료: 위반 유형 의약품 관리대장 미작성 3곳, 유효기간 지난 약 보관 2곳, 수의사 아닌 직원의 조제 1곳",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "시 관계자 통화: “수의사가 아닌 사람이 동물용 의약품을 조제하는 것은 수의사법 위반”. 처분 수위는 다음 달 청문 거쳐 결정, 고발 대상 수는 청문 뒤 공개",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "한내시 보도자료: 반려동물 진료 증가에 따라 의약품 관리 점검 실시(지난해 관내 동물병원 진료 18만건, 3년 전보다 30% 증가), 점검 결과를 지역 수의사회에 알려 위반 사례 공유, 내년부터 매년 점검",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "한내시수의사회 관계자 통화: “다음 달 회원 병원을 대상으로 의약품 관리 교육을 열 계획”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "사진: 한내시 제공 점검 현장 사진",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "unknown",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "p3",
+       "start": 11,
+       "end": 34,
+       "quote": "은포동 누리봄동물병원 원장 강태식(52)씨"
+      }
+     ],
+     "channels": [
+      "privacy",
+      "civil"
+     ],
+     "action": "replace",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "공인이 아닌 개인 사업자를 실명·상호·동·나이로 특정했다. 위반 사실 보도의 공공성과 신원 공개의 공공성은 따로 본다. 식별 단서 축소가 대상",
+     "survey_core": true
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p1",
+     "start": 50,
+     "end": 70,
+     "quote": "6곳에서 관리 규정 위반을 적발했다고",
+     "survey_core": true
+    },
+    {
+     "block_id": "p4",
+     "start": 0,
+     "end": 62,
+     "quote": "시는 적발된 병원에 업무정지 등 행정처분을 내릴 예정이며, 위반 정도가 무거운 곳은 수사기관에 고발하기로 했다."
+    },
+    {
+     "block_id": "p3",
+     "start": 36,
+     "end": 69,
+     "quote": "면허 없는 보조 인력에게 진정제 조제를 맡긴 것으로 드러났다",
+     "survey_core": true
+    }
+   ],
+   "survey_core_basis": "신원 단서 1개와, 신원을 줄여도 남겨야 할 위반 사실 서술 2개",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "범죄·위반 보도의 공공성이 곧 사인 신원 공개의 공공성은 아니라는 기준(legal_reasoning[2])과 평범한 개인 사업자의 신원은 공공의 이해 사항이 아니라고 본 판단(legal_reasoning[3]). 원심 파기, 환송 후 최종 결과 미확인",
+    "author_judgment": "위반 사실 서술 자체는 보존 대상으로, 신원 단서만 must_fix로 둔 것은 작성자 판단. 반론 취재 공백은 별도 쟁점으로 만들지 않았다(장부 unknown)",
+    "transposed": "정신과의원·식약 당국 점검 → 동물병원·시 점검"
+   },
+   "canary": "CANARY-p4p-F03-36e63856"
+  },
+  {
+   "version": 2,
+   "id": "p4p_F04_insult_commentary",
+   "category": "opinion_commentary",
+   "p4_class": "F",
+   "p4_category": "의견·논평: 모멸적 인신공격(사실 부분은 보존)",
+   "hard_negative": false,
+   "scenario": "기록으로 뒷받침되는 비판 칼럼에 모멸적 인신공격 문장이 섞인 기사. 사실·비판 부분은 보존이 정답",
+   "article": "p4_articles/p4p_f04.json",
+   "expected": {
+    "edit": "required",
+    "findings": "required",
+    "max_stars": 2
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:82452:2001다84480#c1",
+     "source_id": "lawgo_prec:82452",
+     "role": "support",
+     "locators": [
+      {
+       "field": "legal_reasoning[2]",
+       "locator": "lawgo_prec:82452#s006:9114-9185"
+      }
+     ]
+    },
+    {
+     "passage_id": "lawgo_prec:82452:2001다84480#c1",
+     "source_id": "lawgo_prec:82452",
+     "role": "counter_support",
+     "locators": [
+      {
+       "field": "legal_reasoning[0]",
+       "locator": "lawgo_prec:82452#s006:8577-8672"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:82452#s005:9-55"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-dfd9672bc8a1",
+    "card_ref": "local:eval/p4_cards_v1.json#card-F04",
+    "source_case_number": "2001다84480"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 신문 기자 칼럼. 반려 통지서 사본과 농가·건축사 정모씨·공사업체·군·지역 건축사회 취재를 확보했다.",
+   "identity_notation": {
+    "scheme": "anonymous",
+    "reason": "사인인 건축사라 성+모 익명으로 둔다. 쟁점은 신원이 아니라 모멸적 표현이며, 군 단위 지역·직업으로 주변인이 알아볼 수 있다는 점은 원안과 같다",
+    "entities": [
+     {
+      "role": "건축사(사인)",
+      "notation": "surname_mo",
+      "rendered": "건축사 정모씨 → 정씨",
+      "reason": "사인 익명 관행"
+     },
+     {
+      "role": "농가",
+      "notation": "title_only",
+      "rendered": "한 농가",
+      "reason": "피해 측 익명"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [],
+    "organizations": [],
+    "places": [
+     "경북(실제 광역)",
+     "백솔군"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "군청 반려 통지서 사본: 보완 서류 기한(지난해 9월 30일) 내 미제출로 반려, 통지일 지난해 10월 4일",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "농가 인터뷰: 정씨에게 자료를 넘긴 날은 지난해 9월 21일, 공사업체에 준 선금 4,000만원을 돌려받지 못함",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "건축사 정모씨 인터뷰: “농가가 자료를 늦게 줬다”. 받은 대행 수수료 300만원 가운데 일부를 돌려주겠다고 말함",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "농가 인터뷰: 한우 사육 규모를 60마리 남짓에서 100마리로 늘리려 축사 증축 추진. 올해 4월 재신청해 허가를 받았고 공사는 7개월 늦어짐. 송아지 입식을 미루고 기존 축사에서 소를 키우는 중",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "공사업체 대표 통화: 선금은 이미 자재 구입에 써서 돌려줄 수 없다",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "백솔군 관계자 통화: 인허가 대행을 맡은 건축사의 업무를 군이 따로 관리하지 않는다",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "지역 건축사회 관계자 통화: 대행 업무 관련 민원 접수 창구는 없다",
+     "basis": "interview",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "p5",
+       "start": 10,
+       "end": 35,
+       "quote": "전문가 자격은커녕 사람 구실조차 못 하는 자다"
+      },
+      {
+       "block_id": "p5",
+       "start": 37,
+       "end": 56,
+       "quote": "변명을 듣고 있자니 역겨움이 치민다"
+      }
+     ],
+     "channels": [
+      "civil"
+     ],
+     "action": "replace",
+     "severity": "should_check",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "기초 사실과 무관하게 인격을 깎아내리는 모멸적 표현. 비판 자체가 아니라 이 두 표현만 대상",
+     "survey_core": true
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "title",
+     "start": 8,
+     "end": 25,
+     "quote": "허가 서류 하나 못 챙긴 건축사",
+     "survey_core": true
+    },
+    {
+     "block_id": "p3",
+     "start": 60,
+     "end": 75,
+     "quote": "“농가가 자료를 늦게 줬다”"
+    },
+    {
+     "block_id": "p4",
+     "start": 33,
+     "end": 62,
+     "quote": "그날부터 보완 기한까지는 열흘 가까운 시간이 있었다.",
+     "survey_core": true
+    },
+    {
+     "block_id": "p7",
+     "start": 67,
+     "end": 128,
+     "quote": "대행인의 실수가 농가의 생계를 흔드는 일이 없도록 백솔군과 지역 건축사회가 인허가 대행 업무를 점검해야 한다."
+    }
+   ],
+   "survey_core_basis": "모멸 표현 1건과, 함께 지워지기 쉬운 강한 비판 제목·기록 근거 사실",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "기본 사실 보도가 진실이 아니라고 단정할 수 없다고 본 부분(legal_reasoning[0])과 모멸적 표현은 의견 표명 한계를 벗어날 수 있다고 본 부분(legal_reasoning[2]). 원심 파기, 환송 후 최종 결과 미확인",
+    "author_judgment": "제목의 비판을 보존 구간으로, 두 표현만 should_check로 둔 것은 작성자 판단. 칼럼의 사실 부분(p3)은 장부(f1·f2)로 뒷받침된다고 보았다",
+    "transposed": "변호사·소송 서류 누락·방송 뉴스 → 건축사·인허가 보완 서류 기한 도과·지역 신문 기자 칼럼"
+   },
+   "canary": "CANARY-p4p-F04-ecd55f47"
+  },
+  {
+   "version": 2,
+   "id": "p4p_P01_official_suspicion",
+   "category": "public_interest_no_edit",
+   "p4_class": "P",
+   "p4_category": "공익 보도: 공직자 직무 의혹 제기(확인 노력·반론 포함)",
+   "hard_negative": true,
+   "scenario": "수사팀 회유 의혹을 가족이 건넨 메모·녹음으로 제기하되 확인 노력과 한계, 경찰 반론을 함께 쓴 기사(보존이 정답)",
+   "article": "p4_articles/p4p_p01.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 2
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:167507:2011다40373#c1",
+     "source_id": "lawgo_prec:167507",
+     "role": "counter_support",
+     "locators": [
+      {
+       "field": "legal_reasoning[2]",
+       "locator": "lawgo_prec:167507#s006:1679-1881"
+      },
+      {
+       "field": "legal_reasoning[3]",
+       "locator": "lawgo_prec:167507#s006:4420-4748"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:167507#s005:11-41"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-c2c451a8f9b5",
+    "card_ref": "local:eval/p4_cards_v1.json#card-P01",
+    "source_case_number": "2011다40373"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 단독. 기자는 자료 진위 확인 노력과 경찰 반론을 장부에 남겼다.",
+   "identity_notation": {
+    "scheme": "anonymous",
+    "reason": "수사 중 사건의 사인 참고인과 그 가족이라 성+모 익명으로 둔다. 비판 대상(경찰 수사팀)은 기관명으로 적는다",
+    "entities": [
+     {
+      "role": "핵심 참고인",
+      "notation": "surname_mo",
+      "rendered": "박모씨 → 박씨",
+      "reason": "사인 참고인 익명"
+     },
+     {
+      "role": "참고인의 형(자료 제공자)",
+      "notation": "title_only",
+      "rendered": "박씨의 형",
+      "reason": "가족 관계만 표기"
+     },
+     {
+      "role": "수사팀 관계자",
+      "notation": "title_only",
+      "rendered": "은석경찰서 수사팀 관계자",
+      "reason": "장부상 익명 관계자"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [],
+    "organizations": [
+     "은석경찰서"
+    ],
+    "places": [
+     "충북(실제 광역)",
+     "은석시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "참고인 박모씨 자필 메모 2장 사본(박씨의 형 제공): “조사관이 새벽까지 조사하며 처음 진술을 뒤집으라고 몰아붙였다”",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "박씨와 형의 통화 녹음 파일(박씨의 형 제공): 박씨가 “처음 한 말을 바꾸라는 얘기를 계속 들었다”고 말함",
+     "basis": "record",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "박씨가 시청에 낸 자필 민원서 사본과 메모 필체 대조",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "박씨 변호인 통화: 녹음 속 목소리가 박씨임을 확인",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "은석경찰서 수사팀 관계자 통화: “조사는 변호인 입회 아래 원칙대로 진행됐고 회유는 없었다”, “조사 과정은 모두 영상으로 녹화했다”. 박씨 측이 공식 문제 제기하면 사실관계 확인하겠다",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "은석경찰서 보도자료(8월): 산업단지 개발 과정의 뇌물 수수 혐의로 시 공무원 2명(인허가 부서)과 개발업체 대표 입건, 업체 대표가 인허가 편의 대가로 돈을 건넨 혐의, 수사 중",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f8",
+     "text": "박씨의 형 인터뷰: “동생이 조사를 받고 올 때마다 많이 힘들어했다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "박씨 변호인 통화: 경찰이 박씨를 핵심 참고인으로 보고 있다. 참고인 신분 조사 3차례, 메모는 9월 17일 조사 다음 날 작성. 형이 23일 자료를 본지에 건넴",
+     "basis": "interview",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "title",
+     "start": 0,
+     "end": 16,
+     "quote": "“수사팀이 진술 바꾸라 했다”",
+     "survey_core": true
+    },
+    {
+     "block_id": "p1",
+     "start": 48,
+     "end": 70,
+     "quote": "진술을 바꾸도록 회유했다는 주장이 나왔다",
+     "survey_core": true
+    },
+    {
+     "block_id": "p2",
+     "start": 58,
+     "end": 93,
+     "quote": "“조사관이 새벽까지 조사하며 처음 진술을 뒤집으라고 몰아붙였다”"
+    },
+    {
+     "block_id": "p4",
+     "start": 79,
+     "end": 112,
+     "quote": "다만 메모와 녹음에 담긴 내용이 사실인지는 확인되지 않았다."
+    },
+    {
+     "block_id": "p6",
+     "start": 15,
+     "end": 48,
+     "quote": "“조사는 변호인 입회 아래 원칙대로 진행됐고 회유는 없었다”"
+    }
+   ],
+   "survey_core_basis": "과잉 수정 위험이 가장 큰 제목 인용과 리드의 의혹 서술",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "공직 수행 관련 의혹 제기는 합리적 이유가 있으면 악의적·현저히 경솔한 공격이 아닌 한 쉽게 제한되지 않는다는 기준(legal_reasoning[2])과 자료 확인 노력·중립적 서술을 들어 청구를 배척한 원심 유지(legal_reasoning[3], outcome)",
+    "author_judgment": "합성 기사의 제목 인용·의혹 서술을 보존 정답으로 둔 것은 작성자 판단이다. '발언 인용이어서'가 아니라 확인 노력·한계 명시·반론 병기가 장부에 있기 때문이다",
+    "transposed": "중앙 검찰 특별수사팀·주간지·대선 관련 사건 → 시 경찰서 수사팀·지역 매체·산업단지 개발 비리. 원 사건을 알아보게 하는 요소(구금 중 메모, 면회 녹음, 정치인 지목 대가의 형량 제안, 수사 결과 발표 직전 게재)는 빼고 불구속 참고인·통화 녹음·심야 조사 압박으로 바꿈"
+   },
+   "canary": "CANARY-p4p-P01-72d1426a"
+  },
+  {
+   "version": 2,
+   "id": "p4p_P02_complaint_progress",
+   "category": "public_interest_no_edit",
+   "p4_class": "P",
+   "p4_category": "공익 보도: 고소·수사 경과의 객관 보도(직업으로 식별 가능)",
+   "hard_negative": true,
+   "scenario": "고소·민사소송·수사 착수의 외적 경과를 고소인 주장으로 귀속해 전하고 당사자 반론을 쓴 기사(보존이 정답)",
+   "article": "p4_articles/p4p_p02.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 2
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:127772:2008다27769#c1",
+     "source_id": "lawgo_prec:127772",
+     "role": "counter_support",
+     "locators": [
+      {
+       "field": "legal_reasoning[2]",
+       "locator": "lawgo_prec:127772#s006:2201-2524"
+      },
+      {
+       "field": "legal_reasoning[3]",
+       "locator": "lawgo_prec:127772#s006:2536-2822"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:127772#s005:11-56"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-d7a1d35dade6",
+    "card_ref": "local:eval/p4_cards_v1.json#card-P02",
+    "source_case_number": "2008다27769"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 사회면. 성+모 익명 표기지만 지역·직업으로 주변인이 알아볼 수 있다. 고소장·사건 검색·검찰·고소인·피고소인 취재가 장부에 있다.",
+   "identity_notation": {
+    "scheme": "anonymous_identifiable",
+    "reason": "고소 단계의 사인이라 성+모 익명으로 둔다. 지역·직업(한내시 세무사)으로 주변인이 알아볼 수 있다는 원안의 어려운 음성 표지를 유지한다",
+    "entities": [
+     {
+      "role": "피고소인(세무사)",
+      "notation": "surname_mo",
+      "rendered": "한내시에서 세무사 사무소를 운영하는 김모씨 → 김씨",
+      "reason": "고소 단계 사인 익명"
+     },
+     {
+      "role": "고소인(옛 고객)",
+      "notation": "surname_mo",
+      "rendered": "최모씨 → 최씨",
+      "reason": "사인 익명"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [],
+    "organizations": [
+     "한내지방검찰청",
+     "한내시세무사회"
+    ],
+    "places": [
+     "충남(실제 광역)",
+     "한내시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "최모씨 고소장 사본: 업무상 횡령 혐의, 납부 대행 금액 중 1,800만원 미납 주장. 2023년부터 세무 대리 위임, 지난해 5월 종합소득세 신고 때 세금 납부를 맡겨 송금, 올해 6월 세무서 미납 고지서를 받고 알았다고 기재. 고지서 금액은 가산세 포함 1,960만원이라고 기재. 세무 대리 계약서 첨부",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "한내시세무사회 관계자 통화: “회원 관련 민원이 들어온 것은 맞다”, “수사 결과를 지켜본 뒤 윤리위원회에 올릴지 정하겠다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "법원 사건 검색: 최씨가 김씨를 상대로 낸 1,800만원 반환 청구 민사소송 한내지방법원 접수 확인, 첫 변론기일 11월 6일",
+     "basis": "record",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "검찰 관계자 통화: 14일 형사부 배당, 고소인 조사, 김씨도 조만간 소환 조사 예정",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "김모씨 통화: “납부 시기를 고객과 협의해 미룬 것일 뿐 돈을 쓴 적은 없다”, “협의한 내용은 문자메시지로 남아 있어 수사 과정에서 소명하겠다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "최씨 통화: “믿고 맡긴 돈이 어디로 갔는지 알고 싶다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "한내시세무사회 회원 명부(공개): 김씨가 2015년부터 한내시에서 세무사 사무소 운영",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "p1",
+     "start": 40,
+     "end": 76,
+     "quote": "업무상 횡령 혐의로 고소당해 검찰이 수사에 착수한 것으로 확인됐다",
+     "survey_core": true
+    },
+    {
+     "block_id": "p2",
+     "start": 0,
+     "end": 9,
+     "quote": "최씨는 고소장에서",
+     "survey_core": true
+    },
+    {
+     "block_id": "p4",
+     "start": 0,
+     "end": 51,
+     "quote": "한내지방검찰청은 지난 14일 사건을 형사부에 배당하고 최씨를 고소인 자격으로 불러 조사했다."
+    },
+    {
+     "block_id": "p6",
+     "start": 14,
+     "end": 49,
+     "quote": "“납부 시기를 고객과 협의해 미룬 것일 뿐 돈을 쓴 적은 없다”"
+    }
+   ],
+   "survey_core_basis": "직업·지역으로 식별 가능한 리드의 수사 경과와 고소인 귀속 표지",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "제3자 고발로 시작된 절차의 외적 경과만 객관적으로 보도하면 고발 내용의 진실성까지 확인할 의무는 없다는 기준(legal_reasoning[2])과 해당 기사들의 위법성을 부정한 판단(legal_reasoning[3]). 원심 파기, 환송 후 최종 결과 미확인",
+    "author_judgment": "직업·지역으로 식별 가능하다는 표지가 있어도 보존을 정답으로 둔 것은 작성자 판단이다. 합성 기사에 추측 서술이 없고 주장이 고소인에게 귀속돼 있다는 점이 근거다",
+    "transposed": "변호사·사무장 → 세무사, 형사고발 → 고소"
+   },
+   "canary": "CANARY-p4p-P02-f38e6590"
+  },
+  {
+   "version": 2,
+   "id": "p4p_P03_political_commentary",
+   "category": "opinion_commentary",
+   "p4_class": "P",
+   "p4_category": "의견·논평: 정치적 논평의 수사적 과장 보도(반론 병기)",
+   "hard_negative": true,
+   "scenario": "교섭단체 대변인의 단정적 정치 공세를 발언자에게 귀속하고 근거 한계와 상대 반론을 함께 전한 기사(보존이 정답)",
+   "article": "p4_articles/p4p_p03.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 2
+   },
+   "evidence_links": [
+    {
+     "passage_id": "lawgo_prec:67572:2004다69291#c1",
+     "source_id": "lawgo_prec:67572",
+     "role": "counter_support",
+     "locators": [
+      {
+       "field": "legal_reasoning[2]",
+       "locator": "lawgo_prec:67572#s006:3629-3695"
+      },
+      {
+       "field": "legal_reasoning[3]",
+       "locator": "lawgo_prec:67572#s006:3887-4025"
+      },
+      {
+       "field": "outcome",
+       "locator": "lawgo_prec:67572#s005:7-40"
+      }
+     ]
+    }
+   ],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "card_from_case",
+    "source_group_id": "G-22b9b2476011",
+    "card_ref": "local:eval/p4_cards_v1.json#card-P03",
+    "source_case_number": "2004다69291"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 정치면 스트레이트. 선거기간이 아니다. 브리핑 녹취·상대 단체 반론·시장 측 입장·소수당 논평·회의록이 장부에 있다.",
+   "identity_notation": {
+    "scheme": "real_name",
+    "reason": "공개 브리핑에서 발언한 시의원과 반론한 단체 대표라 둘 다 실명 보도가 관행이다",
+    "entities": [
+     {
+      "role": "시의회 다수당 원내대변인",
+      "notation": "real_name_fictional",
+      "rendered": "조병철 의원 → 조 의원",
+      "reason": "공인 발언 귀속"
+     },
+     {
+      "role": "퇴직 공무원 모임 회장",
+      "notation": "real_name_fictional",
+      "rendered": "은석사랑회 장한식 회장",
+      "reason": "단체 대표 반론 귀속"
+     },
+     {
+      "role": "시장",
+      "notation": "title_only",
+      "rendered": "시장",
+      "reason": "발언 속 지칭. 원안과 같이 이름 없음"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [
+     "조병철",
+     "장한식"
+    ],
+    "organizations": [
+     "은석시의회",
+     "은석사랑회"
+    ],
+    "places": [
+     "충북(실제 광역)",
+     "은석시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "조병철 의원(다수당 원내대변인) 28일 정례 브리핑 녹취: “친목을 내세운 시장 재선 조직”, “활동 자금의 출처를 밝히라”. 근거로 회원 상당수가 시장 측근과 가깝다는 점을 듦, 자금 흐름 자료는 제시하지 않음. 다수당 의원 3명 동석. 시 감사관실에 조사 요구하겠다고 말함. 모임 행사에 시장 측근 인사들이 여러 차례 참석했다고 주장",
+     "basis": "record",
+     "verified": true
+    },
+    {
+     "fact_id": "f8",
+     "text": "시 감사관실 통화: “의회의 요구가 공식 접수되면 검토하겠다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "은석사랑회 장한식 회장 통화: “회비로 운영되는 퇴직자 친목 단체로 선거와 무관하다”, “근거 없는 정치 공세”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "은석시 누리집 비영리민간단체 현황: 은석사랑회 2021년 등록, 시청 퇴직 간부 모임, 회원 120여명",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "장한식 회장 통화: 월 회비 1만원, 월 1회 등산·분기별 봉사활동, 회비 외 후원금 받지 않음",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "시장 비서실 관계자 통화: “시장은 이 모임과 관계가 없다”, “따로 대응할 계획은 없다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "시의회 소수당 논평(보도자료): “다수당이 퇴직 공무원들을 정쟁에 끌어들이고 있다”",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "시의회 본회의 회의록(9월 15일 시정질문): 다수당 의원이 시장 측근 인사의 산하기관장 임명을 문제 삼고 시장 측이 반박",
+     "basis": "record",
+     "verified": true
+    },
+    {
+     "fact_id": "f9",
+     "text": "은석시의회 누리집 의원 현황: 23석 중 다수당 14석",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "requested_answered",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "title",
+     "start": 10,
+     "end": 31,
+     "quote": "“퇴직 공무원 모임은 시장 재선 조직”",
+     "survey_core": true
+    },
+    {
+     "block_id": "p1",
+     "start": 67,
+     "end": 85,
+     "quote": "“친목을 내세운 시장 재선 조직”",
+     "survey_core": true
+    },
+    {
+     "block_id": "p2",
+     "start": 47,
+     "end": 73,
+     "quote": "다만 구체적인 자금 흐름 자료는 내놓지 않았다."
+    },
+    {
+     "block_id": "p4",
+     "start": 46,
+     "end": 59,
+     "quote": "“근거 없는 정치 공세”"
+    }
+   ],
+   "survey_core_basis": "과잉 수정 위험이 가장 큰 제목·리드의 발언 인용",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": "정당의 정치적 주장은 단정적·과장 어법이어도 악의적이거나 현저히 상당성을 잃은 공격이 아니면 쉽게 책임을 묻지 않는다는 기준(legal_reasoning[2]·[3])과 발언자 책임을 부정한 원심 유지(outcome)",
+    "author_judgment": "판례는 발언자(대변인) 책임 사건이다. 이를 발언을 귀속·반론 병기해 전한 스트레이트 기사의 보존 정답으로 넓힌 것은 작성자 판단이며 평가자가 다르게 볼 수 있다",
+    "transposed": "중앙 정당 대변인·전직 정보기관 간부 모임·대선 국면 → 시의회 교섭단체 대변인·퇴직 시청 간부 모임·평시"
+   },
+   "canary": "CANARY-p4p-P03-6d1e07f3"
+  },
+  {
+   "version": 2,
+   "id": "p4p_P08_no_actionable",
+   "category": "public_interest_no_edit",
+   "p4_class": "P",
+   "p4_category": "수정할 문구가 없는 원고(행사·교통 통제 안내)",
+   "hard_negative": false,
+   "scenario": "시 보도자료에 근거한 행사·교통 통제 안내 기사(검토 권고 없음이 정답)",
+   "article": "p4_articles/p4p_p08.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 1
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "fully_invented",
+    "source_group_id": "G-pilot-p08"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 생활면 안내 기사. 시 보도자료와 시 관계자 통화가 근거다.",
+   "identity_notation": {
+    "scheme": "none",
+    "reason": "개인이 등장하지 않는 안내 기사. 시 관계자는 직함만 쓴다",
+    "entities": [
+     {
+      "role": "시 관계자",
+      "notation": "title_only",
+      "rendered": "시 관계자",
+      "reason": "안내 담당자"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [],
+    "organizations": [
+     "가온시"
+    ],
+    "places": [
+     "강원(실제 광역)",
+     "가온시"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "가온시 보도자료: 11일 07~12시 하프마라톤, 참가 6,000여명, 강변로 양방향 통제, 시내버스 14개 노선 우회",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "시 관계자 통화: “통제 구간과 우회 노선은 시 누리집과 버스정류장 안내문에서 확인할 수 있다”. 우회 노선은 버스정보 앱에도 게시",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "사진: 시 제공 지난해 대회 사진",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "가온시 보도자료: 올해 12회째, 지난해 참가자 5,200여명. 코스는 시청 앞 광장 출발·강변공원 반환 하프(21.0975㎞), 10㎞, 5㎞. 참가 접수 15일 마감, 하프 제한 시간 3시간, 우천 시에도 진행",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "시 관계자 통화: 지난해 교통 통제 관련 민원 40여건을 고려해 올해 통제 시간을 1시간 줄였다",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "가온시 보도자료: 대회 당일 구급차 6대·의료 인력 40명 배치, 자원봉사자 300명 주요 교차로 교통 안내",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "가온시 보도자료: 시청 앞 광장 주변 공영주차장 3곳 대회 당일 오전 운영 중단, 코스 주변 주민에게 통제 안내문 배포. 10㎞ 신청자 2,700여명으로 최다, 외지 참가자 2,000여명 예상, 완주자 전원 기념 메달, 기록은 당일 오후 대회 누리집 공개, 참가 물품은 10일 오후 시청 앞 광장 배부",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "not_requested",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "p3",
+     "start": 0,
+     "end": 56,
+     "quote": "시는 대회 시간 동안 강변로 양방향 차량 통행을 막고, 시내버스 14개 노선을 임시로 우회 운행한다.",
+     "survey_core": true
+    }
+   ],
+   "survey_core_basis": "검토 권고가 없어야 하는 안내 기사의 핵심 사실 1개",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": null,
+    "author_judgment": "완전 창작. 보존 정답은 작성자 판단",
+    "transposed": null
+   },
+   "canary": "CANARY-p4p-P08-5cd963c0"
+  },
+  {
+   "version": 2,
+   "id": "p4p_U01_audit_unverified",
+   "category": "reply_vs_truth",
+   "p4_class": "U",
+   "p4_category": "유보: 감사 결과를 단정했으나 장부에 문서 근거 없음",
+   "hard_negative": false,
+   "scenario": "교육청 감사 결과를 단정했지만 취재 장부에는 제보자 전언만 있는 기사(확인 후 반영이 정답). P13과 최소쌍",
+   "article": "p4_articles/p4p_u01.json",
+   "expected": {
+    "edit": "verify_first",
+    "findings": "required",
+    "max_stars": 3
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "fully_invented",
+    "source_group_id": "G-pilot-u01"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 교육면. 감사 실시 사실과 법인 개요는 누리집으로 확인했지만 감사 결과는 제보자 전언뿐이고 보고서 확보 여부는 장부에 없다. 이사장 측 접촉 여부도 장부에 없다.",
+   "identity_notation": {
+    "scheme": "mixed",
+    "reason": "학교법인 이사장은 공적 성격이 있어 실명 보도(가상 이름)로, 학부모는 사인이라 성+모 익명으로 둔다. P13과 같은 기사다",
+    "entities": [
+     {
+      "role": "학교법인 이사장",
+      "notation": "real_name_fictional",
+      "rendered": "이만석 이사장",
+      "reason": "법인 대표자 실명 보도 관행"
+     },
+     {
+      "role": "학부모",
+      "notation": "surname_mo",
+      "rendered": "학부모 윤모씨",
+      "reason": "사인 익명"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [
+     "이만석"
+    ],
+    "organizations": [
+     "청해도교육청",
+     "학교법인 서담학원",
+     "서담고"
+    ],
+    "places": [
+     "청해도(가상 광역: 실존 도교육청이 가상 감사를 발표하지 않게 함)"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "법인 전 직원(제보자) 통화: 교육청 감사에서 장학기금 3억원 전용이 지적됐고 사무국 인건비·차량 리스료로 쓰였다고 들었다",
+     "basis": "interview",
+     "verified": "unknown"
+    },
+    {
+     "fact_id": "f2",
+     "text": "학부모 윤모씨 인터뷰: “장학금이 왜 끊겼는지 학교에서 한 번도 설명을 들은 적이 없다”. 2024년부터 지급이 끊겼다고 말함. “주변 학부모들도 같은 궁금증을 갖고 있다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "청해도교육청 누리집 공지: 학교법인 서담학원 종합감사 실시(7월 8~19일). 감사 결과는 공지에 없음. 올해 종합감사 대상 사립학교 법인 9곳 중 하나, 종합감사는 4년 주기로 법인 회계·학사 운영 전반 점검",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "서담학원 누리집 법인 개요: 1987년 설립, 산하 서담고 1곳, 서담고 학생 640명, 서담고 1990년 개교, 법인 사무국은 서담고 본관에 위치",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "서담학원 누리집 임원 현황: 이만석 이사장 2019년 취임, 이사 7명",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "서담학원 장학금 지급 규정(누리집 게시): 장학기금은 2010년부터 동문·지역 기업 기부로 조성, 성적·가정 형편 기준 연 30명 안팎 선발, 1인당 연 100만원",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "청해도교육청 누리집 감사 공개 원칙: 사립학교 법인 감사 결과는 처분 확정 뒤 누리집에 공개. 지난해 감사 법인 8곳 결과 모두 게시",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "unknown",
+   "gold_issues": [
+    {
+     "issue_id": "i1",
+     "spans": [
+      {
+       "block_id": "title",
+       "start": 10,
+       "end": 31,
+       "quote": "장학기금 3억원 법인 운영비로 돌려썼다"
+      },
+      {
+       "block_id": "sub",
+       "start": 0,
+       "end": 12,
+       "quote": "도교육청 감사서 드러나"
+      },
+      {
+       "block_id": "p1",
+       "start": 33,
+       "end": 83,
+       "quote": "이만석 이사장이 학생 장학금으로 적립된 기금 3억원을 법인 운영비로 전용한 사실이 드러났다"
+      },
+      {
+       "block_id": "p2",
+       "start": 0,
+       "end": 37,
+       "quote": "기금에서 빠져나간 돈은 법인 사무국 인건비와 차량 리스료로 쓰였다."
+      }
+     ],
+     "channels": [
+      "civil",
+      "correction"
+     ],
+     "action": "verify_first",
+     "severity": "must_fix",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "감사 결과를 확정 사실로 썼지만 장부에는 제보자 전언(검증 안 됨)뿐이다. 감사 보고서 등 문서 확인 후 반영. 반론 요청·응답 서술을 만들면 실패",
+     "survey_core": true
+    },
+    {
+     "issue_id": "i2",
+     "spans": [
+      {
+       "block_id": "sub",
+       "start": 13,
+       "end": 29,
+       "quote": "산하 고교 장학금 지급도 중단"
+      },
+      {
+       "block_id": "p2",
+       "start": 38,
+       "end": 74,
+       "quote": "서담학원 산하 서담고의 장학금 지급은 2024년부터 멈춘 상태다."
+      }
+     ],
+     "channels": [
+      "correction"
+     ],
+     "action": "verify_first",
+     "severity": "should_check",
+     "label_status": "draft",
+     "label_source": "llm_preliminary",
+     "rationale_ref": null,
+     "draft_rationale": "학부모 한 명의 진술만 있다. 지급 중단 시점은 학교·교육청 자료로 확인 후 반영",
+     "survey_core": true
+    }
+   ],
+   "preserve_spans": [
+    {
+     "block_id": "p7",
+     "start": 9,
+     "end": 45,
+     "quote": "“장학금이 왜 끊겼는지 학교에서 한 번도 설명을 들은 적이 없다”",
+     "survey_core": true
+    }
+   ],
+   "survey_core_basis": "확인 전 반영이 정답인 두 쟁점과 보존할 학부모 인용. P13과 같은 구간을 대조한다",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": null,
+    "author_judgment": "완전 창작. verify_first 정답은 작성자 판단. 최소쌍 P13과 기사 본문이 같다",
+    "transposed": null
+   },
+   "canary": "CANARY-p4p-U01-58bc8ed8"
+  },
+  {
+   "version": 2,
+   "id": "p4p_P13_audit_verified",
+   "category": "public_interest_no_edit",
+   "p4_class": "P",
+   "p4_category": "공익 보도: 공개 감사 보고서로 뒷받침된 단정(U01 최소쌍)",
+   "hard_negative": true,
+   "scenario": "U01과 같은 기사. 장부에 공개 감사 보고서 사본이 있어 단정 서술이 문서로 뒷받침된다(보존이 정답)",
+   "article": "p4_articles/p4p_u01.json",
+   "expected": {
+    "edit": "none",
+    "findings": "none_ok",
+    "max_stars": 2
+   },
+   "evidence_links": [],
+   "synthetic": true,
+   "not_a_legal_gold_label": true,
+   "provenance": {
+    "derivation": "minimal_pair_of",
+    "source_group_id": "G-pilot-u01",
+    "pair_of": "p4p_U01_audit_unverified"
+   },
+   "split": "dev",
+   "future_window": false,
+   "as_of": "2026-09-28",
+   "reporting_context": "지역 일간지 교육면. U01과 기사는 같고 공개 감사 보고서 사본을 확보한 점만 다르다. 이사장 측 접촉 여부는 장부에 없다(U01과 같음).",
+   "identity_notation": {
+    "scheme": "mixed",
+    "reason": "U01과 같은 기사·같은 표기. 이사장은 실명 보도(가상 이름), 학부모는 성+모 익명",
+    "entities": [
+     {
+      "role": "학교법인 이사장",
+      "notation": "real_name_fictional",
+      "rendered": "이만석 이사장",
+      "reason": "법인 대표자 실명 보도 관행"
+     },
+     {
+      "role": "학부모",
+      "notation": "surname_mo",
+      "rendered": "학부모 윤모씨",
+      "reason": "사인 익명"
+     }
+    ]
+   },
+   "fictional_names": {
+    "persons": [
+     "이만석"
+    ],
+    "organizations": [
+     "청해도교육청",
+     "학교법인 서담학원",
+     "서담고"
+    ],
+    "places": [
+     "청해도(가상 광역: 실존 도교육청이 가상 감사를 발표하지 않게 함)"
+    ],
+    "collision_check": "네트워크 없이 작성자 지식으로만 점검. 시·도 이름은 사용자 결정(2026-10-10)으로 실제 이름을 쓴다. 정치인·연예인·기업인으로 아는 이름은 피했다. 시·군·구와 경찰서·검찰청·교육청 등 기관명은 실존 명칭과 겹치지 않게 골랐으나(율현은 서울 강남구 법정동과 겹쳐 솔미로 바꿈) 동·리 단위 지명·상호·일반인 동명이인과의 일치는 미확인"
+   },
+   "provided_facts": [
+    {
+     "fact_id": "f1",
+     "text": "청해도교육청 감사 결과 보고서(공개 문서) 사본: 학교법인 서담학원 이만석 이사장 재임 중 장학기금 3억원을 법인 운영비로 전용, 사용처는 사무국 인건비·차량 리스료, 산하 서담고 장학금 2024년부터 미지급으로 지적",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f2",
+     "text": "학부모 윤모씨 인터뷰: “장학금이 왜 끊겼는지 학교에서 한 번도 설명을 들은 적이 없다”. 2024년부터 지급이 끊겼다고 말함. “주변 학부모들도 같은 궁금증을 갖고 있다”",
+     "basis": "interview",
+     "verified": true
+    },
+    {
+     "fact_id": "f3",
+     "text": "청해도교육청 누리집 공지: 학교법인 서담학원 종합감사 실시(7월 8~19일). 감사 결과는 공지에 없음. 올해 종합감사 대상 사립학교 법인 9곳 중 하나, 종합감사는 4년 주기로 법인 회계·학사 운영 전반 점검",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f4",
+     "text": "서담학원 누리집 법인 개요: 1987년 설립, 산하 서담고 1곳, 서담고 학생 640명, 서담고 1990년 개교, 법인 사무국은 서담고 본관에 위치",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f5",
+     "text": "서담학원 누리집 임원 현황: 이만석 이사장 2019년 취임, 이사 7명",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f6",
+     "text": "서담학원 장학금 지급 규정(누리집 게시): 장학기금은 2010년부터 동문·지역 기업 기부로 조성, 성적·가정 형편 기준 연 30명 안팎 선발, 1인당 연 100만원",
+     "basis": "document",
+     "verified": true
+    },
+    {
+     "fact_id": "f7",
+     "text": "청해도교육청 누리집 감사 공개 원칙: 사립학교 법인 감사 결과는 처분 확정 뒤 누리집에 공개. 지난해 감사 법인 8곳 결과 모두 게시",
+     "basis": "document",
+     "verified": true
+    }
+   ],
+   "reply_request": "unknown",
+   "gold_issues": [],
+   "preserve_spans": [
+    {
+     "block_id": "title",
+     "start": 10,
+     "end": 31,
+     "quote": "장학기금 3억원 법인 운영비로 돌려썼다",
+     "survey_core": true
+    },
+    {
+     "block_id": "p1",
+     "start": 33,
+     "end": 83,
+     "quote": "이만석 이사장이 학생 장학금으로 적립된 기금 3억원을 법인 운영비로 전용한 사실이 드러났다",
+     "survey_core": true
+    },
+    {
+     "block_id": "p2",
+     "start": 0,
+     "end": 37,
+     "quote": "기금에서 빠져나간 돈은 법인 사무국 인건비와 차량 리스료로 쓰였다."
+    },
+    {
+     "block_id": "p2",
+     "start": 38,
+     "end": 74,
+     "quote": "서담학원 산하 서담고의 장학금 지급은 2024년부터 멈춘 상태다."
+    },
+    {
+     "block_id": "sub",
+     "start": 13,
+     "end": 29,
+     "quote": "산하 고교 장학금 지급도 중단"
+    },
+    {
+     "block_id": "p7",
+     "start": 9,
+     "end": 45,
+     "quote": "“장학금이 왜 끊겼는지 학교에서 한 번도 설명을 들은 적이 없다”"
+    }
+   ],
+   "survey_core_basis": "U01 i1과 같은 제목·리드 구간. 장부만 다른 쌍에서 판정이 갈리는지 본다",
+   "expected_label": {
+    "label_status": "draft",
+    "label_source": "llm_preliminary"
+   },
+   "basis_notes": {
+    "from_case": null,
+    "author_judgment": "최소쌍. 보존 정답은 작성자 판단. 반론 상태가 unknown이므로 반론 요청·응답 서술을 만들면 실패",
+    "transposed": null
+   },
+   "canary": "CANARY-p4p-P13-0f87acfb"
+  }
+ ]
+}

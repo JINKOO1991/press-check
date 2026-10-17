@@ -1,0 +1,115 @@
+{
+  "snapshot_id": "fixture-synthetic-0.1",
+  "is_fixture": true,
+  "as_of": "2026-10-08",
+  "description": "배선 시험용 합성 코퍼스. 실제 판결·결정·조문의 원문이나 요약이 아니며 법적 판단의 근거로 쓸 수 없다.",
+  "rights_summary": {
+    "rights_hold": [
+      "실제 자료군(PAC, IENDC, 법령, 판결, 연구)의 수집·색인은 P1·P2 범위이며 이 코퍼스에는 포함되지 않았다."
+    ],
+    "missing": [
+      "실제 코퍼스 미탑재. 이 snapshot의 passage는 전부 합성이다."
+    ]
+  },
+  "passages": [
+    {
+      "source_id": "law-prec-194652",
+      "passage_id": "summary-2",
+      "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=194652",
+      "locator": {"kind": "html_section", "value": "판결요지 [2]: 기사 전체 인상에 따른 판단"},
+      "authority_type": "judgment",
+      "decision_date": null,
+      "risk_channels": ["civil", "correction"],
+      "text": "합성 요약(원문 아님): 시험용 자리표시 문구다. 제목과 본문을 합친 기사 전체의 인상으로 단정 표현을 검토한다는 배선 시험용 연결이며, 이 판결의 실제 판시 내용을 요약한 것이 아니다. 판결 원문은 url에서 확인해야 한다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "law-prec-241789",
+      "passage_id": "summary-1",
+      "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=241789",
+      "locator": {"kind": "html_section", "value": "판결요지 [1]: (시험용 자리표시)"},
+      "authority_type": "judgment",
+      "decision_date": null,
+      "risk_channels": ["civil", "criminal"],
+      "text": "합성 요약(원문 아님): 시험용 자리표시 문구다. 사실 적시와 의견 표명을 구별해 검토한다는 배선 시험용 연결이며, 이 판결의 실제 판시 내용을 요약한 것이 아니다. 판결 원문은 url에서 확인해야 한다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-statute-001",
+      "passage_id": "art-1",
+      "url": "https://example.invalid/fixture/statute/001",
+      "locator": {"kind": "text_range", "value": "0-80"},
+      "authority_type": "statute",
+      "decision_date": null,
+      "risk_channels": ["correction", "reply"],
+      "text": "합성 요약(원문 아님): 정정보도와 반론보도 청구 절차를 구분해 설명하는 시험용 조문 문구. 실제 법령이 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-pac-settlement-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/pac/settlement/001",
+      "locator": {"kind": "pdf_page", "value": "3"},
+      "authority_type": "pac_settlement",
+      "decision_date": null,
+      "risk_channels": ["correction", "reply"],
+      "text": "합성 요약(원문 아님): 조정 합의는 위법 인정이 아니라는 구별을 시험하는 가상 사례. 실제 사건이 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-pac-decision-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/pac/decision/001",
+      "locator": {"kind": "pdf_page", "value": "5"},
+      "authority_type": "pac_decision",
+      "decision_date": "2025-03-01",
+      "risk_channels": ["correction"],
+      "text": "합성 요약(원문 아님): 제목과 본문의 인상 차이를 다루는 가상 결정. 날짜 필터 시험용이며 실제 결정이 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-pac-election-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/pac/election/001",
+      "locator": {"kind": "pdf_page", "value": "2"},
+      "authority_type": "pac_election_review",
+      "decision_date": null,
+      "risk_channels": ["pac_election"],
+      "text": "합성 요약(원문 아님): 선거 관련 보도의 사실 확인 의무를 다루는 가상 심의 사례. 실제 심의가 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-iendc-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/iendc/001",
+      "locator": {"kind": "html_section", "value": "심의기준 시험 항목"},
+      "authority_type": "iendc_review",
+      "decision_date": null,
+      "risk_channels": ["iendc_election"],
+      "text": "합성 요약(원문 아님): 인터넷 선거보도 심의기준 항목을 연결하는 시험용 문구. 실제 기준이 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-research-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/research/001",
+      "locator": {"kind": "pdf_page", "value": "12"},
+      "authority_type": "research",
+      "decision_date": null,
+      "risk_channels": ["civil"],
+      "text": "합성 요약(원문 아님): 학술 의견은 현행 법리가 아니라는 구별을 시험하는 가상 논문 문구. 실제 논문이 아니다.",
+      "is_fixture": true
+    },
+    {
+      "source_id": "fixture-correction-001",
+      "passage_id": "p1",
+      "url": "https://example.invalid/fixture/correction/001",
+      "locator": {"kind": "html_section", "value": "정정 기사 본문"},
+      "authority_type": "correction",
+      "decision_date": null,
+      "risk_channels": ["correction"],
+      "text": "합성 요약(원문 아님): 원보도와 정정 기사의 연결 확신이 없으면 수정 쌍으로 쓰지 않는다는 시험용 문구. 실제 정정 기사가 아니다.",
+      "is_fixture": true
+    }
+  ]
+}

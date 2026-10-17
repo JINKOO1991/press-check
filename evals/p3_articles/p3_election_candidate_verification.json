@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-election-candidate-verification",
+  "publication_date": "2026-05-20",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "G후보 과거 소송 이력 확인…본인 “사실과 다르다”"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "공개 판결문 기준 보도, 후보 측 반박 함께 게재"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "법원에 공개된 판결문에 따르면 G후보는 2019년 민사 소송의 피고였다. 판결은 일부 청구를 받아들이는 내용이었다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "G후보 측은 “판결 이후 합의로 정리된 사안”이라며 “일부 표현은 사실과 다르다”고 반박했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": "제9회 전국동시지방선거 선거운동 기간",
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

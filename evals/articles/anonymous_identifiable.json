@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-anonymous_identifiable",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "가상대 교수, 연구비 사용 내역 논란"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "가상시 소재 가상대 의대 소속 50대 A교수가 연구비 사용 내역과 관련해 학내 조사를 받고 있다."
+    },
+    {
+      "block_id": "cap",
+      "section": "caption",
+      "text": "사진 설명: 지난해 학회장으로 선출된 가상대 의대 교수진 단체 사진 (앞줄 왼쪽에서 두 번째)"
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다."
+    ],
+    "sensitive_material": true
+  }
+}

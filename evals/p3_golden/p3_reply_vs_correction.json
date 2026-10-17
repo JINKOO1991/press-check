@@ -1,0 +1,50 @@
+{
+  "note": "합성 기준 출력. 반론 경로만 표시하고 정정·형사 경로는 붙이지 않는다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p2",
+        "start": 11,
+        "end": 25,
+        "quote": "효용 검증이 충분하지 않다"
+      },
+      "priority_stars": 1,
+      "risk_channels": [
+        "reply"
+      ],
+      "issue_category": "reply_opportunity_unknown",
+      "review_confidence": "low",
+      "reason_short": "평가 발언에 대한 D병원 측 입장이 실렸지만 추가 반론 요청 가능성은 확인하세요.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "D병원 측 반론 요청 접수 여부와 그 범위를 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "pac_cases:1212",
+          "passage_id": "pac_cases:1212#8585:2025서울조정1362‧1363‧1364#c1"
+        }
+      ],
+      "counter_considerations": [
+        "도입 일정은 공시 문서 기준이며 평가 부분은 인용 발언이다."
+      ]
+    }
+  ],
+  "explanations": {
+    "finding-001": {
+      "applicable_issue": "반론보도 경로. 사실 오류를 전제로 하는 정정보도 경로와 구분한다.",
+      "article_context": "도입 일정은 공시 문서와 일치하고 효용 평가는 취재원의 발언으로 처리됐다.",
+      "support": "조정 사례 passage의 앞부분: “{{quote|pac_cases:1212#8585:2025서울조정1362‧1363‧1364#c1|0|40}}”",
+      "differences": "인용한 사례는 사실관계 오류가 인정돼 정정이 이뤄진 사안이다. 이번 기사에서 사실 오류를 보여 주는 근거는 없다.",
+      "required_checks": [
+        "반론 요청 접수 여부 확인"
+      ],
+      "uncertainty": "반론 가능성은 허위나 위법을 뜻하지 않는다."
+    }
+  }
+}

@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source record",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "source_id": {
+      "type": "string"
+    },
+    "source_family": {
+      "enum": [
+        "pac_cases",
+        "pac_election",
+        "pac_other",
+        "iendc",
+        "law_go_kr",
+        "scourt",
+        "naver",
+        "daum",
+        "publisher",
+        "research"
+      ]
+    },
+    "canonical_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "document_title": {
+      "type": "string"
+    },
+    "publication_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decision_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "access_status": {
+      "enum": [
+        "available",
+        "restricted",
+        "missing",
+        "not_checked"
+      ]
+    },
+    "collection_enabled": {
+      "type": "boolean"
+    },
+    "robots": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fetch_status": {
+          "enum": [
+            "checked",
+            "unavailable",
+            "not_checked"
+          ]
+        },
+        "purpose_status": {
+          "enum": [
+            "allowed",
+            "disallowed",
+            "unknown"
+          ]
+        },
+        "policy_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fetch_status",
+        "purpose_status",
+        "policy_url",
+        "notes"
+      ]
+    },
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "read": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "store_raw": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "create_derivatives": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "external_api": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "redistribute_raw": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "redistribute_derivatives": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        },
+        "fine_tune": {
+          "enum": [
+            "allowed",
+            "forbidden",
+            "permission_required",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "read",
+        "store_raw",
+        "create_derivatives",
+        "external_api",
+        "redistribute_raw",
+        "redistribute_derivatives",
+        "fine_tune"
+      ]
+    },
+    "rights_basis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "review_status": {
+            "enum": [
+              "verified",
+              "pending"
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "checked_at",
+          "scope",
+          "review_status"
+        ]
+      }
+    },
+    "raw_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "not_started",
+            "extracted",
+            "needs_ocr",
+            "failed",
+            "quarantined"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pages_expected": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "pages_extracted": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "status",
+        "version",
+        "pages_expected",
+        "pages_extracted"
+      ]
+    },
+    "outcome_type": {
+      "enum": [
+        "judgment",
+        "decision",
+        "settlement",
+        "withdrawal",
+        "dismissal_procedural",
+        "dismissal_merits",
+        "correction",
+        "guideline",
+        "research",
+        "unknown"
+      ]
+    },
+    "before_after_status": {
+      "enum": [
+        "not_applicable",
+        "before_missing",
+        "partial_quote",
+        "full_pair_verified",
+        "unverified_pair"
+      ]
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "source_id",
+    "source_family",
+    "canonical_url",
+    "document_title",
+    "publication_date",
+    "decision_date",
+    "checked_at",
+    "access_status",
+    "collection_enabled",
+    "robots",
+    "rights",
+    "rights_basis",
+    "raw_sha256",
+    "extraction",
+    "outcome_type",
+    "before_after_status",
+    "notes"
+  ]
+}

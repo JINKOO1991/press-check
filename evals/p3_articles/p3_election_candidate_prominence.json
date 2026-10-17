@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-election-candidate-prominence",
+  "publication_date": "2026-05-28",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "H후보 유세 현장에 시민 몰려"
+    },
+    {
+      "block_id": "sub",
+      "section": "subtitle",
+      "text": "주말 유세 현장 스케치"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "H후보는 28일 오후 시장 앞에서 유세를 열었다. 현장에는 주최 측 추산 시민 2000여 명이 모였다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "I후보는 같은 날 오전 노인복지관을 방문해 간담회를 열었다. 두 후보 모두 일정 사진을 공개했다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": "제9회 전국동시지방선거 선거운동 기간",
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

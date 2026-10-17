@@ -1,0 +1,27 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-followup_outcome",
+  "publication_date": "2024-03-01",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "D씨 입건"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "경찰은 2024년 2월 D씨를 입건했다고 밝혔다. 당시 경찰 발표에 따르면 입건 사실 자체는 확인됐다."
+    }
+  ],
+  "context": {
+    "genre": "news",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다.",
+      "2026-09 검찰이 불기소 처분한 사실 확인됨",
+      "2024-03 원문은 당시 경찰 발표에 부합"
+    ],
+    "sensitive_material": false
+  }
+}

@@ -1,0 +1,271 @@
+{
+ "schema_version": 1,
+ "_note": "회귀 세트 v0. 순위 상수(권위 가중 1.10·1.01·1.0, 목록 장 강등, 2글자 IDF)를 정하는 순위 품질 작업(round2)에서 쓴 질의다. tune 자료이므로 test gold 로 쓰지 않고 라벨 없는 분포 지표에만 쓴다(P4_DESIGN §5.2). kind=general 21개, exact_check 3개(사건번호·조문 정확 검색 확인용; 같은 작업 기록에 함께 있었고 gold 표본에서도 뺀다). 이 파일에는 라벨이 없다.",
+ "source": "round2_results.json 의 키(회수 2026-10-10)",
+ "queries": [
+  {
+   "id": "v0-01",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "반론보도",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-02",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "조선일보 정정보도",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-03",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "반론보도 청구 기각",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-04",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "인터넷 기사 삭제",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-05",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "취하",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-06",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "초상",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-07",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "실명",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-08",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "공인",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-09",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "사과",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-10",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "익명",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-11",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "음주 사고",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-12",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "정정보도 청구",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-13",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "자살",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-14",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "사진",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-15",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "의혹",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-16",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "명예훼손 손해배상",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-17",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "초상권 침해",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-18",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "사생활 침해 보도",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-19",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "전문가",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-20",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "어린이 보호",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-21",
+   "set": "regression_v0",
+   "kind": "general",
+   "text": "기자가 취재",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-22",
+   "set": "regression_v0",
+   "kind": "exact_check",
+   "text": "2011서울조정1462",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-23",
+   "set": "regression_v0",
+   "kind": "exact_check",
+   "text": "99나27325",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  },
+  {
+   "id": "v0-24",
+   "set": "regression_v0",
+   "kind": "exact_check",
+   "text": "언론중재법 제14조",
+   "params": {
+    "limit": 10
+   },
+   "split": "tune",
+   "tune": true
+  }
+ ]
+}

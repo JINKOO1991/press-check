@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "article_id": "p3-policy-commentary",
+  "publication_date": "2026-09-26",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "지역화폐 확대, 재정 부담을 비켜 갈 수 없다"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "E시가 공개한 2025년 결산서에 따르면 지역화폐 발행 지원금은 120억 원이었다. 같은 해 시의 가용 재원은 전년보다 줄었다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "지역화폐가 소비를 늘린다는 주장은 일리가 있다. 그러나 줄어드는 재원에서 지원금을 늘리려면 다른 사업을 줄여야 한다. 시는 우선순위를 시민에게 설명해야 한다고 본다."
+    }
+  ],
+  "context": {
+    "genre": "opinion",
+    "election_context": null,
+    "verification_notes": [
+      "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+    ],
+    "sensitive_material": false
+  }
+}

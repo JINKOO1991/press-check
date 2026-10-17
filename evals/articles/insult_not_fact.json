@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-insult_not_fact",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "[칼럼] 의회 토론의 품격"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "지난 4일 가상시의회 본회의에서 박의원이 예산안 설명 도중 발언 시간을 넘겼다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "박의원은 인간쓰레기이고 정치판의 기생충이다. 그런 사람이 의회에 앉아 있다는 것 자체가 수치다."
+    }
+  ],
+  "context": {
+    "genre": "opinion",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다."
+    ],
+    "sensitive_material": false
+  }
+}

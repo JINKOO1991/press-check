@@ -1,0 +1,3419 @@
+{
+ "what": "검색 하네스 실행 결과. 법률 정확도·모델 성능을 재지 않는다. 라벨 없는 분포 지표와 자동 gold(dev) 판정이며 사건 단위 관련성 등급은 없다.",
+ "snapshot_id": "idx-34b8367d1dfe423d",
+ "index_file": "corpus-idx-34b8367d1dfe423d.sqlite",
+ "git": {
+  "commit": "b479573ed765547c02327840e979dcd557046fee",
+  "dirty_tracked_files": 0
+ },
+ "rank_constants": {
+  "AUTHORITY_WEIGHTS": {
+   "judgment": 1.1,
+   "pac_decision": 1.01,
+   "pac_settlement": 1.01,
+   "pac_election_review": 1.01,
+   "iendc_review": 1.01,
+   "research": 1.0
+  },
+  "CANDIDATE_CAP": 200,
+  "MAX_PHRASES": 24,
+  "MAX_GRAMS": 24,
+  "BIGRAM_K1": 1.2,
+  "LIST_CHUNK_FAMILIES": [
+   "pac_adjustment_casebooks",
+   "pac_correction_casebooks"
+  ],
+  "KEEP_INDEXES": 3,
+  "INDEX_FORMAT": "pdr-index-3"
+ },
+ "env": {
+  "python": "3.12.3",
+  "sqlite": "3.45.1",
+  "fts_trigram_available": true,
+  "index_has_trigram": true,
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpus": 16,
+  "note": "판례 본문 수신 프로세스 동시 실행 중; pool=20 은 search_eval(평가 전용)"
+ },
+ "query_files": {
+  "regression_v0.json": "98bb9d4b049c2a2f",
+  "gold_auto_dev.json": "662e3c61b99d2586",
+  "latency_load.json": "fbca7e622cbd10b3"
+ },
+ "variants": {
+  "current": {
+   "by_set": {
+    "regression_v0": {
+     "queries": 24,
+     "zero_result_queries": 0,
+     "top10_authority_total": {
+      "judgment": 47,
+      "pac_decision": 20,
+      "research": 153,
+      "pac_settlement": 6,
+      "guideline": 1
+     },
+     "list_chunks_top10_total": 1,
+     "research_top10_total": 153,
+     "duplicate_texts_top10_total": 4,
+     "date_unknown_top10_total": 12,
+     "results_total": 227
+    },
+    "gold_auto_dev": {
+     "queries": 24,
+     "zero_result_queries": 4,
+     "top10_authority_total": {
+      "judgment": 63,
+      "research": 65,
+      "pac_decision": 5,
+      "pac_settlement": 3,
+      "pac_election_review": 2
+     },
+     "list_chunks_top10_total": 0,
+     "research_top10_total": 65,
+     "duplicate_texts_top10_total": 4,
+     "date_unknown_top10_total": 5,
+     "results_total": 138,
+     "gold_Q7": {
+      "queries": 4,
+      "results_mean": 0.0,
+      "with_query_word@10_mean": 0.0
+     },
+     "gold_Q2": {
+      "queries": 6,
+      "hit@1_mean": 0.8333,
+      "rr_mean": 0.9167
+     },
+     "gold_Q1": {
+      "queries": 8,
+      "hit@1_mean": 1.0,
+      "hit@10_mean": 1.0,
+      "rr_mean": 1.0
+     },
+     "gold_Q6": {
+      "queries": 6,
+      "forbidden@10_mean": 0.5,
+      "queries_with_forbidden": 1
+     }
+    }
+   }
+  },
+  "no_weights": {
+   "by_set": {
+    "regression_v0": {
+     "queries": 24,
+     "zero_result_queries": 0,
+     "top10_authority_total": {
+      "judgment": 10,
+      "research": 192,
+      "pac_settlement": 6,
+      "pac_decision": 18,
+      "guideline": 1
+     },
+     "list_chunks_top10_total": 1,
+     "research_top10_total": 192,
+     "duplicate_texts_top10_total": 8,
+     "date_unknown_top10_total": 15,
+     "results_total": 227
+    },
+    "gold_auto_dev": {
+     "queries": 24,
+     "zero_result_queries": 4,
+     "top10_authority_total": {
+      "judgment": 44,
+      "research": 84,
+      "pac_decision": 5,
+      "pac_settlement": 3,
+      "pac_election_review": 2
+     },
+     "list_chunks_top10_total": 0,
+     "research_top10_total": 84,
+     "duplicate_texts_top10_total": 4,
+     "date_unknown_top10_total": 7,
+     "results_total": 138,
+     "gold_Q7": {
+      "queries": 4,
+      "results_mean": 0.0,
+      "with_query_word@10_mean": 0.0
+     },
+     "gold_Q2": {
+      "queries": 6,
+      "hit@1_mean": 0.8333,
+      "rr_mean": 0.9167
+     },
+     "gold_Q1": {
+      "queries": 8,
+      "hit@1_mean": 1.0,
+      "hit@10_mean": 1.0,
+      "rr_mean": 1.0
+     },
+     "gold_Q6": {
+      "queries": 6,
+      "forbidden@10_mean": 0.1667,
+      "queries_with_forbidden": 1
+     }
+    }
+   }
+  },
+  "no_demote": {
+   "by_set": {
+    "regression_v0": {
+     "queries": 24,
+     "zero_result_queries": 0,
+     "top10_authority_total": {
+      "judgment": 46,
+      "pac_decision": 42,
+      "research": 134,
+      "pac_settlement": 5
+     },
+     "list_chunks_top10_total": 24,
+     "research_top10_total": 134,
+     "duplicate_texts_top10_total": 8,
+     "date_unknown_top10_total": 10,
+     "results_total": 227
+    },
+    "gold_auto_dev": {
+     "queries": 24,
+     "zero_result_queries": 4,
+     "top10_authority_total": {
+      "judgment": 63,
+      "research": 64,
+      "pac_decision": 6,
+      "pac_settlement": 3,
+      "pac_election_review": 2
+     },
+     "list_chunks_top10_total": 1,
+     "research_top10_total": 64,
+     "duplicate_texts_top10_total": 4,
+     "date_unknown_top10_total": 5,
+     "results_total": 138,
+     "gold_Q7": {
+      "queries": 4,
+      "results_mean": 0.0,
+      "with_query_word@10_mean": 0.0
+     },
+     "gold_Q2": {
+      "queries": 6,
+      "hit@1_mean": 0.8333,
+      "rr_mean": 0.9167
+     },
+     "gold_Q1": {
+      "queries": 8,
+      "hit@1_mean": 1.0,
+      "hit@10_mean": 1.0,
+      "rr_mean": 1.0
+     },
+     "gold_Q6": {
+      "queries": 6,
+      "forbidden@10_mean": 0.5,
+      "queries_with_forbidden": 1
+     }
+    }
+   }
+  },
+  "bigram_only": {
+   "by_set": {
+    "regression_v0": {
+     "queries": 24,
+     "zero_result_queries": 1,
+     "top10_authority_total": {
+      "judgment": 35,
+      "research": 173,
+      "pac_decision": 11,
+      "pac_settlement": 2
+     },
+     "list_chunks_top10_total": 0,
+     "research_top10_total": 173,
+     "duplicate_texts_top10_total": 3,
+     "date_unknown_top10_total": 9,
+     "results_total": 221
+    },
+    "gold_auto_dev": {
+     "queries": 24,
+     "zero_result_queries": 1,
+     "top10_authority_total": {
+      "judgment": 63,
+      "pac_decision": 4,
+      "pac_settlement": 5,
+      "pac_election_review": 2,
+      "research": 85
+     },
+     "list_chunks_top10_total": 0,
+     "research_top10_total": 85,
+     "duplicate_texts_top10_total": 1,
+     "date_unknown_top10_total": 10,
+     "results_total": 159,
+     "gold_Q7": {
+      "queries": 4,
+      "results_mean": 7.5,
+      "with_query_word@10_mean": 0.0
+     },
+     "gold_Q2": {
+      "queries": 6,
+      "hit@1_mean": 0.8333,
+      "rr_mean": 0.9167
+     },
+     "gold_Q1": {
+      "queries": 8,
+      "hit@1_mean": 1.0,
+      "hit@10_mean": 1.0,
+      "rr_mean": 1.0
+     },
+     "gold_Q6": {
+      "queries": 6,
+      "forbidden@10_mean": 0.5,
+      "queries_with_forbidden": 1
+     }
+    }
+   }
+  }
+ },
+ "paired_vs_current": {
+  "no_weights": {
+   "queries": 48,
+   "jaccard_top10_mean": 0.7389,
+   "queries_changed": 20,
+   "list_chunks_delta_total": 0,
+   "research_delta_total": 58
+  },
+  "no_demote": {
+   "queries": 48,
+   "jaccard_top10_mean": 0.8406,
+   "queries_changed": 15,
+   "list_chunks_delta_total": 24,
+   "research_delta_total": -20
+  },
+  "bigram_only": {
+   "queries": 48,
+   "jaccard_top10_mean": 0.685,
+   "queries_changed": 19,
+   "list_chunks_delta_total": -1,
+   "research_delta_total": 40
+  }
+ },
+ "per_query_current": {
+  "v0-01": {
+   "ids": [
+    "lawgo_prec:127046:2004다50747#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:68351:2003다28439#c1",
+    "lawgo_prec:229927:99다12840#c1",
+    "lawgo_prec:136360:2008그202#c1",
+    "lawgo_prec:126732:2002다49040#c1",
+    "pac_cases:656#7788:2006광주조정15#c1",
+    "pac_other:1000#6853:w0001n00#c1",
+    "pac_other:1049#0:p0184#pc",
+    "pac_cases:656#7788:2006서울조정171#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 6,
+     "pac_decision": 2,
+     "research": 2
+    },
+    "research": 2,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:127046:2004다50747#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:68351:2003다28439#c1",
+    "lawgo_prec:229927:99다12840#c1",
+    "lawgo_prec:136360:2008그202#c1",
+    "lawgo_prec:126732:2002다49040#c1",
+    "pac_cases:656#7788:2006광주조정15#c1",
+    "pac_other:1000#6853:w0001n00#c1",
+    "pac_other:1049#0:p0184#pc",
+    "pac_cases:656#7788:2006서울조정171#c1",
+    "pac_cases:1212#8577:2025서울조정257·258#c1",
+    "pac_other:704#5567:2004다50747#c1",
+    "pac_cases:656#7788:2006서울조정315#c1",
+    "pac_other:1019#0:p0308#pc",
+    "pac_election:1175#8463:2007-시심-1#c1",
+    "pac_election:1175#8463:2007-시심-2#c1",
+    "pac_other:1215#0:p0062#pc",
+    "pac_other:999#6852:99다63138#c1",
+    "pac_other:1217#8593:p0049#pc",
+    "pac_other:538#4128:p0025#pc"
+   ],
+   "case_keys": [
+    "2004다50747",
+    "99다63138",
+    "2003다28439",
+    "99다12840",
+    "2008그202",
+    "2002다49040",
+    "2006광주조정15",
+    "pac_other:1000",
+    "pac_other:1049",
+    "2006서울조정171",
+    "2025서울조정257·258",
+    "2004다50747",
+    "2006서울조정315",
+    "pac_other:1019",
+    "2007-시심-1",
+    "2007-시심-2",
+    "pac_other:1215",
+    "99다63138",
+    "pac_other:1217",
+    "pac_other:538"
+   ]
+  },
+  "v0-02": {
+   "ids": [
+    "pac_other:984#0:p0225#pc",
+    "pac_cases:655#0:2005서울중재151~w0024#c1",
+    "pac_cases:655#0:2005서울중재258~w0037#c1",
+    "pac_cases:655#5469:2005서울중재258#c1",
+    "pac_cases:657#0:2007서울조정368~w0055#c1",
+    "pac_cases:655#5469:05서울조정150#c1",
+    "pac_other:984#0:p0224#pc",
+    "pac_cases:655#0:05서울조정150~w0058#c1",
+    "pac_cases:655#5469:2005서울중재241#c1",
+    "pac_other:704#5565:2004가합30267#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 3,
+     "pac_settlement": 4,
+     "pac_decision": 3
+    },
+    "research": 3,
+    "duplicate_texts": 1,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:984#0:p0225#pc",
+    "pac_cases:655#0:2005서울중재151~w0024#c1",
+    "pac_cases:655#0:2005서울중재258~w0037#c1",
+    "pac_cases:655#5469:2005서울중재258#c1",
+    "pac_cases:657#0:2007서울조정368~w0055#c1",
+    "pac_cases:655#5469:05서울조정150#c1",
+    "pac_other:984#0:p0224#pc",
+    "pac_cases:655#0:05서울조정150~w0058#c1",
+    "pac_cases:655#5469:2005서울중재241#c1",
+    "pac_other:704#5565:2004가합30267#c1",
+    "pac_other:700#5599:p0156#pc",
+    "pac_cases:655#5469:2005서울중재233#c1",
+    "pac_cases:655#0:2005서울중재258#c1",
+    "pac_other:669#5430:p0212#pc",
+    "pac_cases:655#0:2005서울중재247#c1",
+    "pac_cases:655#0:2005서울중재233~w0034#c1",
+    "pac_cases:655#0:2005서울중재20~w0009#c1",
+    "pac_cases:657#0:2007서울조정86~w0016#c1",
+    "pac_other:704#5565:p0003#pc",
+    "pac_other:671#5425:p0140#pc"
+   ],
+   "case_keys": [
+    "pac_other:984",
+    "2005서울중재151",
+    "2005서울중재258",
+    "2005서울중재258",
+    "2007서울조정368",
+    "05서울조정150",
+    "pac_other:984",
+    "05서울조정150",
+    "2005서울중재241",
+    "2004가합30267",
+    "pac_other:700",
+    "2005서울중재233",
+    "2005서울중재258",
+    "pac_other:669",
+    "2005서울중재247",
+    "2005서울중재233",
+    "2005서울중재20",
+    "2007서울조정86",
+    "pac_other:704",
+    "pac_other:671"
+   ]
+  },
+  "v0-03": {
+   "ids": [
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:68351:2003다28439#c1",
+    "lawgo_prec:136360:2008그202#c1",
+    "pac_other:1000#6853:2001다81450#c1",
+    "pac_other:538#4128:p0025#pc",
+    "pac_other:1019#0:p0308#pc",
+    "pac_cases:1212#8577:2025서울조정257·258#c1",
+    "pac_other:705#5538:2006나112566#c1",
+    "pac_other:1144#8321:p0159#pc",
+    "pac_other:999#6852:99다63138#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 3,
+     "research": 6,
+     "pac_decision": 1
+    },
+    "research": 6,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:68351:2003다28439#c1",
+    "lawgo_prec:136360:2008그202#c1",
+    "pac_other:1000#6853:2001다81450#c1",
+    "pac_other:538#4128:p0025#pc",
+    "pac_other:1019#0:p0308#pc",
+    "pac_cases:1212#8577:2025서울조정257·258#c1",
+    "pac_other:705#5538:2006나112566#c1",
+    "pac_other:1144#8321:p0159#pc",
+    "pac_other:999#6852:99다63138#c1",
+    "pac_cases:656#7788:2006서울조정171#c1",
+    "lawgo_prec:125300:2008그193#c1",
+    "lawgo_prec:229927:99다12840#c1",
+    "pac_other:1176#8471:2023다224433#c1",
+    "pac_other:1000#6853:w0001n00#c1",
+    "pac_other:666#5442:2007카기5982#c1",
+    "lawgo_prec:127046:2004다50747#c1",
+    "pac_cases:1212#8579:2025서울조정257·258#c1",
+    "pac_other:1000#6853:p0012#pc",
+    "pac_other:666#5442:2007나41852#c1"
+   ],
+   "case_keys": [
+    "99다63138",
+    "2003다28439",
+    "2008그202",
+    "2001다81450",
+    "pac_other:538",
+    "pac_other:1019",
+    "2025서울조정257·258",
+    "2006나112566",
+    "pac_other:1144",
+    "99다63138",
+    "2006서울조정171",
+    "2008그193",
+    "99다12840",
+    "2023다224433",
+    "pac_other:1000",
+    "2007카기5982",
+    "2004다50747",
+    "2025서울조정257·258",
+    "pac_other:1000",
+    "2007나41852"
+   ]
+  },
+  "v0-04": {
+   "ids": [
+    "lawgo_prec:133979:2008다53812#c1",
+    "pac_other:1073#0:p0142#pc",
+    "lawgo_prec:177822:2012도13748#c1",
+    "pac_other:1043#0:p0081#pc",
+    "pac_other:static12#2111585172:p0082#pc",
+    "pac_other:992#0:p0063#pc",
+    "pac_other:992#6816:p0002#pc",
+    "pac_other:887#7442:p0043#pc",
+    "pac_other:580#0:p0045#pc",
+    "pac_other:1086#8054:p0171#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 2,
+     "research": 7,
+     "guideline": 1
+    },
+    "research": 7,
+    "duplicate_texts": 1,
+    "date_unknown": 2,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:133979:2008다53812#c1",
+    "pac_other:1073#0:p0142#pc",
+    "lawgo_prec:177822:2012도13748#c1",
+    "pac_other:1043#0:p0081#pc",
+    "pac_other:static12#2111585172:p0082#pc",
+    "pac_other:992#0:p0063#pc",
+    "pac_other:992#6816:p0002#pc",
+    "pac_other:887#7442:p0043#pc",
+    "pac_other:580#0:p0045#pc",
+    "pac_other:1086#8054:p0171#pc",
+    "pac_other:800#6322:p0027#pc",
+    "pac_other:601#5017:p0003#pc",
+    "pac_other:598#4976:p0004#pc",
+    "pac_other:744#5888:p0005#pc",
+    "pac_other:744#0:p0069#pc",
+    "pac_other:580#0:p0033#pc",
+    "pac_other:580#0:p0037#pc",
+    "pac_other:580#0:p0013#pc",
+    "pac_other:800#6322:p0028#pc",
+    "pac_other:580#0:p0041#pc"
+   ],
+   "case_keys": [
+    "2008다53812",
+    "pac_other:1073",
+    "2012도13748",
+    "pac_other:1043",
+    "pac_other:static12",
+    "pac_other:992",
+    "pac_other:992",
+    "pac_other:887",
+    "pac_other:580",
+    "pac_other:1086",
+    "pac_other:800",
+    "pac_other:601",
+    "pac_other:598",
+    "pac_other:744",
+    "pac_other:744",
+    "pac_other:580",
+    "pac_other:580",
+    "pac_other:580",
+    "pac_other:800",
+    "pac_other:580"
+   ]
+  },
+  "v0-05": {
+   "ids": [
+    "pac_other:638#0:p0183#pc",
+    "pac_other:525#4003:p0007#pc",
+    "pac_other:593#4893:p0015#pc",
+    "pac_other:984#0:p0314#pc",
+    "pac_other:502#3728:p0007#pc",
+    "pac_other:984#0:p0313#pc",
+    "pac_other:1086#8054:p0183#pc",
+    "pac_other:514#3872:p0004#pc",
+    "pac_other:522#3973:p0009#pc",
+    "pac_other:522#3975:p0021#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:638#0:p0183#pc",
+    "pac_other:525#4003:p0007#pc",
+    "pac_other:593#4893:p0015#pc",
+    "pac_other:984#0:p0314#pc",
+    "pac_other:502#3728:p0007#pc",
+    "pac_other:984#0:p0313#pc",
+    "pac_other:1086#8054:p0183#pc",
+    "pac_other:514#3872:p0004#pc",
+    "pac_other:522#3973:p0009#pc",
+    "pac_other:522#3975:p0021#pc",
+    "pac_other:523#3982:p0003#pc",
+    "pac_other:586#4761:p0006#pc",
+    "pac_other:614#5166:p0009#pc",
+    "pac_other:870#7396:p0016#pc",
+    "pac_other:505#3766:p0003#pc",
+    "pac_other:507#3785:p0006#pc",
+    "pac_other:527#4023:p0007#pc",
+    "pac_other:549#4213:p0011#pc",
+    "pac_other:609#5123:p0006#pc",
+    "pac_other:873#7410:p0010#pc"
+   ],
+   "case_keys": [
+    "pac_other:638",
+    "pac_other:525",
+    "pac_other:593",
+    "pac_other:984",
+    "pac_other:502",
+    "pac_other:984",
+    "pac_other:1086",
+    "pac_other:514",
+    "pac_other:522",
+    "pac_other:522",
+    "pac_other:523",
+    "pac_other:586",
+    "pac_other:614",
+    "pac_other:870",
+    "pac_other:505",
+    "pac_other:507",
+    "pac_other:527",
+    "pac_other:549",
+    "pac_other:609",
+    "pac_other:873"
+   ]
+  },
+  "v0-06": {
+   "ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "pac_other:556#4280:p0002#pc",
+    "pac_other:492#3600:p0002#pc",
+    "pac_other:961#7493:p0156#pc",
+    "pac_other:961#7493:p0154#pc",
+    "pac_other:556#4280:p0003#pc",
+    "pac_other:556#4280:p0004#pc",
+    "pac_other:556#4280:p0012#pc",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:798#0:2016가합101939#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 9
+    },
+    "research": 9,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "pac_other:556#4280:p0002#pc",
+    "pac_other:492#3600:p0002#pc",
+    "pac_other:961#7493:p0156#pc",
+    "pac_other:961#7493:p0154#pc",
+    "pac_other:556#4280:p0003#pc",
+    "pac_other:556#4280:p0004#pc",
+    "pac_other:556#4280:p0012#pc",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:798#0:2016가합101939#c1",
+    "pac_other:593#4898:p0016#pc",
+    "pac_other:961#7493:p0155#pc",
+    "pac_other:1075#7751:p0031#pc",
+    "pac_other:556#4280:p0005#pc",
+    "pac_other:614#5166:p0021#pc",
+    "pac_other:492#3600:p0007#pc",
+    "pac_other:595#4932:p0003#pc",
+    "pac_other:1075#7751:p0001#pc",
+    "pac_other:1162#0:p0070#pc",
+    "pac_other:556#4280:p0013#pc"
+   ],
+   "case_keys": [
+    "2020다253423",
+    "pac_other:556",
+    "pac_other:492",
+    "pac_other:961",
+    "pac_other:961",
+    "pac_other:556",
+    "pac_other:556",
+    "pac_other:556",
+    "pac_other:1075",
+    "2016가합101939",
+    "pac_other:593",
+    "pac_other:961",
+    "pac_other:1075",
+    "pac_other:556",
+    "pac_other:614",
+    "pac_other:492",
+    "pac_other:595",
+    "pac_other:1075",
+    "pac_other:1162",
+    "pac_other:556"
+   ]
+  },
+  "v0-07": {
+   "ids": [
+    "lawgo_prec:226451:2015도9917#c1",
+    "lawgo_prec:112832:95도1729#c1",
+    "lawgo_prec:168607:2012도13607#c1",
+    "lawgo_prec:139169:2007다71#c1",
+    "lawgo_prec:237139:2021도11170#c1",
+    "pac_other:596#4946:p0008#pc",
+    "pac_other:604#5065:p0013#pc",
+    "pac_other:551#4231:p0013#pc",
+    "pac_other:532#4067:p0005#pc",
+    "pac_other:557#4287:p0005#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 5,
+     "research": 5
+    },
+    "research": 5,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:226451:2015도9917#c1",
+    "lawgo_prec:112832:95도1729#c1",
+    "lawgo_prec:168607:2012도13607#c1",
+    "lawgo_prec:139169:2007다71#c1",
+    "lawgo_prec:237139:2021도11170#c1",
+    "pac_other:596#4946:p0008#pc",
+    "pac_other:604#5065:p0013#pc",
+    "pac_other:551#4231:p0013#pc",
+    "pac_other:532#4067:p0005#pc",
+    "pac_other:557#4287:p0005#pc",
+    "lawgo_prec:209162:95도1964#c1",
+    "pac_other:1093#8079:p0013#pc",
+    "pac_other:580#0:p0017#pc",
+    "pac_other:605#5082:p0016#pc",
+    "pac_other:1023#7246:p0026#pc",
+    "pac_other:532#4067:p0004#pc",
+    "pac_other:585#4740:p0004#pc",
+    "pac_other:667#5434:p0304#pc",
+    "pac_other:1023#7246:p0013#pc",
+    "pac_other:532#4067:p0007#pc"
+   ],
+   "case_keys": [
+    "2015도9917",
+    "95도1729",
+    "2012도13607",
+    "2007다71",
+    "2021도11170",
+    "pac_other:596",
+    "pac_other:604",
+    "pac_other:551",
+    "pac_other:532",
+    "pac_other:557",
+    "95도1964",
+    "pac_other:1093",
+    "pac_other:580",
+    "pac_other:605",
+    "pac_other:1023",
+    "pac_other:532",
+    "pac_other:585",
+    "pac_other:667",
+    "pac_other:1023",
+    "pac_other:532"
+   ]
+  },
+  "v0-08": {
+   "ids": [
+    "pac_other:1029#7026:p0020#pc",
+    "pac_other:895#7549:p0003#pc",
+    "pac_other:1029#7026:p0019#pc",
+    "pac_other:700#5600:p0017#pc",
+    "pac_other:594#4904:p0007#pc",
+    "pac_other:614#5160:p0003#pc",
+    "pac_other:1029#7026:p0031#pc",
+    "pac_other:602#5036:p0005#pc",
+    "pac_other:622#5259:p0003#pc",
+    "pac_other:587#4780:p0004#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 1,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1029#7026:p0020#pc",
+    "pac_other:895#7549:p0003#pc",
+    "pac_other:1029#7026:p0019#pc",
+    "pac_other:700#5600:p0017#pc",
+    "pac_other:594#4904:p0007#pc",
+    "pac_other:614#5160:p0003#pc",
+    "pac_other:1029#7026:p0031#pc",
+    "pac_other:602#5036:p0005#pc",
+    "pac_other:622#5259:p0003#pc",
+    "pac_other:587#4780:p0004#pc",
+    "pac_other:597#4960:p0010#pc",
+    "pac_other:622#5259:p0002#pc",
+    "pac_other:622#5259:p0040#pc",
+    "pac_other:888#7444:p0004#pc",
+    "pac_other:1029#7026:p0021#pc",
+    "pac_other:622#5259:p0006#pc",
+    "pac_other:888#0:p0005#pc",
+    "pac_other:992#0:p0012#pc",
+    "pac_other:992#6819:p0009#pc",
+    "pac_other:1029#7026:p0012#pc"
+   ],
+   "case_keys": [
+    "pac_other:1029",
+    "pac_other:895",
+    "pac_other:1029",
+    "pac_other:700",
+    "pac_other:594",
+    "pac_other:614",
+    "pac_other:1029",
+    "pac_other:602",
+    "pac_other:622",
+    "pac_other:587",
+    "pac_other:597",
+    "pac_other:622",
+    "pac_other:622",
+    "pac_other:888",
+    "pac_other:1029",
+    "pac_other:622",
+    "pac_other:888",
+    "pac_other:992",
+    "pac_other:992",
+    "pac_other:1029"
+   ]
+  },
+  "v0-09": {
+   "ids": [
+    "pac_other:700#5599:2001가합17072#c1",
+    "pac_other:670#5427:p0197#pc",
+    "pac_other:671#5425:p0204#pc",
+    "pac_other:600#4998:p0002#pc",
+    "pac_other:700#5599:p0045#pc",
+    "pac_other:700#5599:p0030#pc",
+    "pac_other:1002#6870:p0031#pc",
+    "pac_other:534#4080:p0001#pc",
+    "pac_other:700#5599:p0051#pc",
+    "pac_other:670#5427:p0333#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 4,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:700#5599:2001가합17072#c1",
+    "pac_other:670#5427:p0197#pc",
+    "pac_other:671#5425:p0204#pc",
+    "pac_other:600#4998:p0002#pc",
+    "pac_other:700#5599:p0045#pc",
+    "pac_other:700#5599:p0030#pc",
+    "pac_other:1002#6870:p0031#pc",
+    "pac_other:534#4080:p0001#pc",
+    "pac_other:700#5599:p0051#pc",
+    "pac_other:670#5427:p0333#pc",
+    "pac_other:670#5427:p0339#pc",
+    "pac_other:671#5425:p0212#pc",
+    "pac_other:700#5599:p0031#pc",
+    "pac_other:585#4742:p0006#pc",
+    "pac_other:670#5427:2011가합23621#c1",
+    "pac_other:670#5427:p0199#pc",
+    "pac_other:1002#6870:p0087#pc",
+    "pac_other:534#4080:p0002#pc",
+    "pac_other:596#4945:p0004#pc",
+    "pac_other:612#5150:p0010#pc"
+   ],
+   "case_keys": [
+    "2001가합17072",
+    "pac_other:670",
+    "pac_other:671",
+    "pac_other:600",
+    "pac_other:700",
+    "pac_other:700",
+    "pac_other:1002",
+    "pac_other:534",
+    "pac_other:700",
+    "pac_other:670",
+    "pac_other:670",
+    "pac_other:671",
+    "pac_other:700",
+    "pac_other:585",
+    "2011가합23621",
+    "pac_other:670",
+    "pac_other:1002",
+    "pac_other:534",
+    "pac_other:596",
+    "pac_other:612"
+   ]
+  },
+  "v0-10": {
+   "ids": [
+    "pac_other:1037#7088:p0002#pc",
+    "pac_other:594#4913:p0006#pc",
+    "pac_other:568#0:p0028#pc",
+    "pac_other:1037#0:p0095#pc",
+    "pac_other:545#4177:p0002#pc",
+    "pac_other:1023#7242:p0003#pc",
+    "pac_other:512#3842:p0004#pc",
+    "pac_other:596#4943:p0004#pc",
+    "pac_other:568#0:p0023#pc",
+    "pac_other:594#4913:p0003#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 1,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1037#7088:p0002#pc",
+    "pac_other:594#4913:p0006#pc",
+    "pac_other:568#0:p0028#pc",
+    "pac_other:1037#0:p0095#pc",
+    "pac_other:545#4177:p0002#pc",
+    "pac_other:1023#7242:p0003#pc",
+    "pac_other:512#3842:p0004#pc",
+    "pac_other:596#4943:p0004#pc",
+    "pac_other:568#0:p0023#pc",
+    "pac_other:594#4913:p0003#pc",
+    "pac_other:823#7646:p0003#pc",
+    "pac_other:1148#8336:p0002#pc",
+    "pac_other:598#4970:p0004#pc",
+    "pac_other:609#5118:p0010#pc",
+    "pac_other:1072#7739:p0002#pc",
+    "pac_other:1148#8336:p0004#pc",
+    "pac_other:587#4778:p0002#pc",
+    "pac_other:591#4858:p0001#pc",
+    "pac_other:600#5002:p0004#pc",
+    "pac_other:616#5190:p0001#pc"
+   ],
+   "case_keys": [
+    "pac_other:1037",
+    "pac_other:594",
+    "pac_other:568",
+    "pac_other:1037",
+    "pac_other:545",
+    "pac_other:1023",
+    "pac_other:512",
+    "pac_other:596",
+    "pac_other:568",
+    "pac_other:594",
+    "pac_other:823",
+    "pac_other:1148",
+    "pac_other:598",
+    "pac_other:609",
+    "pac_other:1072",
+    "pac_other:1148",
+    "pac_other:587",
+    "pac_other:591",
+    "pac_other:600",
+    "pac_other:616"
+   ]
+  },
+  "v0-11": {
+   "ids": [
+    "lawgo_prec:116666:97다54482#c1",
+    "pac_other:798#0:p0147#pc",
+    "pac_other:798#0:p0146#pc",
+    "pac_other:798#0:p0148#pc",
+    "pac_other:798#0:2015가단5277893#c1",
+    "pac_cases:659#7801:2009경기조정32#c1",
+    "pac_other:1085#8050:p0003#pc",
+    "pac_other:512#3845:p0025#pc",
+    "pac_cases:655#5469:05서울조정85#c1",
+    "pac_other:798#0:p0144#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 7,
+     "pac_decision": 1,
+     "pac_settlement": 1
+    },
+    "research": 7,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:116666:97다54482#c1",
+    "pac_other:798#0:p0147#pc",
+    "pac_other:798#0:p0146#pc",
+    "pac_other:798#0:p0148#pc",
+    "pac_other:798#0:2015가단5277893#c1",
+    "pac_cases:659#7801:2009경기조정32#c1",
+    "pac_other:1085#8050:p0003#pc",
+    "pac_other:512#3845:p0025#pc",
+    "pac_cases:655#5469:05서울조정85#c1",
+    "pac_other:798#0:p0144#pc",
+    "pac_cases:1212#8577:2025서울조정34·35,2025서울조정36·37(병합)#c1",
+    "pac_other:997#6841:p0012#pc",
+    "lawgo_prec:83566:2004도6784#c1",
+    "pac_other:999#6850:p0087#pc",
+    "pac_other:997#6841:p0011#pc",
+    "pac_other:594#4906:p0002#pc",
+    "pac_other:999#6850:p0089#pc",
+    "pac_cases:655#5469:05서울조정7#c1",
+    "pac_other:999#6850:p0088#pc",
+    "pac_cases:658#0:2008서울조정352~w0066#c1"
+   ],
+   "case_keys": [
+    "97다54482",
+    "pac_other:798",
+    "pac_other:798",
+    "pac_other:798",
+    "2015가단5277893",
+    "2009경기조정32",
+    "pac_other:1085",
+    "pac_other:512",
+    "05서울조정85",
+    "pac_other:798",
+    "2025서울조정34·35, 2025서울조정36·37(병합)",
+    "pac_other:997",
+    "2004도6784",
+    "pac_other:999",
+    "pac_other:997",
+    "pac_other:594",
+    "pac_other:999",
+    "05서울조정7",
+    "pac_other:999",
+    "2008서울조정352"
+   ]
+  },
+  "v0-12": {
+   "ids": [
+    "lawgo_prec:116365:96다40998#c1",
+    "lawgo_prec:196745:97다28803#c1",
+    "lawgo_prec:102535:86다카818#c1",
+    "lawgo_prec:101372:85다카1973#c1",
+    "pac_other:514#3871:p0016#pc",
+    "lawgo_prec:166493:2011다86782#c1",
+    "lawgo_prec:114638:95다37278#c1",
+    "lawgo_prec:108009:90다카25468#c1",
+    "pac_other:1176#8469:p0045#pc",
+    "pac_other:1176#8470:p0043#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 7,
+     "research": 3
+    },
+    "research": 3,
+    "duplicate_texts": 1,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:116365:96다40998#c1",
+    "lawgo_prec:196745:97다28803#c1",
+    "lawgo_prec:102535:86다카818#c1",
+    "lawgo_prec:101372:85다카1973#c1",
+    "pac_other:514#3871:p0016#pc",
+    "lawgo_prec:166493:2011다86782#c1",
+    "lawgo_prec:114638:95다37278#c1",
+    "lawgo_prec:108009:90다카25468#c1",
+    "pac_other:1176#8469:p0045#pc",
+    "pac_other:1176#8470:p0043#pc",
+    "pac_other:1215#0:p0059#pc",
+    "pac_other:1167#8406:p0025#pc",
+    "pac_other:1217#8593:p0046#pc",
+    "pac_other:1203#8548:p0005#pc",
+    "pac_other:529#4040:p0047#pc",
+    "pac_other:1047#7166:p0018#pc",
+    "pac_other:1144#8320:p0040#pc",
+    "pac_other:529#4040:p0043#pc",
+    "pac_other:1086#8055:p0039#pc",
+    "lawgo_prec:68921:2007다2275#c1"
+   ],
+   "case_keys": [
+    "96다40998",
+    "97다28803",
+    "86다카818",
+    "85다카1973",
+    "pac_other:514",
+    "2011다86782",
+    "95다37278",
+    "90다카25468",
+    "pac_other:1176",
+    "pac_other:1176",
+    "pac_other:1215",
+    "pac_other:1167",
+    "pac_other:1217",
+    "pac_other:1203",
+    "pac_other:529",
+    "pac_other:1047",
+    "pac_other:1144",
+    "pac_other:529",
+    "pac_other:1086",
+    "2007다2275"
+   ]
+  },
+  "v0-13": {
+   "ids": [
+    "pac_other:1051#7196:p0005#pc",
+    "pac_other:1051#7196:p0002#pc",
+    "pac_other:1194#0:p0109#pc",
+    "pac_other:598#4974:p0004#pc",
+    "pac_other:598#4974:p0005#pc",
+    "pac_other:621#5245:p0008#pc",
+    "pac_other:1051#7196:p0003#pc",
+    "pac_other:1194#0:p0135#pc",
+    "pac_other:1194#0:p0136#pc",
+    "pac_other:621#5245:p0010#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1051#7196:p0005#pc",
+    "pac_other:1051#7196:p0002#pc",
+    "pac_other:1194#0:p0109#pc",
+    "pac_other:598#4974:p0004#pc",
+    "pac_other:598#4974:p0005#pc",
+    "pac_other:621#5245:p0008#pc",
+    "pac_other:1051#7196:p0003#pc",
+    "pac_other:1194#0:p0135#pc",
+    "pac_other:1194#0:p0136#pc",
+    "pac_other:621#5245:p0010#pc",
+    "pac_other:598#4974:p0006#pc",
+    "pac_other:1051#0:p0088#pc",
+    "pac_other:1051#7196:p0006#pc",
+    "pac_other:621#5245:p0009#pc",
+    "pac_other:1051#7196:p0004#pc",
+    "pac_other:1051#7196:p0007#pc",
+    "pac_other:598#4974:p0003#pc",
+    "pac_other:1051#0:p0083#pc",
+    "pac_other:1129#8209:p0012#pc",
+    "pac_cases:658#7796:2008신심17#c1"
+   ],
+   "case_keys": [
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:1194",
+    "pac_other:598",
+    "pac_other:598",
+    "pac_other:621",
+    "pac_other:1051",
+    "pac_other:1194",
+    "pac_other:1194",
+    "pac_other:621",
+    "pac_other:598",
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:621",
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:598",
+    "pac_other:1051",
+    "pac_other:1129",
+    "2008신심17"
+   ]
+  },
+  "v0-14": {
+   "ids": [
+    "lawgo_prec:107462:90다카8845#c1",
+    "lawgo_prec:167838:2010다103185#c1",
+    "lawgo_prec:605971:2025도4697#c1",
+    "lawgo_prec:115807:97도1230#c1",
+    "lawgo_prec:217373:2021다219116#c1",
+    "pac_other:511#3831:p0006#pc",
+    "pac_other:511#3831:p0005#pc",
+    "pac_other:1019#0:2018나57023#c1",
+    "pac_other:511#3831:p0001#pc",
+    "pac_other:511#3833:p0006#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 5,
+     "research": 5
+    },
+    "research": 5,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:107462:90다카8845#c1",
+    "lawgo_prec:167838:2010다103185#c1",
+    "lawgo_prec:605971:2025도4697#c1",
+    "lawgo_prec:115807:97도1230#c1",
+    "lawgo_prec:217373:2021다219116#c1",
+    "pac_other:511#3831:p0006#pc",
+    "pac_other:511#3831:p0005#pc",
+    "pac_other:1019#0:2018나57023#c1",
+    "pac_other:511#3831:p0001#pc",
+    "pac_other:511#3833:p0006#pc",
+    "pac_other:504#3743:p0005#pc",
+    "pac_other:511#3833:p0003#pc",
+    "pac_other:511#3833:p0008#pc",
+    "pac_other:608#5109:p0050#pc",
+    "pac_other:511#3831:p0011#pc",
+    "pac_other:511#3833:p0007#pc",
+    "pac_other:511#3831:p0002#pc",
+    "pac_other:511#3833:p0009#pc",
+    "pac_other:511#3831:p0004#pc",
+    "pac_other:525#3999:p0003#pc"
+   ],
+   "case_keys": [
+    "90다카8845",
+    "2010다103185",
+    "2025도4697",
+    "97도1230",
+    "2021다219116",
+    "pac_other:511",
+    "pac_other:511",
+    "2018나57023",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:504",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:608",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:525"
+   ]
+  },
+  "v0-15": {
+   "ids": [
+    "lawgo_prec:183976:2015도14375#c1",
+    "lawgo_prec:241865:2023도16586#c1",
+    "lawgo_prec:622961:2025다220404#c1",
+    "pac_cases:658#0:2008경기조정61~w0068#c1",
+    "lawgo_prec:204189:2014다61654#c1",
+    "pac_other:1215#0:p0268#pc",
+    "pac_other:1215#8592:p0187#pc",
+    "pac_other:587#4783:p0004#pc",
+    "pac_other:1215#0:2025노1217#c1",
+    "pac_other:1215#0:p0258#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 4,
+     "pac_settlement": 1,
+     "research": 5
+    },
+    "research": 5,
+    "duplicate_texts": 1,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:183976:2015도14375#c1",
+    "lawgo_prec:241865:2023도16586#c1",
+    "lawgo_prec:622961:2025다220404#c1",
+    "pac_cases:658#0:2008경기조정61~w0068#c1",
+    "lawgo_prec:204189:2014다61654#c1",
+    "pac_other:1215#0:p0268#pc",
+    "pac_other:1215#8592:p0187#pc",
+    "pac_other:587#4783:p0004#pc",
+    "pac_other:1215#0:2025노1217#c1",
+    "pac_other:1215#0:p0258#pc",
+    "pac_other:1215#8592:p0177#pc",
+    "lawgo_prec:159837:2008도11847#c1",
+    "lawgo_prec:215151:2016도14995#c1",
+    "pac_other:1019#0:p0329#pc",
+    "pac_other:1176#8472:2023가합65738#c1",
+    "pac_other:1191#8505:p0068#pc",
+    "pac_other:1215#8592:2025노1217#c1",
+    "pac_other:593#4894:p0012#pc",
+    "pac_other:595#4923:p0012#pc",
+    "pac_other:595#4923:p0013#pc"
+   ],
+   "case_keys": [
+    "2015도14375",
+    "2023도16586",
+    "2025다220404",
+    "2008경기조정61",
+    "2014다61654",
+    "pac_other:1215",
+    "pac_other:1215",
+    "pac_other:587",
+    "2025노1217",
+    "pac_other:1215",
+    "pac_other:1215",
+    "2008도11847",
+    "2016도14995",
+    "pac_other:1019",
+    "2023가합65738",
+    "pac_other:1191",
+    "2025노1217",
+    "pac_other:593",
+    "pac_other:595",
+    "pac_other:595"
+   ]
+  },
+  "v0-16": {
+   "ids": [
+    "lawgo_prec:143970:2010다8365#c1",
+    "lawgo_prec:104335:87다카1450#c1",
+    "lawgo_prec:225429:2016다272342,272359,272366,272373,272380,272397,272403,272410,272427,272434,272441,272458,272465,272472,272489,272496,272502,272519,272526,272533#c1",
+    "lawgo_prec:617163:2022다284711,284728#c1",
+    "pac_other:548#4204:p0003#pc",
+    "lawgo_prec:104597:87다카2370#c1",
+    "pac_other:548#4204:p0006#pc",
+    "pac_cases:657#0:2007서울중재9~w0071#c1",
+    "lawgo_prec:126559:2002다72194#c1",
+    "pac_cases:657#0:2007서울중재9#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 6,
+     "research": 2,
+     "pac_decision": 2
+    },
+    "research": 2,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:143970:2010다8365#c1",
+    "lawgo_prec:104335:87다카1450#c1",
+    "lawgo_prec:225429:2016다272342,272359,272366,272373,272380,272397,272403,272410,272427,272434,272441,272458,272465,272472,272489,272496,272502,272519,272526,272533#c1",
+    "lawgo_prec:617163:2022다284711,284728#c1",
+    "pac_other:548#4204:p0003#pc",
+    "lawgo_prec:104597:87다카2370#c1",
+    "pac_other:548#4204:p0006#pc",
+    "pac_cases:657#0:2007서울중재9~w0071#c1",
+    "lawgo_prec:126559:2002다72194#c1",
+    "pac_cases:657#0:2007서울중재9#c1",
+    "pac_other:548#4204:p0002#pc",
+    "pac_cases:659#7801:2009서울조정458#c1",
+    "pac_cases:659#0:2009서울조정118#c1",
+    "pac_cases:658#0:2008서울조정50#c1",
+    "pac_cases:659#0:2009서울조정76#c1",
+    "pac_cases:659#0:2009서울조정513#c1",
+    "pac_cases:658#0:2008서울조정50~w0011#c1",
+    "lawgo_prec:177866:2011다27820#c1",
+    "pac_cases:656#0:2006서울조정418#c1",
+    "lawgo_prec:237645:2021다250735#c1"
+   ],
+   "case_keys": [
+    "2010다8365",
+    "87다카1450",
+    "2016다272342, 272359, 272366, 272373, 272380, 272397, 272403, 272410, 272427, 272434, 272441, 272458, 272465, 272472, 272489, 272496, 272502, 272519, 272526, 272533",
+    "2022다284711, 284728",
+    "pac_other:548",
+    "87다카2370",
+    "pac_other:548",
+    "2007서울중재9",
+    "2002다72194",
+    "2007서울중재9",
+    "pac_other:548",
+    "2009서울조정458",
+    "2009서울조정118",
+    "2008서울조정50",
+    "2009서울조정76",
+    "2009서울조정513",
+    "2008서울조정50",
+    "2011다27820",
+    "2006서울조정418",
+    "2021다250735"
+   ]
+  },
+  "v0-17": {
+   "ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "lawgo_prec:215865:2004다16280#c1",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:1075#7751:p0031#pc",
+    "pac_other:1075#7751:p0001#pc",
+    "lawgo_prec:170181:2012다31628#c1",
+    "pac_other:1075#7751:p0029#pc",
+    "pac_other:1075#7751:p0033#pc",
+    "lawgo_prec:216695:2020다227455#c1",
+    "pac_other:1075#7751:p0032#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 4,
+     "research": 6
+    },
+    "research": 6,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "lawgo_prec:215865:2004다16280#c1",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:1075#7751:p0031#pc",
+    "pac_other:1075#7751:p0001#pc",
+    "lawgo_prec:170181:2012다31628#c1",
+    "pac_other:1075#7751:p0029#pc",
+    "pac_other:1075#7751:p0033#pc",
+    "lawgo_prec:216695:2020다227455#c1",
+    "pac_other:1075#7751:p0032#pc",
+    "pac_other:1075#7751:p0017#pc",
+    "pac_other:1075#7751:p0018#pc",
+    "pac_other:1075#7751:p0028#pc",
+    "pac_other:1075#7751:p0027#pc",
+    "pac_other:1075#7751:p0022#pc",
+    "pac_other:1075#7751:p0026#pc",
+    "pac_other:1075#7751:p0003#pc",
+    "pac_other:1075#7751:p0024#pc",
+    "pac_other:1075#7751:p0007#pc",
+    "pac_other:878#7427:p0021#pc"
+   ],
+   "case_keys": [
+    "2020다253423",
+    "2004다16280",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "2012다31628",
+    "pac_other:1075",
+    "pac_other:1075",
+    "2020다227455",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:1075",
+    "pac_other:878"
+   ]
+  },
+  "v0-18": {
+   "ids": [
+    "lawgo_prec:170181:2012다31628#c1",
+    "pac_other:496#3659:p0010#pc",
+    "pac_other:881#7438:p0014#pc",
+    "pac_other:951#0:2016나2088859#c1",
+    "pac_other:513#3855:p0002#pc",
+    "pac_other:821#7283:p0010#pc",
+    "pac_other:509#3809:p0004#pc",
+    "pac_other:622#5259:p0036#pc",
+    "pac_other:747#0:p0084#pc",
+    "pac_other:519#3937:p0003#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 9
+    },
+    "research": 9,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:170181:2012다31628#c1",
+    "pac_other:496#3659:p0010#pc",
+    "pac_other:881#7438:p0014#pc",
+    "pac_other:951#0:2016나2088859#c1",
+    "pac_other:513#3855:p0002#pc",
+    "pac_other:821#7283:p0010#pc",
+    "pac_other:509#3809:p0004#pc",
+    "pac_other:622#5259:p0036#pc",
+    "pac_other:747#0:p0084#pc",
+    "pac_other:519#3937:p0003#pc",
+    "pac_other:962#7232:p0010#pc",
+    "pac_other:888#7444:p0040#pc",
+    "pac_other:705#5536:p0155#pc",
+    "pac_cases:662#7821:제2012-105호#c1",
+    "pac_cases:660#7805:제2010-135호#c1",
+    "lawgo_prec:215865:2004다16280#c1",
+    "pac_cases:663#7831:제2013-24호#c1",
+    "pac_other:493#3613:p0009#pc",
+    "pac_cases:656#7788:w0025n00#c1",
+    "pac_cases:660#7805:제2010-204~207호#c1"
+   ],
+   "case_keys": [
+    "2012다31628",
+    "pac_other:496",
+    "pac_other:881",
+    "2016나2088859",
+    "pac_other:513",
+    "pac_other:821",
+    "pac_other:509",
+    "pac_other:622",
+    "pac_other:747",
+    "pac_other:519",
+    "pac_other:962",
+    "pac_other:888",
+    "pac_other:705",
+    "제2012-105호",
+    "제2010-135호",
+    "2004다16280",
+    "제2013-24호",
+    "pac_other:493",
+    "pac_cases:656",
+    "제2010-204~207호"
+   ]
+  },
+  "v0-19": {
+   "ids": [
+    "pac_other:651#5326:p0008#pc",
+    "pac_other:981#6734:p0027#pc",
+    "pac_other:1045#0:p0007#pc",
+    "pac_other:1162#8396:p0024#pc",
+    "pac_other:522#3975:p0026#pc",
+    "pac_other:522#3973:p0016#pc",
+    "pac_other:1187#0:p0199#pc",
+    "pac_other:522#3975:p0030#pc",
+    "pac_other:1045#0:p0011#pc",
+    "pac_other:522#3975:p0031#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:651#5326:p0008#pc",
+    "pac_other:981#6734:p0027#pc",
+    "pac_other:1045#0:p0007#pc",
+    "pac_other:1162#8396:p0024#pc",
+    "pac_other:522#3975:p0026#pc",
+    "pac_other:522#3973:p0016#pc",
+    "pac_other:1187#0:p0199#pc",
+    "pac_other:522#3975:p0030#pc",
+    "pac_other:1045#0:p0011#pc",
+    "pac_other:522#3975:p0031#pc",
+    "pac_other:981#6734:p0030#pc",
+    "pac_other:522#3975:p0033#pc",
+    "pac_other:522#3975:p0029#pc",
+    "pac_other:1187#0:p0202#pc",
+    "pac_other:1187#0:p0203#pc",
+    "pac_other:795#0:p0058#pc",
+    "pac_other:519#3932:p0010#pc",
+    "pac_other:522#3975:p0032#pc",
+    "pac_other:522#3975:p0035#pc",
+    "pac_other:1045#7152:p0004#pc"
+   ],
+   "case_keys": [
+    "pac_other:651",
+    "pac_other:981",
+    "pac_other:1045",
+    "pac_other:1162",
+    "pac_other:522",
+    "pac_other:522",
+    "pac_other:1187",
+    "pac_other:522",
+    "pac_other:1045",
+    "pac_other:522",
+    "pac_other:981",
+    "pac_other:522",
+    "pac_other:522",
+    "pac_other:1187",
+    "pac_other:1187",
+    "pac_other:795",
+    "pac_other:519",
+    "pac_other:522",
+    "pac_other:522",
+    "pac_other:1045"
+   ]
+  },
+  "v0-20": {
+   "ids": [
+    "pac_other:515#3887:p0001#pc",
+    "pac_other:1194#0:p0127#pc",
+    "pac_other:1194#0:p0128#pc",
+    "pac_other:1194#0:p0105#pc",
+    "pac_other:1144#8321:p0151#pc",
+    "pac_cases:658#0:2008서울중재6~w0075#c1",
+    "pac_other:580#0:p0089#pc",
+    "pac_other:1023#7242:p0015#pc",
+    "pac_other:587#4775:p0007#pc",
+    "pac_other:515#3887:p0002#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 9,
+     "pac_decision": 1
+    },
+    "research": 9,
+    "duplicate_texts": 0,
+    "date_unknown": 1,
+    "match": {
+     "text": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:515#3887:p0001#pc",
+    "pac_other:1194#0:p0127#pc",
+    "pac_other:1194#0:p0128#pc",
+    "pac_other:1194#0:p0105#pc",
+    "pac_other:1144#8321:p0151#pc",
+    "pac_cases:658#0:2008서울중재6~w0075#c1",
+    "pac_other:580#0:p0089#pc",
+    "pac_other:1023#7242:p0015#pc",
+    "pac_other:587#4775:p0007#pc",
+    "pac_other:515#3887:p0002#pc",
+    "pac_other:1090#8071:p0002#pc",
+    "pac_other:611#5142:p0018#pc",
+    "pac_other:626#5557:p0013#pc",
+    "pac_other:540#4140:p0003#pc",
+    "pac_other:708#5420:2013가단39476#c1",
+    "pac_other:580#0:p0090#pc",
+    "pac_other:515#3887:p0013#pc",
+    "pac_other:611#5142:p0016#pc",
+    "pac_other:1194#0:p0100#pc",
+    "pac_other:708#5420:p0293#pc"
+   ],
+   "case_keys": [
+    "pac_other:515",
+    "pac_other:1194",
+    "pac_other:1194",
+    "pac_other:1194",
+    "pac_other:1144",
+    "2008서울중재6",
+    "pac_other:580",
+    "pac_other:1023",
+    "pac_other:587",
+    "pac_other:515",
+    "pac_other:1090",
+    "pac_other:611",
+    "pac_other:626",
+    "pac_other:540",
+    "2013가단39476",
+    "pac_other:580",
+    "pac_other:515",
+    "pac_other:611",
+    "pac_other:1194",
+    "pac_other:708"
+   ]
+  },
+  "v0-21": {
+   "ids": [
+    "pac_other:1045#7143:p0002#pc",
+    "pac_other:1045#7143:p0001#pc",
+    "pac_other:586#4762:p0005#pc",
+    "pac_other:1037#7086:p0001#pc",
+    "pac_other:586#4762:p0002#pc",
+    "pac_other:532#4069:p0003#pc",
+    "pac_other:586#4762:p0003#pc",
+    "pac_other:1081#7776:p0001#pc",
+    "pac_other:599#4986:p0011#pc",
+    "pac_other:543#4164:p0001#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1045#7143:p0002#pc",
+    "pac_other:1045#7143:p0001#pc",
+    "pac_other:586#4762:p0005#pc",
+    "pac_other:1037#7086:p0001#pc",
+    "pac_other:586#4762:p0002#pc",
+    "pac_other:532#4069:p0003#pc",
+    "pac_other:586#4762:p0003#pc",
+    "pac_other:1081#7776:p0001#pc",
+    "pac_other:599#4986:p0011#pc",
+    "pac_other:543#4164:p0001#pc",
+    "pac_other:613#5151:p0011#pc",
+    "pac_other:613#5151:p0016#pc",
+    "pac_other:670#5427:p0361#pc",
+    "pac_other:587#4786:p0008#pc",
+    "pac_other:587#4784:p0004#pc",
+    "pac_other:600#5006:p0003#pc",
+    "pac_other:527#769083512:s0005#pc",
+    "pac_other:599#4986:p0007#pc",
+    "pac_other:586#4762:p0015#pc",
+    "pac_other:1045#0:p0084#pc"
+   ],
+   "case_keys": [
+    "pac_other:1045",
+    "pac_other:1045",
+    "pac_other:586",
+    "pac_other:1037",
+    "pac_other:586",
+    "pac_other:532",
+    "pac_other:586",
+    "pac_other:1081",
+    "pac_other:599",
+    "pac_other:543",
+    "pac_other:613",
+    "pac_other:613",
+    "pac_other:670",
+    "pac_other:587",
+    "pac_other:587",
+    "pac_other:600",
+    "pac_other:527",
+    "pac_other:599",
+    "pac_other:586",
+    "pac_other:1045"
+   ]
+  },
+  "v0-22": {
+   "ids": [
+    "pac_cases:661#7811:p0191#pc"
+   ],
+   "unlabeled": {
+    "n": 1,
+    "zero": false,
+    "list_chunks": 1,
+    "authority": {
+     "pac_decision": 1
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "phrase": 1
+    }
+   },
+   "pool_ids": [
+    "pac_cases:661#7811:p0191#pc"
+   ],
+   "case_keys": [
+    "pac_cases:661"
+   ]
+  },
+  "v0-23": {
+   "ids": [
+    "pac_other:999#6852:99나27325#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "pac_other:999#6852:99다63138#c1",
+    "pac_other:999#6852:p0024#pc",
+    "pac_other:999#6852:p0030#pc",
+    "pac_other:999#6852:p0033#pc"
+   ],
+   "unlabeled": {
+    "n": 6,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 5,
+     "judgment": 1
+    },
+    "research": 5,
+    "duplicate_texts": 0,
+    "date_unknown": 3,
+    "match": {
+     "case_number": 1,
+     "phrase": 5
+    }
+   },
+   "pool_ids": [
+    "pac_other:999#6852:99나27325#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "pac_other:999#6852:99다63138#c1",
+    "pac_other:999#6852:p0024#pc",
+    "pac_other:999#6852:p0030#pc",
+    "pac_other:999#6852:p0033#pc"
+   ],
+   "case_keys": [
+    "99나27325",
+    "99다63138",
+    "99다63138",
+    "pac_other:999",
+    "pac_other:999",
+    "pac_other:999"
+   ]
+  },
+  "v0-24": {
+   "ids": [
+    "lawgo_prec:166302:2009다52649#c1",
+    "pac_cases:1169#8417:2024서울조정2243･2244#c1",
+    "pac_cases:1169#8424:2024서울조정2243･2244#c1",
+    "pac_cases:1212#8577:2025서울조정2618/2619#c1",
+    "pac_cases:1212#8579:2025서울조정2618/2619#c1",
+    "pac_cases:659#7801:2009서울조정414#c1",
+    "pac_cases:659#7801:2009서울조정533#c1",
+    "pac_cases:662#7827:w0003n00#c1",
+    "pac_cases:662#7827:w0009n00#c1",
+    "pac_cases:662#7828:2012서울조정239#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "pac_decision": 9
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:166302:2009다52649#c1",
+    "pac_cases:1169#8417:2024서울조정2243･2244#c1",
+    "pac_cases:1169#8424:2024서울조정2243･2244#c1",
+    "pac_cases:1212#8577:2025서울조정2618/2619#c1",
+    "pac_cases:1212#8579:2025서울조정2618/2619#c1",
+    "pac_cases:659#7801:2009서울조정414#c1",
+    "pac_cases:659#7801:2009서울조정533#c1",
+    "pac_cases:662#7827:w0003n00#c1",
+    "pac_cases:662#7827:w0009n00#c1",
+    "pac_cases:662#7828:2012서울조정239#c1",
+    "pac_cases:662#7828:2012서울조정42∙43#c1",
+    "pac_cases:662#7828:w0009n00#c1",
+    "pac_cases:663#7838:2013서울조정925#c1",
+    "pac_cases:663#7839:2013서울조정925#c1",
+    "pac_cases:793#7879:2016서울조정791･792#c1",
+    "pac_other:1007#0:p0154#pc",
+    "pac_other:1019#0:2018가합33527#c1",
+    "pac_other:1019#0:p0207#pc",
+    "pac_other:1035#0:p0162#pc",
+    "pac_other:1043#0:p0022#pc"
+   ],
+   "case_keys": [
+    "2009다52649",
+    "2024서울조정2243･2244",
+    "2024서울조정2243･2244",
+    "2025서울조정2618/2619",
+    "2025서울조정2618/2619",
+    "2009서울조정414",
+    "2009서울조정533",
+    "pac_cases:662",
+    "pac_cases:662",
+    "2012서울조정239",
+    "2012서울조정42∙43",
+    "pac_cases:662",
+    "2013서울조정925",
+    "2013서울조정925",
+    "2016서울조정791･792",
+    "pac_other:1007",
+    "2018가합33527",
+    "pac_other:1019",
+    "pac_other:1035",
+    "pac_other:1043"
+   ]
+  },
+  "Q1-01": {
+   "ids": [
+    "lawgo_prec:237175:82도3248#c1",
+    "pac_other:1215#0:2023헌마1114#c1",
+    "pac_other:1215#0:p0314#pc",
+    "pac_other:1215#0:p0316#pc",
+    "pac_other:1215#0:p0322#pc",
+    "pac_other:1215#8592:p0233#pc",
+    "pac_other:1215#8592:p0235#pc",
+    "pac_other:1215#8592:p0241#pc"
+   ],
+   "unlabeled": {
+    "n": 8,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 7
+    },
+    "research": 7,
+    "duplicate_texts": 3,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1,
+     "phrase": 7
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:237175:82도3248#c1",
+    "pac_other:1215#0:2023헌마1114#c1",
+    "pac_other:1215#0:p0314#pc",
+    "pac_other:1215#0:p0316#pc",
+    "pac_other:1215#0:p0322#pc",
+    "pac_other:1215#8592:p0233#pc",
+    "pac_other:1215#8592:p0235#pc",
+    "pac_other:1215#8592:p0241#pc"
+   ],
+   "case_keys": [
+    "82도3248",
+    "2023헌마1114",
+    "pac_other:1215",
+    "pac_other:1215",
+    "pac_other:1215",
+    "pac_other:1215",
+    "pac_other:1215",
+    "pac_other:1215"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "judgment"
+   }
+  },
+  "Q1-02": {
+   "ids": [
+    "lawgo_prec:197945:2015다256374,256381#c1",
+    "pac_other:951#0:p0074#pc"
+   ],
+   "unlabeled": {
+    "n": 2,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 1
+    },
+    "research": 1,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1,
+     "phrase": 1
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:197945:2015다256374,256381#c1",
+    "pac_other:951#0:p0074#pc"
+   ],
+   "case_keys": [
+    "2015다256374, 256381",
+    "pac_other:951"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "judgment"
+   }
+  },
+  "Q1-03": {
+   "ids": [
+    "pac_cases:658#7796:2008자심95,96#c1"
+   ],
+   "unlabeled": {
+    "n": 1,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_decision": 1
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1
+    }
+   },
+   "pool_ids": [
+    "pac_cases:658#7796:2008자심95,96#c1"
+   ],
+   "case_keys": [
+    "2008자심95, 96"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_decision"
+   }
+  },
+  "Q1-04": {
+   "ids": [
+    "pac_cases:659#7800:2009자심13~15#c1",
+    "pac_cases:659#7800:2009자심130~157#c1"
+   ],
+   "unlabeled": {
+    "n": 2,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_decision": 2
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1,
+     "phrase": 1
+    }
+   },
+   "pool_ids": [
+    "pac_cases:659#7800:2009자심13~15#c1",
+    "pac_cases:659#7800:2009자심130~157#c1"
+   ],
+   "case_keys": [
+    "2009자심13~15",
+    "2009자심130~157"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_decision"
+   }
+  },
+  "Q1-05": {
+   "ids": [
+    "pac_cases:655#0:05서울조정231#c1"
+   ],
+   "unlabeled": {
+    "n": 1,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_settlement": 1
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1
+    }
+   },
+   "pool_ids": [
+    "pac_cases:655#0:05서울조정231#c1"
+   ],
+   "case_keys": [
+    "05서울조정231"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_settlement"
+   }
+  },
+  "Q1-06": {
+   "ids": [
+    "pac_cases:1066#7935:2021서울조정1236･1237･1238/1239･1240･1241#c1",
+    "pac_cases:1066#7937:2021서울조정1236･1237･1238/1239･1240･1241#c1"
+   ],
+   "unlabeled": {
+    "n": 2,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_settlement": 2
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 2
+    }
+   },
+   "pool_ids": [
+    "pac_cases:1066#7935:2021서울조정1236･1237･1238/1239･1240･1241#c1",
+    "pac_cases:1066#7937:2021서울조정1236･1237･1238/1239･1240･1241#c1"
+   ],
+   "case_keys": [
+    "2021서울조정1236･1237･1238/1239･1240･1241",
+    "2021서울조정1236･1237･1238/1239･1240･1241"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_settlement"
+   }
+  },
+  "Q1-07": {
+   "ids": [
+    "pac_election:489#7997:2010지선113(시심)#c1"
+   ],
+   "unlabeled": {
+    "n": 1,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_election_review": 1
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1
+    }
+   },
+   "pool_ids": [
+    "pac_election:489#7997:2010지선113(시심)#c1"
+   ],
+   "case_keys": [
+    "2010지선113(시심)"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_election_review"
+   }
+  },
+  "Q1-08": {
+   "ids": [
+    "pac_election:489#7997:2010지선156(자심)#c1"
+   ],
+   "unlabeled": {
+    "n": 1,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_election_review": 1
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "case_number": 1
+    }
+   },
+   "pool_ids": [
+    "pac_election:489#7997:2010지선156(자심)#c1"
+   ],
+   "case_keys": [
+    "2010지선156(자심)"
+   ],
+   "gold": {
+    "hit@1": true,
+    "hit@10": true,
+    "rr": 1.0,
+    "top1_authority": "pac_election_review"
+   }
+  },
+  "Q2-01": {
+   "ids": [
+    "pac_other:1019#0:2018가합1330#c1",
+    "pac_other:1019#0:p0310#pc",
+    "pac_other:1019#0:p0315#pc",
+    "pac_other:1028#7507:p0011#pc",
+    "pac_other:1047#7166:p0021#pc",
+    "pac_other:1047#7166:p0023#pc",
+    "pac_other:1049#0:2018가합590223#c1",
+    "pac_other:1049#0:2019가합523541#c1",
+    "pac_other:1049#0:p0170#pc",
+    "pac_other:1049#0:p0172#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1019#0:2018가합1330#c1",
+    "pac_other:1019#0:p0310#pc",
+    "pac_other:1019#0:p0315#pc",
+    "pac_other:1028#7507:p0011#pc",
+    "pac_other:1047#7166:p0021#pc",
+    "pac_other:1047#7166:p0023#pc",
+    "pac_other:1049#0:2018가합590223#c1",
+    "pac_other:1049#0:2019가합523541#c1",
+    "pac_other:1049#0:p0170#pc",
+    "pac_other:1049#0:p0172#pc",
+    "pac_other:1049#0:p0183#pc",
+    "pac_other:1049#0:p0193#pc",
+    "pac_other:1049#0:p0223#pc",
+    "pac_other:1051#0:p0056#pc",
+    "pac_other:1051#0:p0060#pc",
+    "pac_other:1051#7198:p0002#pc",
+    "pac_other:1051#7198:p0004#pc",
+    "pac_other:1055#7267:p0021#pc",
+    "pac_other:1068#7712:2020가합5452#c1",
+    "pac_other:1068#7712:p0131#pc"
+   ],
+   "case_keys": [
+    "2018가합1330",
+    "pac_other:1019",
+    "pac_other:1019",
+    "pac_other:1028",
+    "pac_other:1047",
+    "pac_other:1047",
+    "2018가합590223",
+    "2019가합523541",
+    "pac_other:1049",
+    "pac_other:1049",
+    "pac_other:1049",
+    "pac_other:1049",
+    "pac_other:1049",
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:1051",
+    "pac_other:1055",
+    "2020가합5452",
+    "pac_other:1068"
+   ],
+   "gold": {
+    "hit@1": true,
+    "contains@10": 10,
+    "rr": 1.0
+   }
+  },
+  "Q2-02": {
+   "ids": [
+    "pac_cases:1169#8417:2024서울조정2243･2244#c1",
+    "pac_cases:1169#8424:2024서울조정2243･2244#c1",
+    "pac_other:1016#0:p0044#pc",
+    "pac_other:1016#6961:p0011#pc",
+    "pac_other:1047#7166:p0029#pc",
+    "pac_other:1049#0:2019가합1282#c1",
+    "pac_other:1049#0:p0196#pc",
+    "pac_other:1049#0:p0199#pc",
+    "pac_other:1068#7712:2020가합12890#c1",
+    "pac_other:1068#7712:p0085#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "pac_decision": 2,
+     "research": 8
+    },
+    "research": 8,
+    "duplicate_texts": 1,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "pac_cases:1169#8417:2024서울조정2243･2244#c1",
+    "pac_cases:1169#8424:2024서울조정2243･2244#c1",
+    "pac_other:1016#0:p0044#pc",
+    "pac_other:1016#6961:p0011#pc",
+    "pac_other:1047#7166:p0029#pc",
+    "pac_other:1049#0:2019가합1282#c1",
+    "pac_other:1049#0:p0196#pc",
+    "pac_other:1049#0:p0199#pc",
+    "pac_other:1068#7712:2020가합12890#c1",
+    "pac_other:1068#7712:p0085#pc",
+    "pac_other:1086#8054:2020가합117603#c1",
+    "pac_other:1086#8054:p0099#pc",
+    "pac_other:1086#8054:p0100#pc",
+    "pac_other:1086#8054:p0104#pc",
+    "pac_other:1090#8073:p0004#pc",
+    "pac_other:1090#8073:p0010#pc",
+    "pac_other:1090#8073:p0011#pc",
+    "pac_other:1091#0:p0027#pc",
+    "pac_other:1144#8321:2022나2034945#c1",
+    "pac_other:1144#8321:p0156#pc"
+   ],
+   "case_keys": [
+    "2024서울조정2243･2244",
+    "2024서울조정2243･2244",
+    "pac_other:1016",
+    "pac_other:1016",
+    "pac_other:1047",
+    "2019가합1282",
+    "pac_other:1049",
+    "pac_other:1049",
+    "2020가합12890",
+    "pac_other:1068",
+    "2020가합117603",
+    "pac_other:1086",
+    "pac_other:1086",
+    "pac_other:1086",
+    "pac_other:1090",
+    "pac_other:1090",
+    "pac_other:1090",
+    "pac_other:1091",
+    "2022나2034945",
+    "pac_other:1144"
+   ],
+   "gold": {
+    "hit@1": true,
+    "contains@10": 10,
+    "rr": 1.0
+   }
+  },
+  "Q2-03": {
+   "ids": [
+    "lawgo_prec:102246:86도556#c1",
+    "lawgo_prec:102313:86도1603#c1",
+    "lawgo_prec:103157:87도739#c1",
+    "lawgo_prec:104515:88도1008#c1",
+    "lawgo_prec:104991:88도1278#c1",
+    "lawgo_prec:104992:88도1397#c1",
+    "lawgo_prec:105423:89도886#c1",
+    "lawgo_prec:106705:89도1467#c1",
+    "lawgo_prec:107136:90도1167#c1",
+    "lawgo_prec:108650:91도420#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 10
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:102246:86도556#c1",
+    "lawgo_prec:102313:86도1603#c1",
+    "lawgo_prec:103157:87도739#c1",
+    "lawgo_prec:104515:88도1008#c1",
+    "lawgo_prec:104991:88도1278#c1",
+    "lawgo_prec:104992:88도1397#c1",
+    "lawgo_prec:105423:89도886#c1",
+    "lawgo_prec:106705:89도1467#c1",
+    "lawgo_prec:107136:90도1167#c1",
+    "lawgo_prec:108650:91도420#c1",
+    "lawgo_prec:108889:91도347#c1",
+    "lawgo_prec:109509:93다18389#c1",
+    "lawgo_prec:110477:93도696#c1",
+    "lawgo_prec:110623:94도237#c1",
+    "lawgo_prec:110806:94도1880#c1",
+    "lawgo_prec:110989:94도1770#c1",
+    "lawgo_prec:110995:94도2186#c1",
+    "lawgo_prec:112170:95도1010#c1",
+    "lawgo_prec:113700:94다33828#c1",
+    "lawgo_prec:114039:94다29928#c1"
+   ],
+   "case_keys": [
+    "86도556",
+    "86도1603",
+    "87도739",
+    "88도1008",
+    "88도1278",
+    "88도1397",
+    "89도886",
+    "89도1467",
+    "90도1167",
+    "91도420",
+    "91도347",
+    "93다18389",
+    "93도696",
+    "94도237",
+    "94도1880",
+    "94도1770",
+    "94도2186",
+    "95도1010",
+    "94다33828",
+    "94다29928"
+   ],
+   "gold": {
+    "hit@1": true,
+    "contains@10": 9,
+    "rr": 1.0
+   }
+  },
+  "Q2-04": {
+   "ids": [
+    "lawgo_prec:101694:85도785#c1",
+    "lawgo_prec:104516:85다카29#c1",
+    "lawgo_prec:104879:88도899#c1",
+    "lawgo_prec:109509:93다18389#c1",
+    "lawgo_prec:109979:94도142#c1",
+    "lawgo_prec:110623:94도237#c1",
+    "lawgo_prec:113545:94도3309#c1",
+    "lawgo_prec:113700:94다33828#c1",
+    "lawgo_prec:113905:96도977#c1",
+    "lawgo_prec:114128:96다19246#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 10
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:101694:85도785#c1",
+    "lawgo_prec:104516:85다카29#c1",
+    "lawgo_prec:104879:88도899#c1",
+    "lawgo_prec:109509:93다18389#c1",
+    "lawgo_prec:109979:94도142#c1",
+    "lawgo_prec:110623:94도237#c1",
+    "lawgo_prec:113545:94도3309#c1",
+    "lawgo_prec:113700:94다33828#c1",
+    "lawgo_prec:113905:96도977#c1",
+    "lawgo_prec:114128:96다19246#c1",
+    "lawgo_prec:114263:95다36329#c1",
+    "lawgo_prec:114354:95도1473#c1",
+    "lawgo_prec:114492:96도1741#c1",
+    "lawgo_prec:115052:97도88#c1",
+    "lawgo_prec:115605:97다19755#c1",
+    "lawgo_prec:115776:97다24207#c1",
+    "lawgo_prec:116715:97다57689#c1",
+    "lawgo_prec:117644:99도636#c1",
+    "lawgo_prec:117786:99도1543#c1",
+    "lawgo_prec:123320:92도3160#c1"
+   ],
+   "case_keys": [
+    "85도785",
+    "85다카29",
+    "88도899",
+    "93다18389",
+    "94도142",
+    "94도237",
+    "94도3309",
+    "94다33828",
+    "96도977",
+    "96다19246",
+    "95다36329",
+    "95도1473",
+    "96도1741",
+    "97도88",
+    "97다19755",
+    "97다24207",
+    "97다57689",
+    "99도636",
+    "99도1543",
+    "92도3160"
+   ],
+   "gold": {
+    "hit@1": true,
+    "contains@10": 5,
+    "rr": 1.0
+   }
+  },
+  "Q2-05": {
+   "ids": [
+    "lawgo_prec:101618:85도1143#c1",
+    "lawgo_prec:102313:86도1603#c1",
+    "lawgo_prec:104991:88도1278#c1",
+    "lawgo_prec:105898:89도1744#c1",
+    "lawgo_prec:110146:93도3535#c1",
+    "lawgo_prec:110995:94도2186#c1",
+    "lawgo_prec:112170:95도1010#c1",
+    "lawgo_prec:114128:96다19246#c1",
+    "lawgo_prec:114782:96도2234#c1",
+    "lawgo_prec:115605:97다19755#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 10
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:101618:85도1143#c1",
+    "lawgo_prec:102313:86도1603#c1",
+    "lawgo_prec:104991:88도1278#c1",
+    "lawgo_prec:105898:89도1744#c1",
+    "lawgo_prec:110146:93도3535#c1",
+    "lawgo_prec:110995:94도2186#c1",
+    "lawgo_prec:112170:95도1010#c1",
+    "lawgo_prec:114128:96다19246#c1",
+    "lawgo_prec:114782:96도2234#c1",
+    "lawgo_prec:115605:97다19755#c1",
+    "lawgo_prec:115651:97도133#c1",
+    "lawgo_prec:115911:96다38032#c1",
+    "lawgo_prec:116898:98도477#c1",
+    "lawgo_prec:117644:99도636#c1",
+    "lawgo_prec:122087:91도3051#c1",
+    "lawgo_prec:123770:93도1732#c1",
+    "lawgo_prec:124910:2006도7915#c1",
+    "lawgo_prec:141526:2009도156#c1",
+    "lawgo_prec:143200:2009도8949#c1",
+    "lawgo_prec:160302:2011도1147#c1"
+   ],
+   "case_keys": [
+    "85도1143",
+    "86도1603",
+    "88도1278",
+    "89도1744",
+    "93도3535",
+    "94도2186",
+    "95도1010",
+    "96다19246",
+    "96도2234",
+    "97다19755",
+    "97도133",
+    "96다38032",
+    "98도477",
+    "99도636",
+    "91도3051",
+    "93도1732",
+    "2006도7915",
+    "2009도156",
+    "2009도8949",
+    "2011도1147"
+   ],
+   "gold": {
+    "hit@1": true,
+    "contains@10": 8,
+    "rr": 1.0
+   }
+  },
+  "Q2-06": {
+   "ids": [
+    "lawgo_prec:107343:90도1586#c1",
+    "lawgo_prec:108518:90누4839#c1",
+    "lawgo_prec:110746:94다4042#c1",
+    "lawgo_prec:113559:96도519#c1",
+    "lawgo_prec:114128:96다19246#c1",
+    "lawgo_prec:115605:97다19755#c1",
+    "lawgo_prec:117141:98다24624#c1",
+    "lawgo_prec:121612:90도2310#c1",
+    "lawgo_prec:124901:2008다53805#c1",
+    "lawgo_prec:125300:2008그193#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 10
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "citation": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:107343:90도1586#c1",
+    "lawgo_prec:108518:90누4839#c1",
+    "lawgo_prec:110746:94다4042#c1",
+    "lawgo_prec:113559:96도519#c1",
+    "lawgo_prec:114128:96다19246#c1",
+    "lawgo_prec:115605:97다19755#c1",
+    "lawgo_prec:117141:98다24624#c1",
+    "lawgo_prec:121612:90도2310#c1",
+    "lawgo_prec:124901:2008다53805#c1",
+    "lawgo_prec:125300:2008그193#c1",
+    "lawgo_prec:125305:2006다60908#c1",
+    "lawgo_prec:126167:2001도6138#c1",
+    "lawgo_prec:126732:2002다49040#c1",
+    "lawgo_prec:127046:2004다50747#c1",
+    "lawgo_prec:133979:2008다53812#c1",
+    "lawgo_prec:134329:2008다77771#c1",
+    "lawgo_prec:139169:2007다71#c1",
+    "lawgo_prec:141466:2009다11570#c1",
+    "lawgo_prec:141489:2006두16786#c1",
+    "lawgo_prec:141733:2008다18925#c1"
+   ],
+   "case_keys": [
+    "90도1586",
+    "90누4839",
+    "94다4042",
+    "96도519",
+    "96다19246",
+    "97다19755",
+    "98다24624",
+    "90도2310",
+    "2008다53805",
+    "2008그193",
+    "2006다60908",
+    "2001도6138",
+    "2002다49040",
+    "2004다50747",
+    "2008다53812",
+    "2008다77771",
+    "2007다71",
+    "2009다11570",
+    "2006두16786",
+    "2008다18925"
+   ],
+   "gold": {
+    "hit@1": false,
+    "contains@10": 6,
+    "rr": 0.5
+   }
+  },
+  "Q6-01": {
+   "ids": [
+    "lawgo_prec:226451:2015도9917#c1",
+    "lawgo_prec:112832:95도1729#c1",
+    "lawgo_prec:168607:2012도13607#c1",
+    "lawgo_prec:139169:2007다71#c1",
+    "lawgo_prec:237139:2021도11170#c1",
+    "pac_other:596#4946:p0008#pc",
+    "pac_other:604#5065:p0013#pc",
+    "pac_other:551#4231:p0013#pc",
+    "pac_other:532#4067:p0005#pc",
+    "pac_other:557#4287:p0005#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 5,
+     "research": 5
+    },
+    "research": 5,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:226451:2015도9917#c1",
+    "lawgo_prec:112832:95도1729#c1",
+    "lawgo_prec:168607:2012도13607#c1",
+    "lawgo_prec:139169:2007다71#c1",
+    "lawgo_prec:237139:2021도11170#c1",
+    "pac_other:596#4946:p0008#pc",
+    "pac_other:604#5065:p0013#pc",
+    "pac_other:551#4231:p0013#pc",
+    "pac_other:532#4067:p0005#pc",
+    "pac_other:557#4287:p0005#pc",
+    "lawgo_prec:209162:95도1964#c1",
+    "pac_other:1093#8079:p0013#pc",
+    "pac_other:580#0:p0017#pc",
+    "pac_other:605#5082:p0016#pc",
+    "pac_other:1023#7246:p0026#pc",
+    "pac_other:532#4067:p0004#pc",
+    "pac_other:585#4740:p0004#pc",
+    "pac_other:667#5434:p0304#pc",
+    "pac_other:1023#7246:p0013#pc",
+    "pac_other:532#4067:p0007#pc"
+   ],
+   "case_keys": [
+    "2015도9917",
+    "95도1729",
+    "2012도13607",
+    "2007다71",
+    "2021도11170",
+    "pac_other:596",
+    "pac_other:604",
+    "pac_other:551",
+    "pac_other:532",
+    "pac_other:557",
+    "95도1964",
+    "pac_other:1093",
+    "pac_other:580",
+    "pac_other:605",
+    "pac_other:1023",
+    "pac_other:532",
+    "pac_other:585",
+    "pac_other:667",
+    "pac_other:1023",
+    "pac_other:532"
+   ],
+   "gold": {
+    "forbidden@10": 3,
+    "n": 10
+   }
+  },
+  "Q6-02": {
+   "ids": [
+    "pac_other:1029#7026:p0020#pc",
+    "pac_other:895#7549:p0003#pc",
+    "pac_other:1029#7026:p0019#pc",
+    "pac_other:700#5600:p0017#pc",
+    "pac_other:594#4904:p0007#pc",
+    "pac_other:614#5160:p0003#pc",
+    "pac_other:1029#7026:p0031#pc",
+    "pac_other:602#5036:p0005#pc",
+    "pac_other:622#5259:p0003#pc",
+    "pac_other:587#4780:p0004#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 1,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:1029#7026:p0020#pc",
+    "pac_other:895#7549:p0003#pc",
+    "pac_other:1029#7026:p0019#pc",
+    "pac_other:700#5600:p0017#pc",
+    "pac_other:594#4904:p0007#pc",
+    "pac_other:614#5160:p0003#pc",
+    "pac_other:1029#7026:p0031#pc",
+    "pac_other:602#5036:p0005#pc",
+    "pac_other:622#5259:p0003#pc",
+    "pac_other:587#4780:p0004#pc",
+    "pac_other:597#4960:p0010#pc",
+    "pac_other:622#5259:p0002#pc",
+    "pac_other:622#5259:p0040#pc",
+    "pac_other:888#7444:p0004#pc",
+    "pac_other:1029#7026:p0021#pc",
+    "pac_other:622#5259:p0006#pc",
+    "pac_other:888#0:p0005#pc",
+    "pac_other:992#0:p0012#pc",
+    "pac_other:992#6819:p0009#pc",
+    "pac_other:1029#7026:p0012#pc"
+   ],
+   "case_keys": [
+    "pac_other:1029",
+    "pac_other:895",
+    "pac_other:1029",
+    "pac_other:700",
+    "pac_other:594",
+    "pac_other:614",
+    "pac_other:1029",
+    "pac_other:602",
+    "pac_other:622",
+    "pac_other:587",
+    "pac_other:597",
+    "pac_other:622",
+    "pac_other:622",
+    "pac_other:888",
+    "pac_other:1029",
+    "pac_other:622",
+    "pac_other:888",
+    "pac_other:992",
+    "pac_other:992",
+    "pac_other:1029"
+   ],
+   "gold": {
+    "forbidden@10": 0,
+    "n": 10
+   }
+  },
+  "Q6-03": {
+   "ids": [
+    "lawgo_prec:107462:90다카8845#c1",
+    "lawgo_prec:167838:2010다103185#c1",
+    "lawgo_prec:605971:2025도4697#c1",
+    "lawgo_prec:115807:97도1230#c1",
+    "lawgo_prec:217373:2021다219116#c1",
+    "pac_other:511#3831:p0006#pc",
+    "pac_other:511#3831:p0005#pc",
+    "pac_other:1019#0:2018나57023#c1",
+    "pac_other:511#3831:p0001#pc",
+    "pac_other:511#3833:p0006#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 5,
+     "research": 5
+    },
+    "research": 5,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:107462:90다카8845#c1",
+    "lawgo_prec:167838:2010다103185#c1",
+    "lawgo_prec:605971:2025도4697#c1",
+    "lawgo_prec:115807:97도1230#c1",
+    "lawgo_prec:217373:2021다219116#c1",
+    "pac_other:511#3831:p0006#pc",
+    "pac_other:511#3831:p0005#pc",
+    "pac_other:1019#0:2018나57023#c1",
+    "pac_other:511#3831:p0001#pc",
+    "pac_other:511#3833:p0006#pc",
+    "pac_other:504#3743:p0005#pc",
+    "pac_other:511#3833:p0003#pc",
+    "pac_other:511#3833:p0008#pc",
+    "pac_other:608#5109:p0050#pc",
+    "pac_other:511#3831:p0011#pc",
+    "pac_other:511#3833:p0007#pc",
+    "pac_other:511#3831:p0002#pc",
+    "pac_other:511#3833:p0009#pc",
+    "pac_other:511#3831:p0004#pc",
+    "pac_other:525#3999:p0003#pc"
+   ],
+   "case_keys": [
+    "90다카8845",
+    "2010다103185",
+    "2025도4697",
+    "97도1230",
+    "2021다219116",
+    "pac_other:511",
+    "pac_other:511",
+    "2018나57023",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:504",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:608",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:511",
+    "pac_other:525"
+   ],
+   "gold": {
+    "forbidden@10": 0,
+    "n": 10
+   }
+  },
+  "Q6-04": {
+   "ids": [
+    "pac_other:700#5599:2001가합17072#c1",
+    "pac_other:670#5427:p0197#pc",
+    "pac_other:671#5425:p0204#pc",
+    "pac_other:600#4998:p0002#pc",
+    "pac_other:700#5599:p0045#pc",
+    "pac_other:700#5599:p0030#pc",
+    "pac_other:1002#6870:p0031#pc",
+    "pac_other:534#4080:p0001#pc",
+    "pac_other:700#5599:p0051#pc",
+    "pac_other:670#5427:p0333#pc"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "research": 10
+    },
+    "research": 10,
+    "duplicate_texts": 0,
+    "date_unknown": 4,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "pac_other:700#5599:2001가합17072#c1",
+    "pac_other:670#5427:p0197#pc",
+    "pac_other:671#5425:p0204#pc",
+    "pac_other:600#4998:p0002#pc",
+    "pac_other:700#5599:p0045#pc",
+    "pac_other:700#5599:p0030#pc",
+    "pac_other:1002#6870:p0031#pc",
+    "pac_other:534#4080:p0001#pc",
+    "pac_other:700#5599:p0051#pc",
+    "pac_other:670#5427:p0333#pc",
+    "pac_other:670#5427:p0339#pc",
+    "pac_other:671#5425:p0212#pc",
+    "pac_other:700#5599:p0031#pc",
+    "pac_other:585#4742:p0006#pc",
+    "pac_other:670#5427:2011가합23621#c1",
+    "pac_other:670#5427:p0199#pc",
+    "pac_other:1002#6870:p0087#pc",
+    "pac_other:534#4080:p0002#pc",
+    "pac_other:596#4945:p0004#pc",
+    "pac_other:612#5150:p0010#pc"
+   ],
+   "case_keys": [
+    "2001가합17072",
+    "pac_other:670",
+    "pac_other:671",
+    "pac_other:600",
+    "pac_other:700",
+    "pac_other:700",
+    "pac_other:1002",
+    "pac_other:534",
+    "pac_other:700",
+    "pac_other:670",
+    "pac_other:670",
+    "pac_other:671",
+    "pac_other:700",
+    "pac_other:585",
+    "2011가합23621",
+    "pac_other:670",
+    "pac_other:1002",
+    "pac_other:534",
+    "pac_other:596",
+    "pac_other:612"
+   ],
+   "gold": {
+    "forbidden@10": 0,
+    "n": 10
+   }
+  },
+  "Q6-05": {
+   "ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "pac_other:556#4280:p0002#pc",
+    "pac_other:492#3600:p0002#pc",
+    "pac_other:961#7493:p0156#pc",
+    "pac_other:961#7493:p0154#pc",
+    "pac_other:556#4280:p0003#pc",
+    "pac_other:556#4280:p0004#pc",
+    "pac_other:556#4280:p0012#pc",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:798#0:2016가합101939#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 1,
+     "research": 9
+    },
+    "research": 9,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:235585:2020다253423#c1",
+    "pac_other:556#4280:p0002#pc",
+    "pac_other:492#3600:p0002#pc",
+    "pac_other:961#7493:p0156#pc",
+    "pac_other:961#7493:p0154#pc",
+    "pac_other:556#4280:p0003#pc",
+    "pac_other:556#4280:p0004#pc",
+    "pac_other:556#4280:p0012#pc",
+    "pac_other:1075#7751:p0021#pc",
+    "pac_other:798#0:2016가합101939#c1",
+    "pac_other:593#4898:p0016#pc",
+    "pac_other:961#7493:p0155#pc",
+    "pac_other:1075#7751:p0031#pc",
+    "pac_other:556#4280:p0005#pc",
+    "pac_other:614#5166:p0021#pc",
+    "pac_other:492#3600:p0007#pc",
+    "pac_other:595#4932:p0003#pc",
+    "pac_other:1075#7751:p0001#pc",
+    "pac_other:1162#0:p0070#pc",
+    "pac_other:556#4280:p0013#pc"
+   ],
+   "case_keys": [
+    "2020다253423",
+    "pac_other:556",
+    "pac_other:492",
+    "pac_other:961",
+    "pac_other:961",
+    "pac_other:556",
+    "pac_other:556",
+    "pac_other:556",
+    "pac_other:1075",
+    "2016가합101939",
+    "pac_other:593",
+    "pac_other:961",
+    "pac_other:1075",
+    "pac_other:556",
+    "pac_other:614",
+    "pac_other:492",
+    "pac_other:595",
+    "pac_other:1075",
+    "pac_other:1162",
+    "pac_other:556"
+   ],
+   "gold": {
+    "forbidden@10": 0,
+    "n": 10
+   }
+  },
+  "Q6-06": {
+   "ids": [
+    "lawgo_prec:166302:2009다52649#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:101372:85다카1973#c1",
+    "lawgo_prec:127046:2004다50747#c1",
+    "lawgo_prec:114638:95다37278#c1",
+    "lawgo_prec:126732:2002다49040#c1",
+    "lawgo_prec:199891:2015다56413#c1",
+    "lawgo_prec:118127:98다40077#c1",
+    "lawgo_prec:81506:2000다50213#c1",
+    "lawgo_prec:196745:97다28803#c1"
+   ],
+   "unlabeled": {
+    "n": 10,
+    "zero": false,
+    "list_chunks": 0,
+    "authority": {
+     "judgment": 10
+    },
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {
+     "bigram": 10
+    }
+   },
+   "pool_ids": [
+    "lawgo_prec:166302:2009다52649#c1",
+    "lawgo_prec:229731:99다63138#c1",
+    "lawgo_prec:101372:85다카1973#c1",
+    "lawgo_prec:127046:2004다50747#c1",
+    "lawgo_prec:114638:95다37278#c1",
+    "lawgo_prec:126732:2002다49040#c1",
+    "lawgo_prec:199891:2015다56413#c1",
+    "lawgo_prec:118127:98다40077#c1",
+    "lawgo_prec:81506:2000다50213#c1",
+    "lawgo_prec:196745:97다28803#c1",
+    "lawgo_prec:205718:2014다51855#c1",
+    "lawgo_prec:102535:86다카818#c1",
+    "lawgo_prec:108009:90다카25468#c1",
+    "lawgo_prec:116365:96다40998#c1",
+    "lawgo_prec:237019:2022다222898#c1",
+    "lawgo_prec:68351:2003다28439#c1",
+    "lawgo_prec:68827:2006다65620#c1",
+    "lawgo_prec:68921:2007다2275#c1",
+    "lawgo_prec:83127:2001다53387#c1",
+    "lawgo_prec:149999:2009도14442#c1"
+   ],
+   "case_keys": [
+    "2009다52649",
+    "99다63138",
+    "85다카1973",
+    "2004다50747",
+    "95다37278",
+    "2002다49040",
+    "2015다56413",
+    "98다40077",
+    "2000다50213",
+    "97다28803",
+    "2014다51855",
+    "86다카818",
+    "90다카25468",
+    "96다40998",
+    "2022다222898",
+    "2003다28439",
+    "2006다65620",
+    "2007다2275",
+    "2001다53387",
+    "2009도14442"
+   ],
+   "gold": {
+    "forbidden@10": 0,
+    "n": 10
+   }
+  },
+  "Q7-01": {
+   "ids": [],
+   "unlabeled": {
+    "n": 0,
+    "zero": true,
+    "list_chunks": 0,
+    "authority": {},
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {}
+   },
+   "pool_ids": [],
+   "case_keys": [],
+   "gold": {
+    "results": 0,
+    "with_query_word@10": 0
+   }
+  },
+  "Q7-02": {
+   "ids": [],
+   "unlabeled": {
+    "n": 0,
+    "zero": true,
+    "list_chunks": 0,
+    "authority": {},
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {}
+   },
+   "pool_ids": [],
+   "case_keys": [],
+   "gold": {
+    "results": 0,
+    "with_query_word@10": 0
+   }
+  },
+  "Q7-03": {
+   "ids": [],
+   "unlabeled": {
+    "n": 0,
+    "zero": true,
+    "list_chunks": 0,
+    "authority": {},
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {}
+   },
+   "pool_ids": [],
+   "case_keys": [],
+   "gold": {
+    "results": 0,
+    "with_query_word@10": 0
+   }
+  },
+  "Q7-04": {
+   "ids": [],
+   "unlabeled": {
+    "n": 0,
+    "zero": true,
+    "list_chunks": 0,
+    "authority": {},
+    "research": 0,
+    "duplicate_texts": 0,
+    "date_unknown": 0,
+    "match": {}
+   },
+   "pool_ids": [],
+   "case_keys": [],
+   "gold": {
+    "results": 0,
+    "with_query_word@10": 0
+   }
+  }
+ },
+ "pool": 20,
+ "limits": [
+  "Recall@10·nDCG@10 은 사건 단위 등급(E4)이 없어 계산하지 않았다.",
+  "기본 실행은 search() limit 상한 10 이다. 상위 20 풀링은 --pool 20(search_eval, 평가 전용)로만 돈다.",
+  "자동 gold 는 dev 전용이며 Q3·Q4·Q5·as_of 변형과 test 분할은 만들지 않았다(V1 분할 뒤).",
+  "Q6 금지 사건 목록은 자동 후보이며 사람 확인 전이다. Q7 은 질의어가 색인 text 에 0건임을 확인한 주제이고, 상위 결과가 관련 0이라는 판정은 아니다."
+ ],
+ "pooling_burden": {
+  "per_query_unique_cases": {
+   "v0-01": 36,
+   "v0-02": 23,
+   "v0-03": 37,
+   "v0-04": 29,
+   "v0-05": 19,
+   "v0-06": 10,
+   "v0-07": 20,
+   "v0-08": 11,
+   "v0-09": 12,
+   "v0-10": 16,
+   "v0-11": 16,
+   "v0-12": 33,
+   "v0-13": 7,
+   "v0-14": 13,
+   "v0-15": 20,
+   "v0-16": 27,
+   "v0-17": 9,
+   "v0-18": 31,
+   "v0-19": 22,
+   "v0-20": 17,
+   "v0-21": 12,
+   "v0-22": 1,
+   "v0-23": 3,
+   "v0-24": 15,
+   "Q1-01": 3,
+   "Q1-02": 2,
+   "Q1-03": 1,
+   "Q1-04": 2,
+   "Q1-05": 1,
+   "Q1-06": 1,
+   "Q1-07": 1,
+   "Q1-08": 1,
+   "Q2-01": 11,
+   "Q2-02": 13,
+   "Q2-03": 20,
+   "Q2-04": 20,
+   "Q2-05": 20,
+   "Q2-06": 20,
+   "Q6-01": 20,
+   "Q6-02": 11,
+   "Q6-03": 13,
+   "Q6-04": 12,
+   "Q6-05": 10,
+   "Q6-06": 36,
+   "Q7-01": 14,
+   "Q7-02": 9,
+   "Q7-03": 15,
+   "Q7-04": 0
+  },
+  "mean": 14.5,
+  "median": 13.0,
+  "max": 37
+ },
+ "pooling_burden_general21": {
+  "per_query_unique_cases": {
+   "v0-01": 36,
+   "v0-02": 23,
+   "v0-03": 37,
+   "v0-04": 29,
+   "v0-05": 19,
+   "v0-06": 10,
+   "v0-07": 20,
+   "v0-08": 11,
+   "v0-09": 12,
+   "v0-10": 16,
+   "v0-11": 16,
+   "v0-12": 33,
+   "v0-13": 7,
+   "v0-14": 13,
+   "v0-15": 20,
+   "v0-16": 27,
+   "v0-17": 9,
+   "v0-18": 31,
+   "v0-19": 22,
+   "v0-20": 17,
+   "v0-21": 12
+  },
+  "mean": 20.0,
+  "median": 19,
+  "max": 37
+ },
+ "q7_absence_check": {
+  "Q7-01": {
+   "양자역학": 0
+  },
+  "Q7-02": {
+   "양궁": 0,
+   "교향곡": 0
+  },
+  "Q7-03": {
+   "중성자": 0,
+   "인슐린": 0
+  },
+  "Q7-04": {
+   "소믈리에": 0
+  }
+ },
+ "load_set_caps": {
+  "load-01": {
+   "phrases_ge3": 0,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-02": {
+   "phrases_ge3": 0,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-03": {
+   "phrases_ge3": 0,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-04": {
+   "phrases_ge3": 0,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-05": {
+   "phrases_ge3": 27,
+   "cap": 24,
+   "at_cap": true
+  },
+  "load-06": {
+   "phrases_ge3": 27,
+   "cap": 24,
+   "at_cap": true
+  },
+  "load-07": {
+   "phrases_ge3": 26,
+   "cap": 24,
+   "at_cap": true
+  },
+  "load-08": {
+   "phrases_ge3": 26,
+   "cap": 24,
+   "at_cap": true
+  },
+  "load-09": {
+   "phrases_ge3": 2,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-10": {
+   "phrases_ge3": 1,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-11": {
+   "phrases_ge3": 0,
+   "cap": 24,
+   "at_cap": false
+  },
+  "load-12": {
+   "phrases_ge3": 2,
+   "cap": 24,
+   "at_cap": false
+  }
+ }
+}

@@ -1,0 +1,50 @@
+{
+  "note": "합성 기준 출력. 과거 심의 결정의 시기·범위 한계를 밝히고 확인 항목으로 둔다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p1",
+        "start": 41,
+        "end": 63,
+        "quote": "판결은 일부 청구를 받아들이는 내용이었다"
+      },
+      "priority_stars": 1,
+      "risk_channels": [
+        "iendc_election"
+      ],
+      "issue_category": "election_fairness",
+      "review_confidence": "low",
+      "reason_short": "후보자 검증 보도에서 재판 진행 여부와 판결 범위를 정확히 적었는지 확인하세요.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "판결의 확정 여부와 인용 범위를 판결문 원문으로 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "iendc:2109",
+          "passage_id": "iendc:2109#1:w0000n01#c1"
+        }
+      ],
+      "counter_considerations": [
+        "공개 판결문에 근거하고 후보 측 반박을 함께 실었다."
+      ]
+    }
+  ],
+  "explanations": {
+    "finding-001": {
+      "applicable_issue": "인터넷선거보도심의 경로의 후보자 검증 보도.",
+      "article_context": "기사는 공개 판결문을 근거로 들고 후보 반박을 병기했다.",
+      "support": "심의 결정 passage의 일부: “{{quote|iendc:2109#1:w0000n01#c1|0|60}}”",
+      "differences": "인용한 결정은 2022년 선거에 대한 것이다. 이번 기사가 속한 선거와 매체 유형에 같은 기준이 적용되는지는 확인되지 않았다.",
+      "required_checks": [
+        "현행 선거 기간의 심의 기준 확인"
+      ],
+      "uncertainty": "과거 선거의 결정을 현재 기사에 그대로 적용하지 않는다. 근거는 참고용이다."
+    }
+  }
+}

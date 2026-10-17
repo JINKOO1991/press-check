@@ -1,0 +1,37 @@
+{
+  "note": "합성 기준 출력. 규칙 자체 점검용이며 정답 라벨이 아니다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p1",
+        "start": 37,
+        "end": 58,
+        "quote": "구청 회계 공개자료로 확인된 사실이다."
+      },
+      "priority_stars": 1,
+      "risk_channels": [
+        "reply"
+      ],
+      "issue_category": "reply_possibility",
+      "review_confidence": "medium",
+      "reason_short": "사실에 부합하는 보도라도 당사자의 반론보도 청구 가능성은 별도로 검토합니다.",
+      "suggested_edit": {
+        "mode": "none",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": []
+      },
+      "evidence": [
+        {
+          "source_id": "fixture-statute-001",
+          "passage_id": "art-1"
+        }
+      ],
+      "counter_considerations": [
+        "반론 가능성은 보도가 허위라는 뜻이 아니다."
+      ]
+    }
+  ],
+  "explanations": {}
+}

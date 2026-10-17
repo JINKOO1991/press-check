@@ -1,0 +1,202 @@
+{
+  "purpose": "P3 evaluation structure: synthetic articles linked to indexed passages by passage_id. Not a validated legal benchmark.",
+  "version": "p3-0.1",
+  "categories": [
+    "public_interest_no_edit",
+    "reply_vs_truth",
+    "opinion_commentary",
+    "election_standard"
+  ],
+  "min_per_category": 2,
+  "cases": [
+    {
+      "id": "p3_budget_audit",
+      "category": "public_interest_no_edit",
+      "scenario": "공문·감사 원문·회의록으로 뒷받침된 지자체 예산 비판",
+      "article": "p3_articles/p3_budget_audit.json",
+      "expected": {
+        "edit": "none",
+        "findings": "none_ok",
+        "max_stars": 2
+      },
+      "evidence_links": [
+        {
+          "passage_id": "lawgo_prec:241789:2022다251650#c1",
+          "source_id": "lawgo_prec:241789",
+          "role": "counter_support"
+        },
+        {
+          "passage_id": "pac_cases:1212#8585:2025대구조정55/56#c1",
+          "source_id": "pac_cases:1212",
+          "role": "difference_case"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_public_figure_past",
+      "category": "public_interest_no_edit",
+      "scenario": "공직 후보자의 재직 중 계약을 처분 요구서로 확인하고 반박을 실은 보도",
+      "article": "p3_articles/p3_public_figure_past.json",
+      "expected": {
+        "edit": "none",
+        "findings": "none_ok",
+        "max_stars": 2
+      },
+      "evidence_links": [
+        {
+          "passage_id": "lawgo_prec:194652:2000다37647#c1",
+          "source_id": "lawgo_prec:194652",
+          "role": "counter_support"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_reply_request_truthful",
+      "category": "reply_vs_truth",
+      "scenario": "사실에 부합하는 보도에도 당사자 반론 요청이 있을 수 있는 경우",
+      "article": "p3_articles/p3_reply_request_truthful.json",
+      "expected": {
+        "edit": "none",
+        "findings": "required",
+        "max_stars": 2,
+        "channels_required": [
+          "reply"
+        ],
+        "channels_forbidden": [
+          "correction",
+          "criminal"
+        ]
+      },
+      "evidence_links": [
+        {
+          "passage_id": "pac_cases:1212#8585:2025서울조정944/945#c1",
+          "source_id": "pac_cases:1212",
+          "role": "contrast_case"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_reply_vs_correction",
+      "category": "reply_vs_truth",
+      "scenario": "공시 문서와 인용 발언 중심 기사: 반론 경로와 정정 경로 분리",
+      "article": "p3_articles/p3_reply_vs_correction.json",
+      "expected": {
+        "edit": "none",
+        "findings": "required",
+        "max_stars": 2,
+        "channels_required": [
+          "reply"
+        ],
+        "channels_forbidden": [
+          "correction",
+          "criminal",
+          "civil"
+        ]
+      },
+      "evidence_links": [
+        {
+          "passage_id": "pac_cases:1212#8585:2025서울조정1362‧1363‧1364#c1",
+          "source_id": "pac_cases:1212",
+          "role": "contrast_case"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_policy_commentary",
+      "category": "opinion_commentary",
+      "scenario": "결산서 수치를 명시한 정책 논평",
+      "article": "p3_articles/p3_policy_commentary.json",
+      "expected": {
+        "edit": "none",
+        "findings": "none_ok",
+        "max_stars": 1
+      },
+      "evidence_links": [
+        {
+          "passage_id": "lawgo_prec:229161:99다6203#c1",
+          "source_id": "lawgo_prec:229161",
+          "role": "counter_support"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_hidden_fact_in_opinion",
+      "category": "opinion_commentary",
+      "scenario": "논평 형식이지만 뒷거래라는 기초 사실을 암시",
+      "article": "p3_articles/p3_hidden_fact_in_opinion.json",
+      "expected": {
+        "edit": "none",
+        "findings": "required",
+        "max_stars": 3,
+        "channels_forbidden": [
+          "criminal"
+        ]
+      },
+      "evidence_links": [
+        {
+          "passage_id": "lawgo_prec:617163:2022다284711,284728#c1",
+          "source_id": "lawgo_prec:617163",
+          "role": "support"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_election_candidate_verification",
+      "category": "election_standard",
+      "scenario": "선거운동 기간 후보자 검증 보도: 과거 선거의 심의 결정을 현재에 그대로 적용하지 않는다",
+      "article": "p3_articles/p3_election_candidate_verification.json",
+      "expected": {
+        "edit": "none",
+        "findings": "required",
+        "max_stars": 2,
+        "channels_required": [
+          "iendc_election"
+        ],
+        "channels_forbidden": [
+          "pac_election"
+        ]
+      },
+      "evidence_links": [
+        {
+          "passage_id": "iendc:2109#1:w0000n01#c1",
+          "source_id": "iendc:2109",
+          "role": "reference_other_election"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    },
+    {
+      "id": "p3_election_candidate_prominence",
+      "category": "election_standard",
+      "scenario": "두 후보 일정을 함께 실은 선거 보도: 범위가 맞는 근거가 없으면 기권",
+      "article": "p3_articles/p3_election_candidate_prominence.json",
+      "expected": {
+        "edit": "none",
+        "findings": "none_ok",
+        "max_stars": 1
+      },
+      "evidence_links": [
+        {
+          "passage_id": "iendc:2109#1:w0000n00#c1",
+          "source_id": "iendc:2109",
+          "role": "reference_other_election"
+        }
+      ],
+      "synthetic": true,
+      "not_a_legal_gold_label": true
+    }
+  ]
+}

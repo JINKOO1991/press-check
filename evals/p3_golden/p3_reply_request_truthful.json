@@ -1,0 +1,50 @@
+{
+  "note": "합성 기준 출력. 진실 여부와 별개로 반론 경로를 분리.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p2",
+        "start": 14,
+        "end": 24,
+        "quote": "협의 없이 통보됐다"
+      },
+      "priority_stars": 1,
+      "risk_channels": [
+        "reply"
+      ],
+      "issue_category": "reply_opportunity_unknown",
+      "review_confidence": "low",
+      "reason_short": "보도의 진실 여부와 별개로 당사자 반론 요청이 있을 수 있어 입장 반영 여부를 확인하세요.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "C기업 측 입장이 충분히 반영됐는지와 반론 요청 접수 여부를 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "pac_cases:1212",
+          "passage_id": "pac_cases:1212#8585:2025서울조정944/945#c1"
+        }
+      ],
+      "counter_considerations": [
+        "기사는 C기업의 답변을 직접 인용으로 싣고 있다."
+      ]
+    }
+  ],
+  "explanations": {
+    "finding-001": {
+      "applicable_issue": "반론보도 경로. 보도 내용이 진실이어도 당사자는 반론을 청구할 수 있다.",
+      "article_context": "협력사 협의회 쪽 주장이 직접 인용되고 C기업 답변도 함께 실렸다.",
+      "support": "조정 사례 passage의 앞부분: “{{quote|pac_cases:1212#8585:2025서울조정944/945#c1|0|40}}”",
+      "differences": "인용한 조정 사례는 보도가 오보로 확인돼 정정과 반론이 함께 이뤄진 사안이다. 이번 기사에는 오보를 시사하는 근거가 없어 정정 경로로 표시하지 않는다.",
+      "required_checks": [
+        "C기업 측 입장 반영 여부와 반론 요청 접수 여부 확인"
+      ],
+      "uncertainty": "조정 합의는 위법 인정이 아니며 이 사례의 사실관계는 이번 기사와 다르다."
+    }
+  }
+}

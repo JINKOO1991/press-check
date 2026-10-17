@@ -1,0 +1,50 @@
+{
+  "note": "합성 기준 출력. 규칙 자체 점검용이며 정답 라벨이 아니다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "title",
+        "start": 0,
+        "end": 18,
+        "quote": "회사 돈 빼돌린 대표, 경찰 수사"
+      },
+      "priority_stars": 3,
+      "risk_channels": [
+        "civil",
+        "correction"
+      ],
+      "issue_category": "headline_body_certainty_mismatch",
+      "review_confidence": "medium",
+      "reason_short": "제목이 본문에 기재된 혐의 수사보다 범행을 확정합니다.",
+      "suggested_edit": {
+        "mode": "replace",
+        "replacement": "회사 돈 빼돌린 혐의…경찰, 대표 수사",
+        "related_edits": [],
+        "required_verification": [
+          "실제 수사 대상과 혐의 및 취재 내용을 발행 전에 확인한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "law-prec-194652",
+          "passage_id": "summary-2"
+        }
+      ],
+      "counter_considerations": [
+        "기업의 자금 집행에 대한 공익적 취재와 본문의 혐의·부인 설명은 유지한다."
+      ]
+    }
+  ],
+  "explanations": {
+    "finding-001": {
+      "applicable_issue": "제목만 읽은 독자에게 범행이 확정된 것처럼 보이는지, 본문의 혐의 단계와 어긋나는지 본다.",
+      "article_context": "본문은 혐의를 수사 중이라고만 서술하고 금액·경위는 확인되지 않았다고 밝힌다.",
+      "support": "연결된 passage는 합성 코퍼스의 시험용 자리표시이며 실제 판결의 내용이 아니다.",
+      "differences": "합성 예제이므로 실제 사건과의 사실관계 비교는 하지 않았다.",
+      "required_checks": [
+        "실제 수사 대상과 혐의 및 취재 내용을 발행 전에 확인한다."
+      ]
+    }
+  }
+}

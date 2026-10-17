@@ -1,0 +1,37 @@
+{
+  "note": "합성 기준 출력. 규칙 자체 점검용이며 정답 라벨이 아니다.",
+  "findings": [
+    {
+      "finding_id": "finding-001",
+      "span": {
+        "block_id": "p1",
+        "start": 0,
+        "end": 27,
+        "quote": "경찰은 2024년 2월 D씨를 입건했다고 밝혔다."
+      },
+      "priority_stars": 1,
+      "risk_channels": [
+        "follow_up"
+      ],
+      "issue_category": "follow_up_outcome",
+      "review_confidence": "medium",
+      "reason_short": "후속 처분이 확인되어 원보도는 그대로 두고 후속 보도나 보강 여부를 검토합니다.",
+      "suggested_edit": {
+        "mode": "verify_first",
+        "replacement": null,
+        "related_edits": [],
+        "required_verification": [
+          "불기소 처분 사실을 후속 보도나 기사 보강에 반영할지 결정한다."
+        ]
+      },
+      "evidence": [
+        {
+          "source_id": "fixture-correction-001",
+          "passage_id": "p1"
+        }
+      ],
+      "counter_considerations": []
+    }
+  ],
+  "explanations": {}
+}

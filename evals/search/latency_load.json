@@ -1,0 +1,144 @@
+{
+ "schema_version": 1,
+ "_note": "지연 부하 세트 12개(P4_DESIGN §5.5). 질의 문장은 직접 지은 합성 문장이며 색인·기사에서 복사하지 않았다. 긴 문장 4개는 MAX_PHRASES·MAX_GRAMS 상한에 닿게 한 것(닿는지는 결과 JSON의 phrase_cap 필드로 확인).",
+ "queries": [
+  {
+   "id": "load-01",
+   "set": "latency_load",
+   "kind": "load_common2",
+   "text": "언론 보도 기사 사진",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-02",
+   "set": "latency_load",
+   "kind": "load_common2",
+   "text": "법원 판결 청구 손해",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-03",
+   "set": "latency_load",
+   "kind": "load_common2",
+   "text": "정정 반론 신청 결정",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-04",
+   "set": "latency_load",
+   "kind": "load_common2",
+   "text": "피해 사실 인격 권리",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-05",
+   "set": "latency_load",
+   "kind": "load_long",
+   "text": "지방일간지 단독보도 공무원비위 의혹제기 감사착수 경찰내사 제목단정 당사자해명 반론요청 과정누락 사진노출 직장명공개 편집국 사후검토 취재원보호 익명제보자 구체적금액 날짜적시 소제목 오해유발 기획시리즈 후속보도 정정요구 삭제요청 조정신청 반론게재 사실관계",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-06",
+   "set": "latency_load",
+   "kind": "load_long",
+   "text": "선거후보자 캠프관계자 경쟁후보 재산신고 가족사업체 거래내역 기자회견 지역방송사 사실확인 발언내용 자막송출 선거기간 보도공정성 심의신청 정정보도 청구접수 여론조사 결과공표 지지율 비교보도 허위사실 공표혐의 선거관리위원회 고발조치 방송심의 반론게재 사실관계",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-07",
+   "set": "latency_load",
+   "kind": "load_long",
+   "text": "온라인매체 사망사고 현장영상 모자이크 유가족동의 피해자실명 병력공개 언론중재위원회 조정신청 공익목적 취재자유 삭제요구 거절의사 후속기사 추가폭로 예고문구 인터넷게시 검색결과 노출중단 잊힐권리 개인정보 사생활침해 초상권침해 손해배상 삭제권고 사과문게재",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-08",
+   "set": "latency_load",
+   "kind": "load_long",
+   "text": "대기업 총수일가 불공정거래 혐의 탐사기획 익명제보자 진술근거 구체적금액 날짜적시 검찰수사 단계 기소이후 오해유발 소제목 회사측 반박입장 마지막문단 한줄소개 법인고소 명예훼손 업무방해 허위보도 정정반론 손해배상청구 공익성 상당성 반론보도문 사과광고",
+   "params": {
+    "limit": 10
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-09",
+   "set": "latency_load",
+   "kind": "load_counter",
+   "text": "언론 보도의 명예훼손 책임을 부정한 사례",
+   "params": {
+    "limit": 10,
+    "stance": "counter"
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-10",
+   "set": "latency_load",
+   "kind": "load_counter",
+   "text": "정정 보도 청구를 기각한 판단",
+   "params": {
+    "limit": 10,
+    "stance": "counter"
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-11",
+   "set": "latency_load",
+   "kind": "load_filter",
+   "text": "언론 보도 기사 사진",
+   "params": {
+    "limit": 10,
+    "as_of": "2015-12-31",
+    "risk_channel": "privacy"
+   },
+   "split": "dev",
+   "tune": false
+  },
+  {
+   "id": "load-12",
+   "set": "latency_load",
+   "kind": "load_filter",
+   "text": "명예훼손 손해배상 정정",
+   "params": {
+    "limit": 10,
+    "as_of": "2010-12-31",
+    "risk_channel": "civil"
+   },
+   "split": "dev",
+   "tune": false
+  }
+ ]
+}

@@ -1,0 +1,958 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Case record",
+  "description": "사건 구조화 결과(ARCHITECTURE §5 case record, P2_DESIGN §4). 원문 인용 필드는 {quote, page_id, start, end}이며 start/end는 해당 페이지 텍스트의 Unicode code point 기준 [start, end)이다. 교차검증은 contracts.validate_case_record.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "doc_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "att_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "institution": {
+      "enum": [
+        "pac",
+        "iendc",
+        "supreme_court",
+        "high_court",
+        "district_court",
+        "constitutional_court",
+        "other_court",
+        "other_body"
+      ]
+    },
+    "institution_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "authority_type": {
+      "enum": [
+        "statute",
+        "guideline",
+        "judgment",
+        "pac_settlement",
+        "pac_decision",
+        "pac_election_review",
+        "iendc_review",
+        "research",
+        "correction"
+      ]
+    },
+    "decision_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "원문에 적힌 결정 종류 표기(조정합의, 심의 의결 등). 라벨 판단은 outcome_type이 한다."
+    },
+    "case_number": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decision_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "publication_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "parties_redacted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "media_outlet",
+              "reporter",
+              "third_party",
+              "other"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "role",
+          "label"
+        ]
+      }
+    },
+    "factual_background": {
+      "type": "array",
+      "items": {
+        "description": "사건 경위. speaker로 당사자 주장, 기관이 인정한 사실, 기록상 사실을 나눈다.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "speaker": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "institution",
+              "court_majority",
+              "court_concurring",
+              "court_dissenting",
+              "article",
+              "record"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "speaker",
+          "quote"
+        ]
+      }
+    },
+    "article_claims": {
+      "type": "array",
+      "items": {
+        "description": "분쟁 대상 기사가 주장·전달한 내용. speaker는 article.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "speaker": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "institution",
+              "court_majority",
+              "court_concurring",
+              "court_dissenting",
+              "article",
+              "record"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "speaker",
+          "quote"
+        ]
+      }
+    },
+    "disputed_spans": {
+      "type": "array",
+      "items": {
+        "description": "분쟁 대상 기사 구절. speaker는 article.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "speaker": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "institution",
+              "court_majority",
+              "court_concurring",
+              "court_dissenting",
+              "article",
+              "record"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "speaker",
+          "quote"
+        ]
+      }
+    },
+    "issue_tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      },
+      "maxItems": 20
+    },
+    "claims_or_requested_remedy": {
+      "type": "array",
+      "items": {
+        "description": "신청인·피신청인의 주장과 구제 요구. speaker는 claimant 또는 respondent.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "speaker": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "institution",
+              "court_majority",
+              "court_concurring",
+              "court_dissenting",
+              "article",
+              "record"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "speaker",
+          "quote"
+        ]
+      }
+    },
+    "outcome_type": {
+      "enum": [
+        "judgment",
+        "decision",
+        "settlement",
+        "withdrawal",
+        "dismissal_procedural",
+        "dismissal_merits",
+        "correction",
+        "guideline",
+        "research",
+        "unknown"
+      ]
+    },
+    "outcome": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "speaker": {
+          "enum": [
+            "claimant",
+            "respondent",
+            "institution",
+            "court_majority",
+            "court_concurring",
+            "court_dissenting",
+            "article",
+            "record"
+          ]
+        },
+        "quote": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            },
+            "page_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "quote",
+            "page_id",
+            "start",
+            "end"
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "speaker",
+        "quote"
+      ],
+      "description": "기관·법원이 내린 결론. speaker는 institution 또는 court_majority."
+    },
+    "outcome_scope": {
+      "enum": [
+        "whole",
+        "partial",
+        "procedural",
+        "unclear"
+      ]
+    },
+    "legal_reasoning": {
+      "type": "array",
+      "items": {
+        "description": "기관·법원의 판단 근거. 당사자 주장과 문단 단위로 분리한다. 대법원은 다수·별개·반대의견을 speaker로 구분한다.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "speaker": {
+            "enum": [
+              "claimant",
+              "respondent",
+              "institution",
+              "court_majority",
+              "court_concurring",
+              "court_dissenting",
+              "article",
+              "record"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "speaker",
+          "quote"
+        ]
+      }
+    },
+    "legal_provisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "citation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quote": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "citation",
+          "quote"
+        ]
+      }
+    },
+    "law_versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "law": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effective_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "effective_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "relation": {
+            "enum": [
+              "applied_at_time",
+              "current",
+              "transitional",
+              "unknown"
+            ]
+          },
+          "quote": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "law",
+          "effective_from",
+          "effective_to",
+          "relation",
+          "quote"
+        ]
+      }
+    },
+    "supporting_passage_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "source_locators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "pdf_page",
+              "html_section",
+              "text_range"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ]
+      },
+      "minItems": 1
+    },
+    "settlement_or_adjudication": {
+      "enum": [
+        "settlement",
+        "adjudication",
+        "withdrawal",
+        "none",
+        "unknown"
+      ]
+    },
+    "available_original_article": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "quoted_in_source",
+            "described_only",
+            "absent",
+            "unknown"
+          ]
+        },
+        "quote": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            },
+            "page_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "quote",
+            "page_id",
+            "start",
+            "end"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "quote"
+      ]
+    },
+    "available_corrected_article": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "quoted_in_source",
+            "described_only",
+            "absent",
+            "unknown"
+          ]
+        },
+        "quote": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "quote": {
+              "type": "string",
+              "minLength": 1
+            },
+            "page_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "quote",
+            "page_id",
+            "start",
+            "end"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "quote"
+      ]
+    },
+    "correction_pair_confidence": {
+      "enum": [
+        "not_applicable",
+        "before_missing",
+        "partial_quote",
+        "full_pair_verified",
+        "unverified_pair"
+      ]
+    },
+    "appeal_or_later_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "relation": {
+            "enum": [
+              "appeal",
+              "remand",
+              "final",
+              "related_case",
+              "later_correction",
+              "unknown"
+            ]
+          },
+          "case_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "quote": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              },
+              "page_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "quote",
+              "page_id",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "required": [
+          "relation",
+          "case_number",
+          "note",
+          "quote"
+        ]
+      }
+    },
+    "verified_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "enum": [
+              "quote_substring_match",
+              "independent_reviewer",
+              "human"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "by",
+          "method",
+          "at"
+        ]
+      }
+    },
+    "verification_status": {
+      "enum": [
+        "unverified",
+        "verified",
+        "quarantined",
+        "rejected"
+      ]
+    },
+    "quote_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matched": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dropped_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "total",
+        "matched",
+        "dropped_fields"
+      ]
+    },
+    "structurer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "version",
+        "model",
+        "input_sha256"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "doc_id",
+    "att_id",
+    "institution",
+    "institution_name",
+    "authority_type",
+    "decision_type",
+    "case_number",
+    "decision_date",
+    "publication_date",
+    "parties_redacted",
+    "factual_background",
+    "article_claims",
+    "disputed_spans",
+    "issue_tags",
+    "claims_or_requested_remedy",
+    "outcome_type",
+    "outcome",
+    "outcome_scope",
+    "legal_reasoning",
+    "legal_provisions",
+    "law_versions",
+    "supporting_passage_ids",
+    "source_locators",
+    "settlement_or_adjudication",
+    "available_original_article",
+    "available_corrected_article",
+    "correction_pair_confidence",
+    "appeal_or_later_history",
+    "verified_by",
+    "verification_status",
+    "quote_check",
+    "structurer"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "press-dispute",
+  "owner": {
+    "name": "press-dispute-review contributors"
+  },
+  "description": "Marketplace for the press-dispute-review plugin: pre-publication review of Korean news articles for press-dispute risk.",
+  "plugins": [
+    {
+      "name": "press-dispute-review",
+      "source": "./plugins/press-dispute-review",
+      "description": "Reviews Korean news drafts (title, subtitle, body, captions) before publication, flags expressions that may lead to press disputes, and suggests minimal edits with checked evidence. Editorial aid, not legal advice."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+ "schema_version": "0.1",
+ "article_id": "p4-v2-title",
+ "publication_date": "2026-09-20",
+ "blocks": [
+  {
+   "block_id": "title",
+   "section": "title",
+   "text": "D시 건설과장, 업체에서 금품 받았다"
+  },
+  {
+   "block_id": "sub",
+   "section": "subtitle",
+   "text": "경찰 내사 착수…과장 측은 사실무근 주장"
+  },
+  {
+   "block_id": "p1",
+   "section": "body",
+   "text": "경찰이 D시 건설과장 E씨를 상대로 업체 선정 과정에 금품이 오갔는지 내사에 들어갔다. 경찰은 아직 혐의를 확인하지 않았다고 밝혔다."
+  },
+  {
+   "block_id": "p2",
+   "section": "body",
+   "text": "E씨 측은 “금품을 받은 사실이 없다”는 입장이다."
+  }
+ ],
+ "context": {
+  "genre": "news",
+  "election_context": null,
+  "verification_notes": [
+   "이 기사는 모두 가상의 합성 예제이며 실제 기사가 아니다."
+  ],
+  "sensitive_material": false
+ }
+}

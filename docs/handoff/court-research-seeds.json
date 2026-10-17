@@ -1,0 +1,87 @@
+{
+  "checked_at": "2026-10-05",
+  "scope": "Discovery seeds; no exhaustive corpus run or fine-tuning performed",
+  "court_api": {
+    "list_guide": "https://open.law.go.kr/LSO/openApi/guideResult.do?htmlName=precListGuide",
+    "body_guide": "https://open.law.go.kr/LSO/openApi/guideResult.do?htmlName=precInfoGuide",
+    "requires": "Issued OC and verified usage conditions",
+    "query_plan": {
+      "org": "400201",
+      "search": 2,
+      "sort": "dasc",
+      "display": 100,
+      "start_date": "discover_earliest_available_no_arbitrary_cutoff",
+      "end_date": "2026-10-05",
+      "reference_expansion": true
+    }
+  },
+  "judgments": [
+    {
+      "id": "law-prec-194652",
+      "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=194652",
+      "date": "2003-01-24",
+      "case_numbers": [
+        "2000다37647"
+      ],
+      "status": "official_body_checked"
+    },
+    {
+      "id": "law-evt-99da6203",
+      "url": "https://www.law.go.kr/precInfoP.do?evtNo=99%EB%8B%A46203&mode=0",
+      "date": "2000-07-28",
+      "case_numbers": [
+        "99다6203"
+      ],
+      "status": "official_search_excerpt_checked"
+    },
+    {
+      "id": "law-prec-241789",
+      "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=241789",
+      "date": "2024-10-08",
+      "case_numbers": [
+        "2022다251650"
+      ],
+      "status": "official_body_checked"
+    },
+    {
+      "id": "law-prec-617163",
+      "url": "https://www.law.go.kr/LSW/precInfoP.do?precSeq=617163",
+      "date": "2026-02-12",
+      "case_numbers": [
+        "2022다284711",
+        "2022다284728"
+      ],
+      "status": "official_body_checked"
+    }
+  ],
+  "research": [
+    {
+      "url": "https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001556126",
+      "title": "종교적 비판의 자유",
+      "year": 2011,
+      "status": "metadata_abstract_checked",
+      "rights": "fulltext_api_and_redistribution_not_verified"
+    },
+    {
+      "url": "https://kci.go.kr/kciportal/landing/article.kci?arti_id=ART003159524",
+      "title": "한국 언론법제의 역사와 전망",
+      "year": 2024,
+      "status": "metadata_abstract_search_checked",
+      "rights": "fulltext_api_and_redistribution_not_verified"
+    },
+    {
+      "url": "https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART003101997",
+      "title": "유명인 수사보도와 ‘공익’ 미분화의 문제점",
+      "year": 2024,
+      "status": "metadata_abstract_search_checked",
+      "rights": "fulltext_api_and_redistribution_not_verified"
+    },
+    {
+      "url": "https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART002045267",
+      "title": "사실기사의 직접인용에 대한 이중의 타당성 문제의 검토",
+      "year": 2015,
+      "status": "metadata_abstract_search_checked",
+      "rights": "fulltext_api_and_redistribution_not_verified"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+ "note": "합성 기준 출력",
+ "findings": [
+  {
+   "finding_id": "finding-001",
+   "span": {
+    "block_id": "title",
+    "start": 14,
+    "end": 20,
+    "quote": "금품 받았다"
+   },
+   "priority_stars": 2,
+   "risk_channels": [
+    "civil"
+   ],
+   "issue_category": "headline_assertion",
+   "review_confidence": "medium",
+   "reason_short": "수사 단계의 혐의를 제목에서 확정 사실처럼 썼습니다.",
+   "suggested_edit": {
+    "mode": "replace",
+    "replacement": "금품 수수 의혹으로 내사 받아",
+    "related_edits": [],
+    "required_verification": []
+   },
+   "evidence": [],
+   "counter_considerations": [
+    "본문에 내사 착수 사실이 있다."
+   ]
+  }
+ ],
+ "explanations": {
+  "finding-001": {
+   "applicable_issue": "제목이 본문보다 높은 단계를 단정하는지 본다.",
+   "article_context": "본문은 내사 착수까지만 적었다.",
+   "support": "근거 없음",
+   "differences": "해당 없음",
+   "counter_arguments": "본문에 경찰 내사 사실이 있다.",
+   "required_checks": [],
+   "uncertainty": "합성 예시이며 판단을 확정하지 않는다."
+  }
+ }
+}

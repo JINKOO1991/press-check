@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Review report",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "execution_mode": {
+      "enum": [
+        "live",
+        "synthetic_example"
+      ]
+    },
+    "report_id": {
+      "type": "string"
+    },
+    "article_id": {
+      "type": "string"
+    },
+    "article_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "corpus_snapshot_id": {
+      "type": "string"
+    },
+    "analyzed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "legal_as_of": {
+      "type": "string",
+      "format": "date"
+    },
+    "overall_status": {
+      "enum": [
+        "findings",
+        "no_actionable_findings",
+        "insufficient_information",
+        "partial"
+      ]
+    },
+    "coverage_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "ephemeral",
+            "local_encrypted"
+          ]
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "mode",
+        "expires_at"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "finding_id": {
+            "type": "string"
+          },
+          "span": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "block_id": {
+                "type": "string"
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "block_id",
+              "start",
+              "end",
+              "quote"
+            ]
+          },
+          "priority_stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "risk_channels": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "correction",
+                "reply",
+                "follow_up",
+                "civil",
+                "criminal",
+                "pac_election",
+                "iendc_election",
+                "privacy",
+                "portrait",
+                "copyright"
+              ]
+            }
+          },
+          "issue_category": {
+            "type": "string"
+          },
+          "review_confidence": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "reason_short": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "suggested_edit": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "enum": [
+                  "replace",
+                  "verify_first",
+                  "none"
+                ]
+              },
+              "replacement": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "related_edits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "span": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "block_id": {
+                          "type": "string"
+                        },
+                        "start": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "end": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "quote": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "block_id",
+                        "start",
+                        "end",
+                        "quote"
+                      ]
+                    },
+                    "replacement": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "span",
+                    "replacement"
+                  ]
+                }
+              },
+              "required_verification": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "mode",
+              "replacement",
+              "related_edits",
+              "required_verification"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "mode": {
+                      "const": "replace"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "replacement": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "mode": {
+                      "enum": [
+                        "verify_first",
+                        "none"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "replacement": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source_id": {
+                  "type": "string"
+                },
+                "passage_id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "locator": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "pdf_page",
+                        "html_section",
+                        "text_range"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value"
+                  ]
+                },
+                "authority_type": {
+                  "enum": [
+                    "statute",
+                    "guideline",
+                    "judgment",
+                    "pac_settlement",
+                    "pac_decision",
+                    "pac_election_review",
+                    "iendc_review",
+                    "research",
+                    "correction"
+                  ]
+                },
+                "verified": {
+                  "const": true
+                }
+              },
+              "required": [
+                "source_id",
+                "passage_id",
+                "url",
+                "locator",
+                "authority_type",
+                "verified"
+              ]
+            }
+          },
+          "counter_considerations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detailed_explanation_ref": {
+            "type": "string"
+          },
+          "validation_status": {
+            "enum": [
+              "verified",
+              "needs_information"
+            ]
+          }
+        },
+        "required": [
+          "finding_id",
+          "span",
+          "priority_stars",
+          "risk_channels",
+          "issue_category",
+          "review_confidence",
+          "reason_short",
+          "suggested_edit",
+          "evidence",
+          "counter_considerations",
+          "detailed_explanation_ref",
+          "validation_status"
+        ]
+      }
+    },
+    "hidden_finding_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "schema_version",
+    "execution_mode",
+    "report_id",
+    "article_id",
+    "article_sha256",
+    "policy_version",
+    "corpus_snapshot_id",
+    "analyzed_at",
+    "legal_as_of",
+    "overall_status",
+    "coverage_notes",
+    "retention",
+    "findings",
+    "hidden_finding_count"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "article_id": "eval-pure_opinion",
+  "publication_date": "2026-10-05",
+  "blocks": [
+    {
+      "block_id": "title",
+      "section": "title",
+      "text": "[사설] 청년 주거정책, 방향부터 다시 짜야"
+    },
+    {
+      "block_id": "p1",
+      "section": "body",
+      "text": "정부는 올해 청년 임대주택 공급 목표를 1만 가구로 정했지만 상반기 실제 공급은 2000가구에 그쳤다. 국토부 통계로 확인되는 수치다."
+    },
+    {
+      "block_id": "p2",
+      "section": "body",
+      "text": "이런 상황에서 기존 계획을 유지하겠다는 태도는 정책 실패에 대한 무책임한 대응이라고 본다. 공급 방식 자체를 재검토해야 한다."
+    }
+  ],
+  "context": {
+    "genre": "opinion",
+    "election_context": null,
+    "verification_notes": [
+      "합성 시험 기사. 모든 인물·기관·수치는 가상이다."
+    ],
+    "sensitive_material": false
+  }
+}

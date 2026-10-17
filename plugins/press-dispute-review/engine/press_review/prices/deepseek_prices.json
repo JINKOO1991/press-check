@@ -1,0 +1,39 @@
+{
+  "snapshot_id": "2026-10-09",
+  "source_url": "https://api-docs.deepseek.com/quick_start/pricing",
+  "checked_at": "2026-10-09",
+  "page_html_sha256": "210f102275ccf1a6542f08a3bc9e4b4c7c83278cb74b35217bffa112df6363b2",
+  "currency": "USD",
+  "unit": "per_1M_tokens",
+  "notes": [
+    "Peak/off-peak split is the vendor's own. Off-peak = half of peak. The page lists deepseek-flash and deepseek-v4-pro columns.",
+    "The page names the flash model 'deepseek-flash'. 'deepseek-v4-flash' is a legacy name that is still accepted: requests are served by DeepSeek-V4.1-Flash and billed at the Flash price (page footnote 1, checked 2026-10-09). This repo's code-constant allowlist stays deepseek-v4-flash / deepseek-v4-pro (P2_DESIGN section 4), so the flash price is keyed under deepseek-v4-flash and canonical_id records the vendor's current name.",
+    "Chinese public holidays are off-peak all day on the vendor side. They are not computed here (excluded_dates is empty), so costs on those days are over-estimated, never under-estimated.",
+    "Thinking mode is on by default at effort high on the vendor side; reasoning tokens are billed as output tokens."
+  ],
+  "peak_hours_utc": {
+    "weekdays": [0, 1, 2, 3, 4],
+    "ranges": [["01:00", "04:00"], ["06:00", "10:00"]],
+    "guard_minutes": 5,
+    "excluded_dates": [],
+    "rule_text": "Peak hours are 01:00 - 04:00 and 06:00 - 10:00 UTC, Monday through Friday, excluding Chinese public holidays. All other hours are off-peak, including weekends and Chinese public holidays in full."
+  },
+  "models": {
+    "deepseek-v4-flash": {
+      "canonical_id": "deepseek-flash",
+      "vendor_model_version": "DeepSeek-V4.1-Flash",
+      "context_length": 1000000,
+      "max_output_tokens": 384000,
+      "peak": {"input_cache_hit": 0.006, "input_cache_miss": 0.3, "output": 1.2},
+      "off_peak": {"input_cache_hit": 0.003, "input_cache_miss": 0.15, "output": 0.6}
+    },
+    "deepseek-v4-pro": {
+      "canonical_id": "deepseek-v4-pro",
+      "vendor_model_version": "DeepSeek-V4-Pro-0813",
+      "context_length": 1000000,
+      "max_output_tokens": 384000,
+      "peak": {"input_cache_hit": 0.044, "input_cache_miss": 1.32, "output": 3.96},
+      "off_peak": {"input_cache_hit": 0.022, "input_cache_miss": 0.66, "output": 1.98}
+    }
+  }
+}

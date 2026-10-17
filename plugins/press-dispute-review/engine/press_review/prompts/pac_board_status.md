@@ -1,0 +1,11 @@
+version: 2026-10-16.1
+
+## Source profile: PAC 시정권고 현황 (status board attachment: decision list or statistics summary)
+- institution: `pac`. authority_type: `pac_decision` only.
+- outcome_type: `correction` when the text records a correction recommendation (시정권고), `decision` for another decision, `dismissal_procedural` (각하) or `dismissal_merits` (기각) when the matter was dismissed, `withdrawal` (취하) when it was taken back, otherwise `unknown`. A recommendation is not a finding that the article was unlawful in court.
+- Only a list of individual cases (rows that carry a case number such as 2017안건201, a media name or an article title) produces CASES. Output one CASE per such row. A statistics summary (counts by type, by media kind or by session) is not a case: do not turn a count row, a column header or a media-name list into a CASE; return `{"cases": []}` for it.
+- Every CASE must carry a row-unique quote: copy the row itself (the whole table row line, or at least the cells with its own case number, media name and title) as one `factual_background` ITEM (speaker `institution`, summary of what the row records). A row without such a quote must not be output.
+- Many lists state the decision once in a section heading line (for example `■ 시정권고 106건`) and the rows have no result column. In that case copy the heading line as the `outcome` quote of every row under that heading (outcome_type `correction` for 시정권고) and keep the row quote in `factual_background`. Use only the heading that actually governs the row (a list can have several headings, for example 시정권고 and 불문). If the row has its own result cell, quote the row instead. If neither the row nor a governing heading states the result, set `outcome` null.
+- Copy table text exactly as it appears in the page, including the table markup (`|` separators or `<td>`/`</td>` tags). Do not rewrite cells as plain words joined by spaces.
+- In a status table (rows with cells), a quote that is exactly one whole table cell (for example 주의 or 경고) is accepted even when it is shorter than 4 characters. The code checks that it equals one cell of a table shown in the page text. Any other quote shorter than 4 characters is discarded.
+- The corrected article is rarely reproduced. Use `quoted_in_source` for original_article or corrected_article only when the wording itself appears in the document.
