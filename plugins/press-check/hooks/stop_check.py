@@ -2,6 +2,7 @@
 """Stop 훅: 이번 턴에 draft 스킬이 호출됐는데 최종 응답이 고정 머리말로 시작하지 않으면 한 번 막는다.
 
 허용은 출력 없이 종료 코드 0, 차단은 stdout 에 JSON 한 줄. 어떤 예외도 허용으로 처리한다(fail-open).
+완료 머리말이면 마지막 build_revision 결과의 revised_blocks text 가 응답에 글자 그대로 있는지도 확인한다.
 파일을 쓰지 않고, 기사 원문을 출력하지 않는다. 표준 라이브러리만 쓴다.
 """
 import json
@@ -28,6 +29,11 @@ REASON_NO_CALLS = (
     "이번 턴에서 검토를 수행한 뒤 그 결과로 머리말을 쓰거나, 수행하지 못했다면 "
     "'[press-check 검토 미완료] 사유=<짧은 사유>'로 시작하세요. "
     "완료 머리말 형식: '[press-check 검토 완료] report_id=<id> 적용 <n>건 미해결 <m>건 흐름경고 <k>건'."
+)
+
+REASON_REVISION = (
+    "최종 응답의 변경본이 서버가 돌려준 revised_blocks 와 글자가 다릅니다. 어긋난 block_id: {ids}. "
+    "서버가 돌려준 revised_blocks 의 text 를 한 글자도 바꾸지 말고 해당 블록을 다시 출력하세요."
 )
 
 
@@ -138,6 +144,77 @@ def _review_tools_called(turn):
             and any(n.endswith("__submit_report") for n in names))
 
 
+def _last_revision_call_id(turn):
+    last = None
+    for b in _tool_uses(turn):
+        if (b.get("name") or "").endswith("__build_revision") and isinstance(b.get("id"), str):
+            last = b["id"]
+    return last
+
+
+def _result_text(turn, tool_use_id):
+    for e in turn:
+        if e.get("type") != "user":
+            continue
+        c = _content(e)
+        if not isinstance(c, list):
+            continue
+        for b in c:
+            if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") == tool_use_id:
+                rc = b.get("content")
+                if isinstance(rc, str):
+                    return rc
+                if isinstance(rc, list):
+                    return "\n".join(x.get("text", "") for x in rc
+                                     if isinstance(x, dict) and x.get("type") == "text" and isinstance(x.get("text"), str))
+                return None
+    return None
+
+
+def _revised_blocks(text):
+    """파싱 실패·ok 아님·블록 없음이면 None."""
+    try:
+        d = json.loads(text)
+        if not isinstance(d, dict):
+            return None
+        if "revised_blocks" not in d and isinstance(d.get("structuredContent"), dict):
+            d = d["structuredContent"]
+        if d.get("ok") is False:
+            return None
+        blocks = d.get("revised_blocks")
+        if not isinstance(blocks, list):
+            return None
+        out = [(str(b.get("block_id")), b["text"]) for b in blocks
+               if isinstance(b, dict) and isinstance(b.get("text"), str) and b["text"]]
+        return out or None
+    except Exception:
+        return None
+
+
+def _revision_mismatch(turn, path, msg):
+    """변경본 블록 text 가 응답에 글자 그대로(줄바꿈은 \\n 으로 통일) 없으면 차단 사유, 아니면 None."""
+    uid = _last_revision_call_id(turn)
+    if uid is None:
+        return None
+    text = _result_text(turn, uid)
+    if text is None:
+        time.sleep(RETRY_WAIT_S)
+        turn = _load_turn(path)
+        if not turn:
+            return None
+        text = _result_text(turn, uid)
+        if text is None:
+            return None
+    blocks = _revised_blocks(text)
+    if not blocks:
+        return None
+    body = msg.replace("\r\n", "\n")
+    bad = [bid for bid, t in blocks if t.replace("\r\n", "\n") not in body]
+    if not bad:
+        return None
+    return REASON_REVISION.format(ids=", ".join(bad))
+
+
 def _load_turn(path):
     try:
         return _current_turn(_read_entries(path))
@@ -162,13 +239,14 @@ def _decide(payload):
     if UNDONE_RE.match(head):
         return None
     if DONE_RE.match(head):
-        if _review_tools_called(turn):
-            return None
-        time.sleep(RETRY_WAIT_S)
-        turn = _load_turn(path)
-        if not turn or _review_tools_called(turn):
-            return None
-        return REASON_NO_CALLS
+        if not _review_tools_called(turn):
+            time.sleep(RETRY_WAIT_S)
+            turn = _load_turn(path)
+            if not turn:
+                return None
+            if not _review_tools_called(turn):
+                return REASON_NO_CALLS
+        return _revision_mismatch(turn, path, msg)
     return REASON_BASE
 
 

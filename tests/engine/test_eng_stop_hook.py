@@ -291,3 +291,121 @@ def test_reread_no_calls_blocks(monkeypatch, tmp_path):
 
 def test_reread_with_calls_allows(monkeypatch, tmp_path):
     assert _reread_decision(monkeypatch, tmp_path, "calls") is None
+
+
+# ---- 변경본 글자 일치 검사 ----
+BLOCKS = [
+    {"block_id": "title", "section": "title", "text": "합성 제목 가나다"},
+    {"block_id": "p1", "section": "body", "text": "합성 첫 문단이다."},
+    {"block_id": "p2", "section": "body", "text": '합성 인용 "경찰은 수사 중이다"라고 했다.'},
+    {"block_id": "p3", "section": "body", "text": "첫 줄\n둘째 줄"},
+]
+BODY = "\n\n".join(b["text"] for b in BLOCKS)
+
+
+def _rev_use(uid):
+    return _a([{"type": "tool_use", "id": uid, "name": PFX + "build_revision", "input": {"report_id": "rpt-x"}}])
+
+
+def _rev_res(uid, payload, form="str"):
+    text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False)
+    content = {"str": text, "blocks": [{"type": "text", "text": text}]}[form]
+    return _u([{"type": "tool_result", "tool_use_id": uid, "content": content}])
+
+
+def _rev_turn(blocks=BLOCKS, uid="rv1", form="str", ok=True):
+    return [_slash(), _meta()] + _review_calls() + [_rev_use(uid), _rev_res(uid, {"ok": ok, "revised_blocks": blocks}, form)]
+
+
+def _typo_body():
+    return BODY.replace("경찰은", "경경찰은")
+
+
+def test_revision_match_allows(tmp_path):
+    _assert_allow(_hook(tmp_path, _rev_turn(), DONE + "\n" + BODY))
+
+
+def test_revision_duplicate_char_blocks_only_that_block(tmp_path):
+    d = _assert_block(_hook(tmp_path, _rev_turn(), DONE + "\n" + _typo_body()))
+    assert "p2" in d["reason"]
+    for other in ("title", "p1", "p3"):
+        assert other not in d["reason"]
+    assert "경찰" not in d["reason"] and "합성" not in d["reason"]
+    assert "한 글자도 바꾸지 말고" in d["reason"]
+
+
+def test_revision_result_forms_parsed(tmp_path):
+    for form in ("str", "blocks"):
+        e = _rev_turn(form=form)
+        _assert_allow(_hook(tmp_path, e, DONE + "\n" + BODY))
+        _assert_block(_hook(tmp_path, e, DONE + "\n" + _typo_body()))
+    wrapped = [_slash(), _meta()] + _review_calls() + [_rev_use("rv1"), _rev_res("rv1", {"structuredContent": {"ok": True, "revised_blocks": BLOCKS}})]
+    _assert_allow(_hook(tmp_path, wrapped, DONE + "\n" + BODY))
+    _assert_block(_hook(tmp_path, wrapped, DONE + "\n" + _typo_body()))
+
+
+def test_revision_no_call_allows(tmp_path):
+    _assert_allow(_hook(tmp_path, [_slash(), _meta()] + _review_calls(), DONE + "\n" + _typo_body()))
+
+
+def test_revision_result_missing_allows_after_reread(monkeypatch, tmp_path):
+    m = _load_module()
+    monkeypatch.setattr(m, "RETRY_WAIT_S", 0)
+    p = _write(tmp_path, [_slash(), _meta()] + _review_calls() + [_rev_use("rv1")])
+    r = m._decide({"stop_hook_active": False, "last_assistant_message": DONE + "\n" + _typo_body(), "transcript_path": str(p)})
+    assert r is None
+
+
+def test_revision_result_appears_on_reread_is_checked(monkeypatch, tmp_path):
+    m = _load_module()
+    monkeypatch.setattr(m, "RETRY_WAIT_S", 0)
+    base = [_slash(), _meta()] + _review_calls() + [_rev_use("rv1")]
+    reads = []
+
+    def fake(path):
+        reads.append(1)
+        return base if len(reads) == 1 else base + [_rev_res("rv1", {"ok": True, "revised_blocks": BLOCKS})]
+
+    monkeypatch.setattr(m, "_read_entries", fake)
+    r = m._decide({"stop_hook_active": False, "last_assistant_message": DONE + "\n" + _typo_body(), "transcript_path": "x"})
+    assert r and "p2" in r
+
+
+def test_revision_not_ok_or_empty_or_unparseable_allows(tmp_path):
+    msg = DONE + "\n" + _typo_body()
+    _assert_allow(_hook(tmp_path, _rev_turn(ok=False), msg))
+    _assert_allow(_hook(tmp_path, _rev_turn(blocks=[]), msg))
+    e = [_slash(), _meta()] + _review_calls() + [_rev_use("rv1"), _rev_res("rv1", "not json {")]
+    _assert_allow(_hook(tmp_path, e, msg))
+    e = [_slash(), _meta()] + _review_calls() + [_rev_use("rv1"), _rev_res("rv1", {"ok": True})]
+    _assert_allow(_hook(tmp_path, e, msg))
+
+
+def test_revision_uses_last_call_in_turn(tmp_path):
+    old = [dict(BLOCKS[0], text="오래된 제목 결과")]
+    e = [_slash(), _meta()] + _review_calls() + [_rev_use("rv1"), _rev_res("rv1", {"ok": True, "revised_blocks": old}),
+                                                  _rev_use("rv2"), _rev_res("rv2", {"ok": True, "revised_blocks": BLOCKS})]
+    _assert_allow(_hook(tmp_path, e, DONE + "\n" + BODY))
+    d = _assert_block(_hook(tmp_path, e, DONE + "\n" + _typo_body()))
+    assert "p2" in d["reason"]
+
+
+def test_revision_previous_turn_result_not_used(tmp_path):
+    prev = [_u("앞선 요청"), _rev_use("old1"), _rev_res("old1", {"ok": True, "revised_blocks": BLOCKS}), _a([{"type": "text", "text": "끝"}])]
+    e = prev + [_slash(), _meta()] + _review_calls()
+    _assert_allow(_hook(tmp_path, e, DONE + "\n" + _typo_body()))
+
+
+def test_revision_stop_hook_active_allows(tmp_path):
+    _assert_allow(_hook(tmp_path, _rev_turn(), DONE + "\n" + _typo_body(), stop_hook_active=True))
+
+
+def test_revision_not_checked_for_undone_header(tmp_path):
+    _assert_allow(_hook(tmp_path, _rev_turn(), UNDONE + "\n" + _typo_body()))
+
+
+def test_revision_multiline_block_consistent(tmp_path):
+    e = _rev_turn()
+    _assert_allow(_hook(tmp_path, e, DONE + "\n" + BODY.replace("\n둘째", "\r\n둘째")))
+    d = _assert_block(_hook(tmp_path, e, DONE + "\n" + BODY.replace("첫 줄\n둘째 줄", "첫 줄 둘째 줄")))
+    assert "p3" in d["reason"]
