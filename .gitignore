@@ -32,3 +32,6 @@ node_modules/
 evals/out/
 .pytest_cache/
 evals/out/
+
+# 로컬 전용 지침
+CLAUDE.local.md
