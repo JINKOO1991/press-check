@@ -35,7 +35,7 @@ def test_tool_schema_has_stance_and_institution(live):
     tools = {t["name"]: t for t in c.request("tools/list")["result"]["tools"]}
     props = tools["search_cases"]["inputSchema"]["properties"]
     assert props["stance"]["enum"] == ["support", "counter", "both"] and "supreme_court" in props["institution"]["enum"]
-    assert set(tools) == {"prepare_article", "search_cases", "submit_report", "explain_finding", "corpus_status"}   # 외부 검색 도구 없음
+    assert set(tools) == {"prepare_article", "search_cases", "submit_report", "explain_finding", "build_revision", "corpus_status"}   # 외부 검색 도구 없음
 
 
 def test_search_to_submit_roundtrip_on_real_index(live, article_obj):

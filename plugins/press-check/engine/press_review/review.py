@@ -1,6 +1,6 @@
 """보고서 조립과 MCP 도구 동작. CLI와 mcp_server.py가 공유한다.
 
-MCP 도구 함수(D2): prepare_article, search_cases, submit_report, explain_finding, corpus_status.
+MCP 도구 함수(D2): prepare_article, search_cases, submit_report, explain_finding, build_revision, corpus_status.
 모두 JSON으로 직렬화되는 dict를 돌려주며 ``ok`` 키로 성공 여부를 알린다.
 
 서버만 ``verified: true`` 를 붙인다: 모델이 보낸 verified 값은 버리고, 코퍼스에 source_id+passage_id가 있고
@@ -14,7 +14,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from . import config, contracts, corpus_sqlite, edit_checks, hashing, logsafe, render
+from . import config, contracts, corpus_sqlite, edit_checks, hashing, logsafe, render, revision
 from .article_io import parse_plaintext_ex
 from .store import EphemeralStore
 
@@ -325,7 +325,9 @@ _ARTICLE_PREFIX = "article:"
 def _forget_expired(key: str) -> None:
     """보관소에서 원고가 사라지면 그 원고의 로그 색인(8자 조각)도 지운다."""
     if key.startswith(_ARTICLE_PREFIX):
-        logsafe.forget_article(key[len(_ARTICLE_PREFIX):])
+        handle = key[len(_ARTICLE_PREFIX):]
+        logsafe.forget_article(handle)
+        logsafe.forget_article(handle + revision.REV_SUFFIX)
 
 
 def new_store(ttl_seconds: float = config.DEFAULT_TTL_SECONDS, clock: Any = None) -> EphemeralStore:
@@ -458,6 +460,10 @@ def explain_finding(store: Any, *, report_id: str, finding_id: str) -> dict:
     except KeyError:
         return {"ok": False, "message": f"finding_id '{finding_id}' 가 이 보고서에 없습니다."}
     return {"ok": True, "markdown": md}
+
+
+def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_ids: list[str] | None = None) -> dict:
+    return revision.build_revision(store, report_id=report_id, article_sha256=article_sha256, finding_ids=finding_ids)
 
 
 def corpus_status(corpus: Any) -> dict:

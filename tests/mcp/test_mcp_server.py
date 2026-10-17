@@ -12,7 +12,7 @@ from press_review.mcp_server import SUPPORTED_PROTOCOL_VERSIONS, Server, serve
 from press_review.providers import MockProvider
 from press_review.store import EphemeralStore
 
-TOOLS = {"prepare_article", "search_cases", "submit_report", "explain_finding", "corpus_status"}
+TOOLS = {"prepare_article", "search_cases", "submit_report", "explain_finding", "build_revision", "corpus_status"}
 NOW = dt.datetime(2026, 10, 8, 12, 0, tzinfo=dt.timezone(dt.timedelta(hours=9)))
 
 

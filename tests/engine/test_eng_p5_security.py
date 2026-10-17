@@ -31,7 +31,7 @@ def _launch_spec():
 
 
 def test_f1_mcp_launch_ignores_cwd_modules(tmp_path):
-    """작업 폴더의 json.py 가 서버 기동 때 실행되지 않고, 서버는 tools/list 5개를 돌려준다."""
+    """작업 폴더의 json.py 가 서버 기동 때 실행되지 않고, 서버는 tools/list 6개를 돌려준다."""
     evil = tmp_path / "evilcwd"
     evil.mkdir()
     marker = tmp_path / "MARKER"
@@ -49,7 +49,7 @@ def test_f1_mcp_launch_ignores_cwd_modules(tmp_path):
     assert not marker.exists()
     lines = [json.loads(x) for x in p.stdout.decode().splitlines() if x.strip()]
     tools = [r for r in lines if r.get("id") == 2][0]["result"]["tools"]
-    assert len(tools) == 5
+    assert len(tools) == 6
 
 
 def test_f2_store_item_cap_evicts_oldest():
