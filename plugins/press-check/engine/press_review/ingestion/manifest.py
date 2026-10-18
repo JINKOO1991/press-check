@@ -158,7 +158,8 @@ _V1_COLUMNS = {
 _ADD_COLUMNS = {
     "attachments": (("orig_filename", "TEXT"), ("dedup_of", "TEXT"), ("page_count", "INTEGER"), ("fetched_at", "TEXT"),
                     ("detected_type", "TEXT"), ("extractor_version", "TEXT"), ("extract_input_sha256", "TEXT"),
-                    ("structurer_version", "TEXT"), ("structure_input_sha256", "TEXT")),
+                    ("structurer_version", "TEXT"), ("structure_input_sha256", "TEXT"),
+                    ("raw_archived_to", "TEXT"), ("raw_archived_at", "TEXT")),      # 외부 보관 표시(raw 삭제 계획): 채워지면 파일이 없어도 재수집·강등하지 않는다
     "api_usage": (("cache_miss_tokens", "INTEGER"), ("target_id", "TEXT"), ("attempt", "INTEGER"), ("status", "TEXT"),
                   ("error_class", "TEXT"), ("latency_ms", "INTEGER"), ("finish_reason", "TEXT"),
                   ("requested_model", "TEXT")),            # G-D11: 요청한 모델 이름(model 열은 응답이 돌려준 이름)
@@ -838,7 +839,7 @@ class Manifest:
     # ================================================================== P2 쓰기 헬퍼
     _ATT_FIELDS = ("raw_sha256", "raw_path", "orig_filename", "dedup_of", "page_count", "fetched_at", "detected_type",
                    "content_length", "content_type", "extractor_version", "extract_input_sha256", "structurer_version",
-                   "structure_input_sha256")
+                   "structure_input_sha256", "raw_archived_to", "raw_archived_at")
     _DOC_STAGE_FIELDS = ("extractor_version", "extract_input_sha256", "structurer_version", "structure_input_sha256")
 
     def link_document_list_page(self, doc_id: str, source_id: str, list_url: str) -> bool:

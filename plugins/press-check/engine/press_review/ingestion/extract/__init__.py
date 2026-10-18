@@ -68,7 +68,7 @@ LATER_STATUSES = ("structured", "verified", "indexed")
 MAX_RETRIES_BEFORE_SKIP = 3
 ALIGN_MIN_SHARE = 0.8
 REPEAT_STOP = 3
-NOT_WORK = ("skipped", "dedup_skipped", "deferred_waiting_chapters", "refused_verified")
+NOT_WORK = ("skipped", "dedup_skipped", "deferred_waiting_chapters", "refused_verified", "skipped_archived")
 EXTRACTABLE = ("fetched", "extracted", "failed") + LATER_STATUSES
 
 
@@ -219,6 +219,8 @@ def extract_attachment(ctx: Any, runner: ToolRunner, att: dict, family: str, *, 
         path = stage.resolve(Path(ctx.corpus_dir), att["raw_path"])
     except (ValueError, TypeError):
         path = None
+    if att.get("raw_archived_to") and (path is None or not path.is_file()):
+        return {"outcome": "skipped_archived"}      # 외부 보관됨: 상태를 내리지 않고 건너뛴다(다시 추출하려면 복원 스크립트로 먼저 되돌린다)
     if path is None or not path.is_file():
         m.record_failure(aid, "extract", "raw_missing", "raw file not found; fetch will download it again")
         m.set_attachment_status(aid, "discovered")             # fetch 단계가 다시 받는다
@@ -526,6 +528,13 @@ def run_extract(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] =
             "errors": dict(errors), "stopped": stopped, **info}
 
 
+def _local_file(ctx: Any, att: dict) -> bool:
+    try:
+        return stage.resolve(Path(ctx.corpus_dir), att["raw_path"]).is_file()
+    except (ValueError, TypeError):
+        return False
+
+
 def _extract_one(ctx: Any, runner: ToolRunner, att: dict, family: str, *, ocr: bool, extractor: Optional[str] = None,
                  force: bool = False) -> dict:
     """전체 PDF 이면서 같은 문서에 장별 PDF 가 있으면 보충 모드, 아니면 일반 모드."""
@@ -540,6 +549,8 @@ def _extract_one(ctx: Any, runner: ToolRunner, att: dict, family: str, *, ocr: b
             covering = [s for s in chapters if s["status"] in stage.EXTRACTED_OR_LATER and s.get("raw_path")
                         and s.get("detected_type") == "pdf"]
             if covering:
+                if any(c.get("raw_archived_to") and not _local_file(ctx, c) for c in covering):
+                    return {"outcome": "skipped_archived"}       # 보충 범위를 정하려면 장별 PDF 를 읽어야 한다: 외부 보관 중이면 복원 뒤에 다시 한다(파생 행을 지우기 전에 멈춘다)
                 return extract_attachment(ctx, runner, att, family, ocr=ocr, plan_sig=_plan_sig(covering),
                                           select_pages=plan_supplement(runner, ctx, {}, att, covering), extractor=extractor, force=force)
     return extract_attachment(ctx, runner, att, family, ocr=ocr, extractor=extractor, force=force)

@@ -202,7 +202,7 @@ def select_candidates(manifest: Any, corpus_dir: Path, *, source: Optional[str] 
     """(내려받을 첨부 목록(순위 정렬), 요약). 요약: unmapped_sources, skipped_exhausted, rights_not_allowed."""
     rows = manifest.list_attachments(source_id=source, right=("store_raw", "allowed"))
     open_fail = {f["target"]: f for f in manifest.failures(open_only=True) if f["stage"] == "fetch"}
-    out, unmapped, exhausted, shells = [], set(), 0, []
+    out, unmapped, exhausted, shells, archived = [], set(), 0, [], 0
     want = set(att_ids) if att_ids else None
     for a in rows:
         if want is not None and a["att_id"] not in want:      # --att: 지정한 첨부만(게이트 표본용). 순위·소스 지정 없이도 고른다
@@ -218,6 +218,9 @@ def select_candidates(manifest: Any, corpus_dir: Path, *, source: Optional[str] 
         elif t not in tier_set and want is None:
             continue
         st = a["status"]
+        if a.get("raw_archived_to") and a["raw_path"] and not _file_ok(corpus_dir, a["raw_path"]):
+            archived += 1                            # 외부 보관 표시가 있고 로컬 파일만 없다: 받은 것으로 본다(복원 스크립트가 표시를 지운다)
+            continue
         if st == "discovered":
             pass
         elif st == "failed" and (not a["raw_path"] or not _file_ok(corpus_dir, a["raw_path"])):
@@ -232,7 +235,7 @@ def select_candidates(manifest: Any, corpus_dir: Path, *, source: Optional[str] 
             continue
         out.append(a)
     out.sort(key=lambda a: tiers.sort_key(a["source_id"], a["att_id"]))
-    return out, {"unmapped_sources": sorted(unmapped), "skipped_exhausted": exhausted, "viewer_shells_skipped": len(shells),
+    return out, {"unmapped_sources": sorted(unmapped), "skipped_exhausted": exhausted, "skipped_archived": archived, "viewer_shells_skipped": len(shells),
                  "viewer_shell_ids": shells}
 
 
