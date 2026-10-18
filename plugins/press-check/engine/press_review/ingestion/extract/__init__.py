@@ -25,6 +25,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from ... import diskguard
 from .. import stage, tiers
 from ..context import TimeBudgetExceeded
 from . import hwp as hwp_mod
@@ -479,6 +480,9 @@ def run_extract(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] =
         by_doc.setdefault(a["doc_id"], []).append(a)
     if ctx.dry_run:
         return {"stage": "extract", "dry_run": True, "documents": len(by_doc), "attachments": len(cands), **info}
+    guard = ctx.extras.get("disk_guard")
+    if guard is not None:                                  # 후보 첨부 수(limit 적용 후)만큼 쓸 여유가 있는지 첫 첨부 전에 확인한다
+        guard.start(min(len(cands), limit) if limit is not None else len(cands))
     counts: Counter = Counter()
     sums: Counter = Counter()
     errors: Counter = Counter()
@@ -497,7 +501,7 @@ def run_extract(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] =
             ctx.check_time()
             try:
                 res = _extract_one(ctx, runner, att, family, ocr=ocr, extractor=extractor, force=force)
-            except TimeBudgetExceeded:
+            except (TimeBudgetExceeded, diskguard.DiskGuardError):      # 디스크 부족은 실패가 아니라 이어받기 가능한 정지다
                 raise
             except Exception as e:                       # 어댑터 버그: 기록하고 이어 간다. 같은 클래스 3연속이면 멈춘다
                 cls = type(e).__name__
@@ -507,6 +511,8 @@ def run_extract(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] =
                 ctx.logger.error("extract %s crashed: %s", att["att_id"], cls, exc_info=True)
                 res = {"outcome": "failed", "error_class": cls, "unexpected": True}
             counts[res["outcome"]] += 1
+            if ctx.extras.get("disk_guard") is not None:
+                ctx.extras["disk_guard"].advance()
             if res["outcome"] not in NOT_WORK:                 # --limit 은 실제로 처리한 건수만 센다(이미 끝난 첨부를 건너뛴 것은 제외)
                 attempted += 1
             if res["outcome"] == "failed":

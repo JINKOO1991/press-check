@@ -422,3 +422,41 @@ def test_att_filter_extracts_only_the_named_attachment_even_outside_a_known_tier
     assert r0["result"]["attempted"] == 0 and not pages(env, ids[0])
     _, r1 = env.run(r, "--att", ids[1])
     assert r1["result"]["attempted"] == 1 and not pages(env, ids[0]) and len(pages(env, ids[1])) == 2
+
+
+def test_disk_guard_error_in_page_loop_pauses_without_failure_record(env):
+    """페이지 루프의 check_time 에서 DiskGuardError 가 나면 첨부 실패로 삼키지 않고 위로 전파해 paused_disk_* 로 정지한다."""
+    from press_review import diskguard
+    from press_review.ingestion.context import RunContext
+    doc, a1, blob, spec = one_pdf(env, n=3)
+    n = {"c": 0}
+    real = RunContext.check_time
+
+    def check_time(self):
+        n["c"] += 1
+        if n["c"] >= 3:                       # 1: 문서 루프, 2: 첨부 루프, 3~: 쪽 루프(try 안)
+            raise diskguard.DiskGuardError("low", 1, 2, "부족")
+        real(self)
+    env.mp.setattr(RunContext, "check_time", check_time)
+    code, res = env.run(FakeRunner({blob: spec}))
+    assert code == diskguard.EXIT_LOW and res["status"] == "paused_disk_low"
+    assert env.m.select("SELECT * FROM attachments WHERE att_id=?", (a1,))[0]["status"] != "failed"
+    assert env.m.select("SELECT * FROM failures WHERE error_class='DiskGuardError'") == []
+
+
+def test_extract_start_checks_candidate_count(env):
+    """후보 첨부 수 x 항목당 예상량이 여유를 넘으면 첫 첨부를 건드리기 전에 low 로 정지한다."""
+    from press_review import diskguard
+    env.mp.setenv("PRESS_DISK_STRUCT_MB", "1024")
+    env.mp.setattr(diskguard, "_default_avail", lambda p: 20 * 1024 ** 3)
+    ids = []
+    for i in range(30):
+        doc, (a,) = seed(env.m, doc_key=str(200 + i), atts=[(1, U % f"G{i}", "full", None, "application/pdf", "PDF")])
+        blob, spec = simple_pdf(f"G{i}", 1)
+        place_raw(env.m, env.corpus, a, blob)
+        ids.append(a)
+    code, res = env.run(FakeRunner({}))
+    assert code == diskguard.EXIT_LOW and res["status"] == "paused_disk_low"
+    assert all(r["status"] not in ("extracted", "failed") for r in env.m.select("SELECT status FROM attachments"))
+    code2, res2 = env.run(FakeRunner({}), "--limit", "5")                    # limit 적용 후 5개 = 5GB 이므로 시작은 통과
+    assert res2["status"] != "paused_disk_low"

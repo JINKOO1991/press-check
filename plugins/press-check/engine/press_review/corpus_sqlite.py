@@ -550,7 +550,8 @@ def _read_rights(conn: sqlite3.Connection) -> tuple[dict, dict]:
 
 
 def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.datetime | None = None,
-                check: Callable[[], None] | None = None, keep: int = KEEP_INDEXES, dry_run: bool = False) -> dict:
+                check: Callable[[], None] | None = None, keep: int = KEEP_INDEXES, dry_run: bool = False,
+                force_disk: bool = False, on_force: Callable[[str], None] | None = None) -> dict:
     """수집 장부에서 색인을 만든다. 돌려주는 dict 는 건수·경로·상태뿐이다(원문 없음).
 
     status: ``built`` | ``unchanged``(같은 snapshot 이 이미 있음) | ``dry_run`` | ``no_passages``(넣을 chunk 없음, 아무것도 발행하지 않음).
@@ -638,6 +639,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                                       "by_source_family": dict(sorted(by_family.items())), "sources": sources,
                                       "excluded": base["excluded"]}, ensure_ascii=False, sort_keys=True),
         }
+        _guard_index_build(od, force=force_disk, on_force=on_force)    # 임시 파일을 만들기 전에 C: 여유 확인(색인 폴더가 다른 드라이브여도 같은 기준)
         config.private_mkdir(od)
         tmp = od / f"{target.name}.tmp-{os.getpid()}"
         try:
@@ -655,6 +657,11 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
         return {"status": "built", "path": str(target), "fts_trigram": use_fts, "pruned": pruned, **base}
     finally:
         conn.close()
+
+
+def _guard_index_build(od: Path, *, force: bool = False, on_force: Callable[[str], None] | None = None) -> None:
+    from . import diskguard
+    diskguard.require_free(diskguard.index_build_estimate(od), "색인 빌드", force=force, on_force=on_force, fallback_path=od)
 
 
 def _snapshot_of(path: Path) -> str | None:

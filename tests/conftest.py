@@ -13,6 +13,8 @@ _TMP = tempfile.mkdtemp(prefix="pdr-tests-data-")
 atexit.register(shutil.rmtree, _TMP, True)
 os.environ["PRESS_DISPUTE_DATA_DIR"] = _TMP
 os.environ.pop("CLAUDE_PLUGIN_DATA", None)
+os.environ["PRESS_DISK_MIN_FREE_GB"] = "0"          # 디스크 가드(diskguard) 기본 임계값 10GB 가 시험 PC 여유에 좌우되지 않게 한다. 가드 단위 시험은 monkeypatch 로 덮어쓴다
+os.environ["PRESS_DISK_MARGIN_GB"] = "0"
 os.environ["PRESS_REVIEW_ALLOW_SYNTHETIC"] = "1"      # 합성 코퍼스에 의존하는 기존 테스트용. 색인 없음 거부 동작은 개별 테스트가 끈다
 
 

@@ -40,7 +40,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 from ..config import private_mkdir
-from .. import logsafe
+from .. import diskguard, logsafe
 from ..providers import deepseek as ds
 from . import links as links_mod
 from . import rights as rights_mod
@@ -413,12 +413,15 @@ class Structurer:
     def __init__(self, manifest: Manifest, provider: ds.DeepSeekProvider, corpus_dir: Path, *, model: str = DEFAULT_MODEL,
                  window_chars: int = WINDOW_CHARS, snap_chars: int = SNAP_CHARS, max_tokens: int = MAX_TOKENS,
                  quarantine_rate: float = sr.DEFAULT_QUARANTINE_RATE, retry_dead: bool = False, force: bool = False,
-                 execute: bool = True, page_chunks: bool = False, check_time: Optional[Callable[[], None]] = None):
+                 execute: bool = True, page_chunks: bool = False, check_time: Optional[Callable[[], None]] = None,
+                 disk_guard: Any = None):
         model = ds.canonical_model(model)           # 구 이름은 공급자 정식 이름으로 옮긴다(G-D11). 목록 밖이면 ModelNotAllowed
         self.m, self.p, self.corpus = manifest, provider, Path(corpus_dir)
         self.model, self.window_chars, self.snap_chars, self.max_tokens = model, window_chars, snap_chars, max_tokens
         self.rate, self.retry_dead, self.force, self.execute, self.page_chunks = quarantine_rate, retry_dead, force, execute, page_chunks
         self.check_time = check_time or (lambda: None)
+        self.disk_guard = disk_guard                 # diskguard.DiskGuard 또는 None. 대상마다 tick, 부족하면 이어받기 가능한 상태로 정지
+        self.disk_error: Optional[diskguard.DiskGuardError] = None
         self._model_ok = False
         self.fatal: Optional[ds.DeepSeekError] = None
         self.paused = False
@@ -430,10 +433,21 @@ class Structurer:
 
     # ---- 공개 진입점 ----
     def run(self, targets: list) -> dict:
+        if self.disk_guard is not None:              # 대상 목록(limit 적용 후)이 확정됐으므로 전체 예상량 조건을 건다
+            try:
+                self.disk_guard.start(len(targets))
+            except diskguard.DiskGuardError as e:
+                self.disk_error, targets = e, []
         for t in targets:
             self.stats["targets"] += 1
             if self.fatal or self.paused:
                 break
+            if self.disk_guard is not None:
+                try:
+                    self.disk_guard.tick()
+                except diskguard.DiskGuardError as e:
+                    self.disk_error = e
+                    break
             try:
                 self._target(t)
             except StructureError as e:
@@ -444,11 +458,15 @@ class Structurer:
                 self.stats["failed"] += 1
                 self.m.record_failure(t.key, "structure", "unexpected_error", f"{type(e).__name__}: {sanitize_message(str(e))}")
                 log.warning("structure target %s failed unexpectedly: %s", t.key, type(e).__name__)
+            if self.disk_guard is not None:
+                self.disk_guard.advance()                 # 대상 1건 처리 끝(성공·실패 공통)
         s = dict(self.stats)
         s["cost_usd"] = round(s["cost_usd"], 8)
         s["est_pending_usd"] = round(s["est_pending_usd"], 8)
         s["coverage"] = _coverage(s["source_chars"], s["read_chars"])
         s["status"] = ("aborted_" + self.fatal.error_class) if self.fatal else ("paused_time_limit" if self.paused else "completed")
+        if self.disk_error is not None and not self.fatal:
+            s["status"] = "paused_disk_" + self.disk_error.kind
         s["budget_remaining_usd"] = self.p.budget.remaining()
         return s
 
@@ -1006,11 +1024,22 @@ def main(argv: Optional[list] = None, *, provider: Optional[ds.DeepSeekProvider]
     ap.add_argument("--retry-dead", action="store_true")
     ap.add_argument("--force", action="store_true", help="입력이 같아도 다시 조립한다(API 재호출 없음). 검증 완료 대상을 다시 구조화하려면 필요하고, 상태는 structured 로 돌아간다")
     ap.add_argument("--page-chunks", action="store_true", help="모든 쪽을 원문 그대로 chunk 로도 기록한다")
+    ap.add_argument("--force-disk", action="store_true", help="디스크 가드(C: 여유 확인)를 우회한다. 기본 꺼짐")
     ap.add_argument("--plan-only", action="store_true", help="호출 없이 창 수와 예상 비용 상한만 계산한다(장부는 메모리 사본)")
     args = ap.parse_args(argv)
     args.model = ds.canonical_model(args.model)
     out = out or sys.stdout
     root = Path(args.corpus) if args.corpus else default_corpus_dir()
+    guard, forced = None, []
+    if not args.plan_only:                        # plan-only 는 메모리 사본만 읽는다(가드 없음)
+        guard = diskguard.DiskGuard("구조화", diskguard.estimate("struct", 1), check_every=5, force=args.force_disk, on_force=forced.append, fallback_path=root)
+        try:
+            guard.start(0)                    # 시작 검사는 최소 여유+마진만. 대상 수가 정해지면 Structurer.run 이 예상량을 건다
+        except diskguard.DiskGuardError as e:
+            print(e.message_ko, file=sys.stderr)
+            out.write(json.dumps({"command": "structure", "status": "disk_guard_stopped", "kind": e.kind, "free_bytes": e.free_bytes,
+                                  "needed_bytes": e.needed_bytes, "message_ko": e.message_ko}, ensure_ascii=False, sort_keys=True) + "\n")
+            return diskguard.exit_code(e)
     m = Manifest(root / "manifest.sqlite", in_memory_copy=args.plan_only)
     budget = Budget(args.max_seconds)
     prov = provider or ds.DeepSeekProvider(thinking=args.thinking, budget=ds.BudgetGuard(args.budget_usd))
@@ -1018,11 +1047,13 @@ def main(argv: Optional[list] = None, *, provider: Optional[ds.DeepSeekProvider]
     try:
         st = Structurer(m, prov, root, model=args.model, window_chars=args.window_chars, snap_chars=args.snap_chars,
                         max_tokens=args.max_tokens, quarantine_rate=args.quarantine_rate, retry_dead=args.retry_dead, force=args.force,
-                        execute=not args.plan_only, page_chunks=args.page_chunks, check_time=budget.check)
+                        execute=not args.plan_only, page_chunks=args.page_chunks, check_time=budget.check, disk_guard=guard)
         targets = find_targets(m, source_ids=args.source, att_ids=args.att, doc_ids=args.doc, profile=args.profile, limit=args.limit_targets)
         result = st.run(targets)
         status = result["status"]
-        code = 1 if status.startswith("aborted") else 0
+        code = 1 if status.startswith("aborted") else (diskguard.exit_code(st.disk_error) if st.disk_error is not None and not st.fatal else 0)
+        if forced:
+            result["disk_guard_forced"] = forced
     except ds.DeepSeekError as e:
         status, code = "failed", 1
         result = {"error_class": e.error_class, "error": sanitize_message(str(e))}

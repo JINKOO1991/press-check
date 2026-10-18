@@ -363,6 +363,9 @@ def run_fetch(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] = N
     if not ctx.dry_run:                                   # 껍데기는 장부에서도 보류로 굳힌다(다음 실행의 후보에서 빠지고 coverage 에 보인다)
         for att_id in shell_ids:
             withhold.mark_viewer_shell(ctx.manifest, att_id, att_id.split("#", 1)[0])
+    guard = ctx.extras.get("disk_guard")
+    if guard is not None and not ctx.dry_run:             # 후보 수(상한 적용)만큼 PDF 를 받을 여유가 있는지 시작 때 확인한다
+        guard.start(min(len(cands), limit) if limit is not None else len(cands))
     fam_cache: dict = {}
     counts = {"fetched": 0, "dedup": 0, "failed": 0, "dry_run": 0}
     errors: dict = {}
@@ -374,6 +377,8 @@ def run_fetch(ctx: Any, *, source: Optional[str] = None, tier: Optional[str] = N
         attempted += 1
         res = fetch_one(ctx, att, stage.family_of(ctx.manifest, att["source_id"], fam_cache))
         counts[res["outcome"]] += 1
+        if guard is not None:
+            guard.advance()
         if res["outcome"] == "failed":
             errors[res["error_class"]] = errors.get(res["error_class"], 0) + 1
         ctx.logger.info("fetch %s %s", att["att_id"], res["outcome"])

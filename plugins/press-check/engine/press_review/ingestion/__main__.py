@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from .. import logsafe
+from .. import diskguard, logsafe
 from . import sources as sources_pkg
 from .context import Budget, RunContext, TimeBudgetExceeded, corpus_dir as default_corpus_dir, utcnow
 from .http import DryRunMiss, HttpClient, IngestionError, scrub_text
@@ -25,6 +25,11 @@ from .manifest import Manifest, sanitize_message
 
 RESERVED = ("status", "export-inventory", "export-coverage", "admission", "rights")
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+# 의도적으로 제외한 소량 쓰기 명령: rights set, export-inventory — 수 KB 쓰기라 디스크가 부족해도 권리 기록·목록 내보내기를 막지 않는다.
+# 디스크를 쓰는 어댑터 -> (항목당 예상 종류, 표시 이름). 읽기 전용(status·export-*·rights show·admission 보고)과 --dry-run 에는 가드를 걸지 않는다
+DISK_GUARDED = {"fetch": ("pdf", "PDF 수신"), "extract": ("struct", "본문 추출"), "build_index": ("struct", "색인 빌드"),
+                "lawapi": ("case_json", "판례 수집"), "lawapi_body": ("case_json", "판례 본문 수집"),
+                "pac": ("case_json", "PAC 수집"), "iendc": ("case_json", "IENDC 수집")}
 
 
 def available_sources() -> list[str]:
@@ -38,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--refresh", action="store_true", help="HTTP 캐시를 무시하고 다시 받는다(robots는 하루 1회 규칙 유지)")
     p.add_argument("--limit-pages", type=int, default=None, help="어댑터가 처리할 목록 페이지 수 상한")
     p.add_argument("--dry-run", action="store_true", help="장부는 메모리 사본, HTTP는 캐시 적중만. 캐시에 없으면 그 URL을 보고하고 멈춘다")
+    p.add_argument("--force-disk", action="store_true", help="디스크 가드(C: 여유 확인)를 우회한다. 기본 꺼짐, 경고를 남기고 결과 JSON 에 기록한다")
     p.add_argument("--out-dir", default=None, help="export-inventory·export-coverage 출력 폴더(기본 corpus/inventory, export-coverage는 필수)")
     return p
 
@@ -83,6 +89,13 @@ def _rights_command(extras: list, root: Path, out: Any, parser: argparse.Argumen
     return 0
 
 
+def _disk_stop(out: Any, target: str, e: "diskguard.DiskGuardError") -> int:
+    _emit(out, {"command": target, "status": "disk_guard_stopped", "kind": e.kind, "free_bytes": e.free_bytes,
+                "needed_bytes": e.needed_bytes, "message_ko": e.message_ko})
+    print(e.message_ko, file=sys.stderr)
+    return diskguard.exit_code(e)
+
+
 def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[[], float] = time.monotonic,
          sleep: Callable[[float], None] = time.sleep, resolver: Optional[Callable] = None,
          oc_provider: Optional[Callable[[], str]] = None, stdout: Any = None, corpus: Optional[Path] = None,
@@ -115,6 +128,7 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
 
     root = Path(corpus) if corpus else default_corpus_dir()
     logsafe.configure(stream=log_stream)
+    forced: list = []                   # --force-disk 로 가드를 우회한 기록(결과 JSON 의 disk_guard_forced)
     logger = logging.getLogger("press_review.ingestion")
 
     if target == "status":
@@ -163,18 +177,32 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
             parser.error(f"admission requires --source one of: {', '.join(admission.ADMISSION_SOURCES)}")
         kw = {k: v for k, v in (("min_quote_rate", args.min_quote_rate), ("max_quarantine_rate", args.max_quarantine_rate),
                                                   ("min_completeness", args.min_completeness)) if v is not None}
+        if args.apply and not ns.dry_run:            # 장부에 쓰는 경우에만 가드(보고만 하는 경로는 읽기 전용)
+            try:
+                diskguard.require_free(0, "admission 적용", force=ns.force_disk, fallback_path=root, on_force=forced.append)
+            except diskguard.DiskGuardError as e:
+                return _disk_stop(out, target, e)
         # --apply 없이, 또는 --dry-run 이면 메모리 사본에서 읽는다(파일을 쓰지 않는다)
         m = Manifest(root / "manifest.sqlite", in_memory_copy=(ns.dry_run or not args.apply))
         try:
             report = admission.evaluate(m, args.source, corpus_dir=root, **kw)
             written = admission.apply(m, report) if args.apply else None
             _emit(out, {"command": "admission", "source": args.source, "applied": bool(args.apply and not ns.dry_run), "written": written,
-                        "criteria": report["criteria"], "summary": report["summary"], "attachments": report["attachments"]})
+                        "criteria": report["criteria"], "summary": report["summary"], "attachments": report["attachments"],
+                    **({"disk_guard_forced": forced} if forced else {})})
         finally:
             m.close()
         return 0
 
     # ---- 어댑터 실행 ----
+    guard = None
+    if target in DISK_GUARDED and not ns.dry_run:
+        kind, label = DISK_GUARDED[target]
+        guard = diskguard.DiskGuard(label, diskguard.estimate(kind, 1), force=ns.force_disk, on_force=forced.append, fallback_path=root)
+        try:
+            guard.start(0)               # 시작 검사는 최소 여유+마진만. 항목 수를 아는 단계(run_fetch 등)가 예상량을 다시 건다
+        except diskguard.DiskGuardError as e:
+            return _disk_stop(out, target, e)
     budget = Budget(ns.max_seconds, clock)
     manifest = Manifest(root / "manifest.sqlite", in_memory_copy=ns.dry_run)
     client = HttpClient(root / "http_cache", manifest=manifest, transport=transport, clock=clock, sleep=sleep,
@@ -182,6 +210,8 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
                         network=not ns.dry_run, lock_dir=root / "locks", logger=logger.getChild("http"))
     ctx = RunContext(http=client, manifest=manifest, budget=budget, logger=logger, corpus_dir=root, now=utcnow,
                      refresh=ns.refresh, limit_pages=ns.limit_pages, dry_run=ns.dry_run)
+    if guard is not None:
+        ctx.extras.update(disk_guard=guard, force_disk=ns.force_disk, on_force_disk=forced.append)
     status, result, extra, code = "completed", None, {}, 0
     try:
         result = module.run(ctx, args)
@@ -189,6 +219,9 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
         status = "paused_time_limit"
     except DryRunMiss as e:
         status, extra = "dry_run_stopped", {"would_fetch": sanitize_message(str(e))}
+    except diskguard.DiskGuardError as e:      # 루프 중간 부족: 장부는 이어받기 가능한 상태 그대로 정지한다
+        status, code = "paused_disk_" + e.kind, diskguard.exit_code(e)
+        extra = {"kind": e.kind, "free_bytes": e.free_bytes, "needed_bytes": e.needed_bytes, "message_ko": e.message_ko}
     except IngestionError as e:
         status, code = "failed", 1
         extra = {"error_class": e.error_class, "error": sanitize_message(scrub_text(str(e)))}
@@ -201,7 +234,8 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
         client.close()
         manifest.close()
     _emit(out, {"command": target, "status": status, "elapsed_seconds": round(budget.elapsed(), 1),
-                "corpus_dir": str(root), "manifest_counts": counts, "http": dict(client.stats), "result": result, **extra})
+                "corpus_dir": str(root), "manifest_counts": counts, "http": dict(client.stats), "result": result,
+                **({"disk_guard_forced": forced} if forced else {}), **extra})
     return code
 
 

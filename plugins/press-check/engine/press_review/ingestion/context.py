@@ -77,6 +77,9 @@ class RunContext:
 
     def check_time(self) -> None:
         self.budget.check()
+        g = self.extras.get("disk_guard")          # 디스크 가드(diskguard.DiskGuard): 페이지·문서 루프마다 부르는 이 지점에서 주기 검사
+        if g is not None:
+            g.tick()
 
     def time_left(self) -> Optional[float]:
         return self.budget.remaining()
