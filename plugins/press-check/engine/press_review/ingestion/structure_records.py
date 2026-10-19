@@ -633,6 +633,27 @@ def map_decision_type(text: str) -> tuple:
     return mapped, rest
 
 
+# 거친 표기: 같은 편의 표기 정밀도 차이이지 모순이 아니다(한정 문구를 생략한 위헌, 한정합헌을 합헌으로 적음). 격리하지 않고 decision_type 을 장부의 구체 라벨로 바꾼다.
+DETC_COARSE = {"위헌": ("한정위헌", "헌법불합치"), "합헌": ("한정합헌",)}
+
+
+def refine_decision_type(decision_type: str, dispositions: Any, st: "_Stats") -> Optional[str]:
+    """모델이 쓴 처분 집합의 거친 표기를 장부 구체 라벨로 치환한 문자열(장부 순서, 쉼표 연결). 치환할 것이 없거나 대응 못 한 조각이 있으면 None.
+    개별 note ``decision_type_refined:위헌->한정위헌`` 을 남긴다. 장부 sides 를 쓰는 vote_opinion 재표기에는 영향이 없다(장부 값은 그대로)."""
+    ledger_labels = [x for x in (dispositions or []) if isinstance(x, str) and x in DETC_DISPOSITIONS]
+    known = set(ledger_labels)
+    mapped, rest = map_decision_type(decision_type)
+    coarse = {d: [s for s in specific if s in known] for d, specific in DETC_COARSE.items() if d in mapped and d not in known}
+    coarse = {d: s for d, s in coarse.items() if s}
+    if rest or not coarse:
+        return None
+    final = (mapped - set(coarse)) | {s for sp in coarse.values() for s in sp}
+    ordered = [x for x in dict.fromkeys(ledger_labels) if x in final] + sorted(final - known)
+    for d, sp in coarse.items():
+        st.note("decision_type", f"decision_type_refined:{d}->{','.join(sp)}")
+    return ", ".join(ordered)
+
+
 def disposition_guard(decision_type: str, dispositions: Any, st: "_Stats") -> list:
     """처분 가드: decision_type 에서 대응된 처분이 장부 body.dispositions(classify_orders 결과)에 없으면 격리 사유를 돌려준다.
     대응 못 한 표기는 note 만. 장부 분류가 비었거나 전부 unknown 이면 가드를 쓰지 않는다. 일부만 unknown 이면 대응된 처분이 그 unknown 항목일 수 있어 note 만."""
@@ -643,7 +664,7 @@ def disposition_guard(decision_type: str, dispositions: Any, st: "_Stats") -> li
     mapped, rest = map_decision_type(decision_type)
     if rest:
         st.note("decision_type", "disposition_unmapped:" + ",".join(rest)[:60])
-    bad = {x for x in mapped - known if not (x in DETC_EQUIVALENT and known & DETC_EQUIVALENT)}
+    bad = {x for x in mapped - known if not (x in DETC_EQUIVALENT and known & DETC_EQUIVALENT) and not (x in DETC_COARSE and known.intersection(DETC_COARSE[x]))}
     if not bad:
         return []
     if "unknown" in ledger_labels:
@@ -814,6 +835,8 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
             dec_type = None
         elif dec_type:
             disp_errors = disposition_guard(dec_type, ctx.ledger.get("dispositions"), st)
+            if not disp_errors:
+                dec_type = refine_decision_type(dec_type, ctx.ledger.get("dispositions"), st) or dec_type
 
     parties = []
     for i, p in enumerate(d.get("parties") if isinstance(d.get("parties"), list) else []):
