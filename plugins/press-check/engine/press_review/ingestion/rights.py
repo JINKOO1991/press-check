@@ -89,9 +89,11 @@ def set_document_override(manifest: Any, doc_id: str, rights: dict, rights_basis
     manifest.set_rights("document", doc_id, rights, rights_basis, review_status)
 
 
-def record_installer_decision(manifest: Any, source_family: str, changes: dict, note: str, by: str) -> list:
+def record_installer_decision(manifest: Any, source_family: str, changes: dict, note: str, by: str,
+                              source_ids: Optional[list] = None) -> list:
     """설치자가 소스 계열의 권리 결정을 기록한다. 그 계열로 등록된 모든 소스 행에 changes(RIGHT_KEYS 부분집합)를 적용하고
-    rights_basis 에 기록자·근거 메모를 남긴다. 반환: 갱신한 source_id 목록. 소스 행의 forbidden 은 풀 수 없다."""
+    rights_basis 에 기록자·근거 메모를 남긴다. 반환: 갱신한 source_id 목록. 소스 행의 forbidden 은 풀 수 없다.
+    source_ids 가 있으면 그 계열의 그 소스 행에만 쓰고 다른 행(예: 판례)은 건드리지 않는다. 계열에 없는 source_id 는 LookupError."""
     if source_family not in COLLECTED_FAMILIES:
         raise ValueError(f"unsupported source_family '{source_family}' (choose: {', '.join(COLLECTED_FAMILIES)})")
     if not changes:
@@ -102,6 +104,12 @@ def record_installer_decision(manifest: Any, source_family: str, changes: dict, 
     srcs = [s for s in manifest.sources() if s["source_family"] == source_family]
     if not srcs:
         raise LookupError(f"no source of family '{source_family}' in the ledger (run its collector first so the sources are registered)")
+    if source_ids:
+        known = {s["source_id"] for s in srcs}
+        unknown = [i for i in source_ids if i not in known]
+        if unknown:
+            raise LookupError(f"unknown source_id for family '{source_family}': {unknown} (known: {sorted(known)})")
+        srcs = [s for s in srcs if s["source_id"] in set(source_ids)]
     plan = []
     for s in srcs:
         cur = manifest.get_rights("source", s["source_id"])
@@ -222,3 +230,23 @@ def _eff_cached(manifest: Any, doc: dict, srights: Optional[dict], overrides: se
         return effective_rights(manifest, doc["doc_id"])
     return {"rights": {k: srights[k] for k in RIGHT_KEYS}, "rights_basis": srights["rights_basis"],
             "review_status": srights["review_status"], "inherited": True}
+
+
+class RightsNotRecorded(Exception):
+    """어댑터가 필요로 하는 소스 권리가 allowed 로 기록되지 않았다."""
+    error_class = "rights_not_recorded"
+
+
+def require_source_rights(manifest: Any, source_id: str, needs: tuple = ("read", "store_raw")) -> dict:
+    """어댑터 시작 게이트: 소스 행의 권리(문서 단위 재정의가 아니라 소스 값)에서 needs 가 모두 allowed 가 아니면 RightsNotRecorded.
+    unknown·permission_required·forbidden 모두 중단하고, 소스 행이 없어도 중단한다. 통과하면 소스 권리 dict 를 돌려준다."""
+    bad_keys = [k for k in needs if k not in RIGHT_KEYS]
+    if bad_keys:
+        raise ValueError(f"unknown right keys: {bad_keys}")
+    row = manifest.get_rights("source", source_id)
+    if not row:
+        raise RightsNotRecorded(f"{source_id}: no source rights row (register the source and record the installer decision first)")
+    missing = {k: row[k] for k in needs if row[k] != "allowed"}
+    if missing:
+        raise RightsNotRecorded(f"{source_id}: required rights not allowed: {missing} (record with `rights set <family> --source {source_id}`)")
+    return {k: row[k] for k in RIGHT_KEYS}

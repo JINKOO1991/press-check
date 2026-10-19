@@ -792,6 +792,7 @@ def split_case_numbers(s: str) -> list[str]:
     prefix = None
     for part in re.split(r"[,·ㆍ、]|\s+및\s+", s or ""):
         p = re.sub(r"\([^)]*\)", "", part).strip().replace(" ", "")
+        p = re.sub(r"등$", "", p)   # '2005헌마165등' 의 끝 '등'(같은 번호 외 다수)은 번호가 아니다
         m = _CASE_FULL.match(p)
         if m:
             prefix = m.group(1) + m.group(2)

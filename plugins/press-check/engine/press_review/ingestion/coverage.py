@@ -121,10 +121,14 @@ def build_coverage(m: Any, generated_at: str, inventory_dir: Optional[Path] = No
     law = law_extra(inventory_dir)
     if law:
         for s in out:
-            if s["source_family"] == "law_go_kr":
-                docs = s["documents"]["count"]
-                s["law_cross_check"] = {**law, "documents_union": docs,
-                                        "not_matched_by_any_term": (law["probe_all"] or {}).get("all", 0) - docs}
+            if s["source_family"] != "law_go_kr":
+                continue
+            if not s["source_id"].startswith("lawgo_prec_"):   # 질의어×기간 요약은 판례 전용이다. 다른 소스(헌재결정례 등)는 대조 불가로 표시한다.
+                s["law_cross_check"] = {"status": "not_comparable", "reason": "판례 질의어 요약(lawgo_prec_terms.json)은 이 소스의 대조 자료가 아니다"}
+                continue
+            docs = s["documents"]["count"]
+            s["law_cross_check"] = {**law, "documents_union": docs,
+                                    "not_matched_by_any_term": (law["probe_all"] or {}).get("all", 0) - docs}
     return {"generated_at": generated_at, "sources": out, "not_collected": rights_mod.not_collected_rows()}
 
 
@@ -178,7 +182,9 @@ def render_markdown(cov: dict) -> str:
     L += ["", "화면에 표시된 총 건수 자체는 PAC 게시판·IENDC 에서 장부에 저장되지 않는다(어댑터 실행 때 확인만 했다). 이 표의 '마지막 쪽 범위'는 간행물 목록에만 의미가 있고, 게시판·고정 페이지·법제처 행은 참고값이다.", ""]
     for s in cov["sources"]:
         x = s.get("law_cross_check")
-        if x:
+        if x and x.get("status") == "not_comparable":
+            L += [f"### 법제처 대조 (`{s['source_id']}`)", "", f"- 대조 불가: {x['reason']}", ""]
+        elif x:
             pa = x["probe_all"] or {}
             L += ["### 법제처 대조", "",
                   f"- 사전 {x['terms']}개 중 완료 {x['terms_complete']}개, 연 단위 분할 {x['terms_split_by_year']}개",

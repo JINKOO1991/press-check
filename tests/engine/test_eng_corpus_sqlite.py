@@ -422,3 +422,10 @@ def test_fixture_corpus_accepts_new_arguments():
     assert fx.search("합성 요약", institution="pac") == []
     with pytest.raises(ValueError):
         fx.search("합성", stance="nope")
+
+
+def test_case_numbers_paren_annotation_on_later_tokens():
+    # 괄호 주석(병합 등)은 토큰 단위로 지운 뒤 분해한다. 둘째 이후 토큰의 괄호도 토큰을 떨어뜨리지 않는다.
+    assert cs.case_numbers("2006헌가3(병합)") == ["2006헌가3"]
+    assert cs.case_numbers("2005헌마165, 2005헌마314(병합)") == ["2005헌마165", "2005헌마314"]
+    assert cs.case_numbers("2005헌마165(병합), 314(병합), 2006헌가3") == ["2005헌마165", "2005헌마314", "2006헌가3"]

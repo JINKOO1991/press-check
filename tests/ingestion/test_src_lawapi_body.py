@@ -504,3 +504,9 @@ def test_header_page_carries_the_decision_own_case_number_date_and_court(corpus,
     t = (corpus / head["text_path"]).read_text(encoding="utf-8")
     assert "2022다284711, 284728" in t and "2026. 2. 12." in t and "대법원" in t
     assert extra["body"]["body_case_no"] == "2022다284711, 284728" and extra["body"]["text_available"] is True
+
+
+def test_split_case_numbers_trailing_deung():
+    assert L.split_case_numbers("2005헌마165등") == ["2005헌마165"]
+    assert L.split_case_numbers("2005헌마165 등") == ["2005헌마165"]
+    assert L.split_case_numbers("2000다37524, 37531등") == ["2000다37524", "2000다37531"]

@@ -97,6 +97,8 @@ def _rights_command(extras: list, root: Path, out: Any, parser: argparse.Argumen
         rp.add_argument("--" + k.replace("_", "-"), dest=k, choices=rights_mod.VALUES, default=None)
     rp.add_argument("--note", default="", help="set: 근거 한 줄(필수)")
     rp.add_argument("--by", default=None, help="set: 기록자(기본 OS 사용자 이름)")
+    rp.add_argument("--source", action="append", default=None, metavar="SOURCE_ID",
+                    help="set: 이 source_id 행에만 기록(복수 가능). 없으면 계열 전체")
     ra = rp.parse_args(extras)
     if ra.action == "show":
         m = Manifest(root / "manifest.sqlite", in_memory_copy=True)   # 읽기 전용 사본
@@ -111,7 +113,8 @@ def _rights_command(extras: list, root: Path, out: Any, parser: argparse.Argumen
     m = Manifest(root / "manifest.sqlite")
     try:
         try:
-            updated = rights_mod.record_installer_decision(m, ra.family, changes, ra.note, ra.by or getpass.getuser())
+            updated = rights_mod.record_installer_decision(m, ra.family, changes, ra.note, ra.by or getpass.getuser(),
+                                                          source_ids=ra.source)
         except (ValueError, LookupError) as e:
             _emit(out, {"command": "rights set", "status": "refused", "error": str(e)})
             return 2

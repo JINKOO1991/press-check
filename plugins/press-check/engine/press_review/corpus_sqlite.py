@@ -122,6 +122,7 @@ _RIGHTS_KEYS = ("redistribute_raw", "redistribute_derivatives", "review_status")
 _RUN = re.compile(r"[0-9a-z가-힣]+")
 _CASE_HEAD = re.compile(r"(\d{2,4}[가-힣]{1,8})(\d{1,8})")
 _CASE_SEP = re.compile(r"[,，·‧∙・ㆍ\u119e/、&\s]+")     # NFKC 는 ㆍ(U+318D)를 U+119E 로 바꾼다
+_CASE_PAREN = re.compile(r"\([^()]*\)")
 _CASE_GAP = re.compile(r"(\d{2,4}[가-힣]{1,8})\s+(?=\d)")   # 사건부호와 번호 사이 공백(``2019다 12345``)
 _QUERY_CASE = re.compile(r"\d{2,4}[가-힣]{1,8}\d{1,8}")
 _NOT_CASE_KINDS = {"년", "월", "일", "시", "분", "초", "세", "호", "조", "항", "회", "차", "건", "명", "원", "개", "번", "위", "대", "주", "기", "부"}
@@ -154,7 +155,7 @@ def case_numbers(raw: str | None) -> list[str]:
     """사건번호 표기를 번호별 정규형 목록으로. ``2023다240763, 240770`` -> [2023다240763, 2023다240770]. 공백은 지운다."""
     if not raw:
         return []
-    s = _CASE_GAP.sub(r"\1", unicodedata.normalize("NFKC", raw).strip())
+    s = _CASE_GAP.sub(r"\1", _CASE_PAREN.sub("", unicodedata.normalize("NFKC", raw)).strip())   # 괄호 주석 `(병합)` 은 토큰 분해 전에 지운다
     m = _CASE_HEAD.match(s)
     if not m:
         return []
