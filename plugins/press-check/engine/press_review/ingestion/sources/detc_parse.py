@@ -390,13 +390,45 @@ def _classify_item(item: str) -> str:
         return "위헌"
     if "취소한다" in t or "위헌임을확인한다" in t or "인용한다" in t:
         return "인용"
-    if "각하" in t:
+    if re.search(r"(?<!기)각하", t):                       # '기각하고' 안의 '각하' 는 기각이다
         return "각하"
     if "기각" in t:
         return "기각"
     if "심판절차" in t and "종료" in t:
         return "심판절차종료"
     return "unknown"
+
+
+_CLAUSE_CUT = re.compile(r"(?P<sent>(?<=다\.)\s+)|(?P<conj>(?:하고|하며|하면서|하되)[,，]?\s*)|(?P<sep>[,，]\s*|\s+및\s+)")
+_CLAUSE_KW = re.compile(r"각하|기각|취소|위반|합치|확인|종료|할수없|인용")
+_CONJ_END = re.compile(r"(?:하고|하며|하면서|하되)[,，]?$")
+_PASSIVE_END = re.compile(r"(?:되고|되며)[,，]?$")
+
+
+def _item_labels(item: str) -> list[str]:
+    """한 항목을 절로 나눠 판정한 처분 라벨을 순서대로 모은다(중복은 한 번, 처분이 아닌 절은 버린다). 처분이 하나도 없으면 ['unknown'].
+    문장 끝은 언제나 자르고, 접속('하고/하며/하면서/하되')·쉼표·'및' 는 앞 조각에 처분 어휘가 있을 때만 자른다
+    ('…해석하는 한, 헌법에 위반된다' 의 쉼표나 '갑 및 을의 청구를 각하한다' 의 '및' 은 자르지 않는다). 괄호·날짜 속은 가려서 본다."""
+    masked = _mask(item)
+    segs, st = [], 0
+    for m in _CLAUSE_CUT.finditer(masked):
+        if m.group("sent"):
+            segs.append(item[st:m.start()])
+            st = m.end()
+            continue
+        end = m.end() if m.group("conj") else m.start()
+        if _CLAUSE_KW.search(re.sub(r"\s+", "", item[st:end])):
+            segs.append(item[st:end])
+            st = m.end()
+    segs.append(item[st:])
+    labels: list[str] = []
+    for seg in segs:
+        s = seg.strip()
+        s = _PASSIVE_END.sub("된다", _CONJ_END.sub("한다", s))
+        lab = _classify_item(s)
+        if lab != "unknown" and lab not in labels:
+            labels.append(lab)
+    return labels or ["unknown"]
 
 
 def classify_orders(order_text: str) -> list[str]:
@@ -416,4 +448,4 @@ def classify_orders(order_text: str) -> list[str]:
         items = [text[starts[i][1]:bounds[i + 1]] for i in range(len(starts))]
     else:
         items = [s for s in re.split(r"(?<=다\.)\s+", text) if s.strip()] or [text]
-    return [_classify_item(i) for i in items]
+    return [x for i in items for x in _item_labels(i)]
