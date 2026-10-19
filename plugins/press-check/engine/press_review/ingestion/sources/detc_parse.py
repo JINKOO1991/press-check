@@ -134,7 +134,7 @@ def _section_marks(text: str) -> list[tuple[int, int, str]]:
 
 # 당사자 구간에서 병합 근거는 현 사건의 번호 나열뿐이다: '사건' 라벨 줄, 번호만 늘어놓은 줄, 번호만 든 괄호 주석('청구인 … (번호)'). 재심대상·종전·관련 결정이나 '선고' 날짜가 붙은 인용은
 # 그 표기부터 잘라 낸다(청구인 등 다른 라벨 줄의 번호도 인정하지 않는다).
-_CITE_CUT = re.compile(r"재심|종전|선행|관련|참조|대상결정|선고|\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}")
+_CITE_CUT = re.compile(r"재심대상(?:\s*(?:결정|사건))?|재심사건|(?:종전|선행|관련|참조)\s*(?:결정|사건|판례)|대상결정|선고|\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}")
 _LEAD_MARK = re.compile(r"^[ \t\u3000]*(?:【[^】]*】|[\[［][^\]］]*[\]］])")
 
 
@@ -204,7 +204,7 @@ _PFX = r"(?:\d{1,2}\.|[가-하]\.|\(\d{1,2}\)|\([가-하]\))"
 _PFX_MID = r"(?:\d{1,2}\.|\(\d{1,2}\)|\([가-하]\)|(?:(?<![가-힣])|(?<=견))[가-하]\.)"
 # 표제 본문: '재판관 … 의견' 의 마지막 명사구에서 끊는다. '…의견에 대한 / …의견의 보충' 은 이어지는 표제이므로 거기서 끊지 않는다.
 # 끝 뒤에 한글이 바로 이어지면(의견일치·의견이 있다) 진술문이다. 다만 목록 머리('가.')는 한글이어도 마침표가 붙어 있어 허용한다.
-_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.‘’'\"“”]{0,100}?재판관[^\n.]{0,150}?(?:\n[ \t　]*[^\n.]{0,40}?)?의견(?!\s*(?:에\s*대한|의\s*보충))"
+_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.‘’'\"“”]{0,100}?재판관[^\n.]{0,150}?(?:\n[ \t　]*(?:(?![와과]\s*같은)[^\n.‘’'\"“”]){0,40}?)?의견(?!\s*(?:에\s*대한|의\s*보충))"
          r"(?:\([가-힣]{1,12}\)(?![가-힣](?!\.))|(?!\([가-힣])(?![가-힣](?!\.)))")
 _LINE_START = r"(?:(?<=\n)|^)[ \t　]*"
 _NOT_REF = r"(?<!아래 )(?<!뒤의 )(?<!다음 )(?<!위의 )(?<!앞의 )(?<!아래)(?<!뒤의)(?<!다음)(?<!위의)(?<!앞의)"
@@ -236,8 +236,12 @@ def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
         return classify_opinion(core.replace("법정의견", "다수의견")), None
     m = _VOTE_TAIL.search(last)
     if m:
-        words = _VOTE_ANY.findall(last)
-        return "vote_opinion", (m.group(1) if len({_VOTE_SIDE[w] for w in words}) <= 1 else None)      # 편이 갈리는 복합 표제는 입장 불명
+        sides = set()
+        for piece in re.split(r"및|와|과|·|ㆍ|,|，", re.split(r"이?아닌|이?아니라", last)[-1]):          # '이 아닌' 앞의 입장어는 그 의견의 입장이 아니다
+            ws = _VOTE_ANY.findall(piece)
+            if ws:
+                sides.add(_VOTE_SIDE[ws[-1]])
+        return "vote_opinion", (m.group(1) if len(sides) <= 1 else None)      # 병렬로 이은 입장어의 편이 갈리면 입장 불명
     if last.endswith("법정의견"):
         return "majority", None
     kind = classify_opinion(last)
@@ -342,7 +346,7 @@ def split_head_opinions(headnote_holding: Optional[str]) -> tuple[list[Section],
 
 
 # ---------------------------------------------------------------- 주문 분류기
-_ITEM_NO = re.compile(r"(?:\A|(?<=\n)|(?<=[.다])[ \t\u3000]+)(\d{1,2})\.\s")
+_ITEM_NO = re.compile(r"(?:(?:\A|(?<=\n))[ \t\u3000]*|(?<=[.다])[ \t\u3000]+)(\d{1,2})\.\s")
 _MASK_DATE = re.compile(r"\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?")
 _MASK_PAREN = re.compile(r"\([^()]*\)")
 

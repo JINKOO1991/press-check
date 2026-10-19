@@ -279,3 +279,39 @@ def test_compound_vote_opinion(heading, vote):
 ])
 def test_classify_orders_masks_dates_and_parentheses(order, expected):
     assert D.classify_orders(order) == expected
+
+
+# ---------------------------------------------------------------- 독립 검토 2회차 후속(회귀 4건)
+def test_merged_numbers_keep_party_names_that_start_with_retrial():
+    text = "【당 사 자】\n재심청구인 갑 (2020헌아1)\n사건 2020헌아2\n재심대상 사건 2018헌마1\n【주 문】\n각하한다.\n"
+    assert D.extract_merged_numbers(text) == ["2020헌아1", "2020헌아2"]               # 재심대상 인용만 잘라 낸다
+
+
+def test_wrapped_narrative_is_not_a_heading():
+    tail = "재판관 갑은\n반대의견과 같은 의견.\n법정의견 본문이다.\n"
+    secs, info = D.split_detc(case(tail))
+    assert not [s for s in secs if s.kind == "opinion"] and info["marker_count"] == 0
+    assert info["status"] in ("unsplit", "needs_review", "none")                       # 표제가 아니므로 법정의견이 dissent 로 재표기되지 않는다
+    assert [s.opinion_kind for s in secs if s.kind == "reasons"] == ["main"]
+    quoted = "이 부분은 재판관 갑의\n‘반대의견’ 의견이다.\n본문이다.\n"
+    assert not [s for s in D.split_detc(case(quoted))[0] if s.kind == "opinion"]
+    ok = D.split_detc(case("6. 재판관 갑, 을의\n반대의견\n반대 이유 문장이다.\n"))                 # 정상 줄바꿈 표제는 유지
+    assert [s.opinion_kind for s in ok[0] if s.kind == "opinion"] == ["dissent"] and ok[1]["status"] == "split"
+
+
+@pytest.mark.parametrize("heading,vote", [
+    ("재판관 갑의 위헌이 아닌 합헌의견", "합헌"),
+    ("재판관 갑의 합헌이 아니라 위헌의견", "위헌"),
+    ("재판관 갑의 합헌 및 위헌의견", None),
+    ("재판관 갑, 을의 각하·합헌의견", None),
+    ("재판관 갑과 을의 위헌의견", "위헌"),
+    ("재판관 갑의 위헌 및 헌법불합치의견", "헌법불합치"),
+])
+def test_vote_negation_and_parallel_stances(heading, vote):
+    assert D.classify_detc_opinion(heading) == ("vote_opinion", vote)
+
+
+def test_classify_orders_indented_item_heads():
+    assert D.classify_orders("1. A법 제1조는 헌법에 위반된다.\n  2. 나머지 청구를 각하한다.") == ["위헌", "각하"]
+    assert D.classify_orders("1. A법 제1조는 헌법에 위반된다.\n\u3000\u30002. 나머지 청구를 각하한다.") == ["위헌", "각하"]
+    assert D.classify_orders("1. A법(2000. 1. 2. 법률 제1호)은 헌법에 위반된다.\n  2. 나머지 청구를 각하한다.") == ["위헌", "각하"]
