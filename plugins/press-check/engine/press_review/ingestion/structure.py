@@ -194,8 +194,8 @@ def ledger_values(manifest: Manifest, doc_id: str, *, detc: bool = False) -> dic
         nos = [x.strip() for x in (body.get("case_nos") or []) if isinstance(x, str) and x.strip()]
         if nos:
             out["case_id_number"] = nos[0]
-            if "case_number" not in out:
-                out["case_number"], out["case_number_tokens"] = nos[0], nos
+            if "case_number" not in out or len(nos) > 1:       # 병합 번호가 있으면 ", " 로 이어 둔다: 색인 case_numbers 표가 토큰별로 만든다(토큰 1개면 현행과 같다)
+                out["case_number"], out["case_number_tokens"] = ", ".join(nos), nos
         out["institution"] = "constitutional_court"
         out["dispositions"] = [x for x in (body.get("dispositions") or []) if isinstance(x, str)]
         hs = body.get("headnote_split")

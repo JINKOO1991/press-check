@@ -546,7 +546,7 @@ DETC_HEADNOTE_KINDS = ("headnote_holding", "headnote_opinion")
 DETC_OPINION_SECTIONS = ("reasons", "opinion", "heading") + DETC_HEADNOTE_KINDS
 DETC_DISPOSITIONS = ("위헌불선언", "헌법불합치", "한정위헌", "한정합헌", "심판절차종료", "합헌", "위헌", "인용", "각하", "기각")      # detc_parse.classify_orders 어휘(unknown 제외)
 DETC_EQUIVALENT = frozenset({"위헌", "인용"})     # 동치군: classify_orders 가 '위헌임을 확인한다' 주문(헌법소원 인용)을 인용으로 분류하므로 모델은 같은 주문을 위헌으로도 적을 수 있다
-_DECISION_SPLIT = re.compile(r"[,，、/·ㆍ;；\s]+|및|그리고")
+_DECISION_SEP = re.compile(r"[,，、/·ㆍ;；]+|\s+및\s+|\s+그리고\s+")        # 공백으로는 나누지 않는다(인쇄된 문장이 공백을 포함한다)
 _PAREN = re.compile(r"[(（][^)）]*[)）]")
 
 
@@ -579,20 +579,37 @@ def detc_majority_barred(row: Any, ledger: dict) -> Optional[str]:
     return None
 
 
+def _phrase_dispositions(piece: str) -> set:
+    """인쇄된 처분 문장 -> 처분 집합. detc_parse.classify_orders 와 같은 구문 판정(부정형 우선)을 쓴다.
+    classify_orders 가 '합치되지 아니한다' 만 헌법불합치로 보므로 '합치하지 아니한다' 표기는 여기서 보충한다. 대응 못 하면 빈 집합."""
+    from .sources.detc_parse import classify_orders          # 지연 import: detc_parse -> lawapi 쪽 import 순환을 피한다
+    out = {x for x in classify_orders(piece) if x in DETC_DISPOSITIONS}
+    if "합치하지아니한다" in re.sub(r"\s+", "", piece):
+        out.add("헌법불합치")
+    return out
+
+
 def map_decision_type(text: str) -> tuple:
     """decision_type 표기 -> (classify_orders 어휘로 대응된 처분 집합, 대응하지 못한 조각 목록). '위헌, 각하' -> ({위헌, 각하}, [])."""
     mapped: set = set()
     rest: list = []
-    for part in _DECISION_SPLIT.split(_PAREN.sub(" ", text)):
+    for part in _DECISION_SEP.split(_PAREN.sub(" ", text)):
         p = part.strip().rstrip(".")
-        if p.endswith("결정") and p[:-2] in DETC_DISPOSITIONS:
-            p = p[:-2]
         if not p:
             continue
-        if p in DETC_DISPOSITIONS:
-            mapped.add(p)
-        else:
-            rest.append(p)
+        toks = [t[:-2] if t.endswith("결정") and t[:-2] in DETC_DISPOSITIONS else t for t in p.split()]
+        if all(t in DETC_DISPOSITIONS for t in toks):                 # 어휘 토큰만('위헌 각하', '합헌결정')
+            mapped.update(toks)
+            continue
+        found = _phrase_dispositions(p)                               # 인쇄된 문장('각 헌법에 위반된다', '모두 기각한다')
+        if found:
+            mapped.update(found)
+            continue
+        for t in toks:                                                # 일부만 어휘인 조각('일부 인용')
+            if t in DETC_DISPOSITIONS:
+                mapped.add(t)
+            else:
+                rest.append(t)
     return mapped, rest
 
 
