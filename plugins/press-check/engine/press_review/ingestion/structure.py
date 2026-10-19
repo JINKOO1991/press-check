@@ -171,7 +171,10 @@ def egress_reason(manifest: Manifest, doc_id: str) -> Optional[str]:
 
 
 # ---------------------------------------------------------------- 장부 값(판례)
-def ledger_values(manifest: Manifest, doc_id: str) -> dict:
+LEDGER_PROFILES = ("court_judgment", "constitutional_decision")      # 사건번호·선고일을 장부 값으로 고정하는 프로필
+
+
+def ledger_values(manifest: Manifest, doc_id: str, *, detc: bool = False) -> dict:
     """판례 문서 자신의 사건번호·선고일(법제처 응답에서 결정적으로 얻은 값). 없는 항목은 빠진다.
     case_number: 응답에 인쇄된 표기(``body.body_case_no``, 없으면 목록의 ``case_no``). tokens: 낱개 사건번호(``body.case_nos``)."""
     d = manifest.get_document(doc_id) or {}
@@ -187,6 +190,17 @@ def ledger_values(manifest: Manifest, doc_id: str) -> dict:
         out["case_number_tokens"] = [x for x in (body.get("case_nos") or []) if isinstance(x, str)]
     if d.get("decision_date"):
         out["decision_date"] = d["decision_date"]
+    if detc:                  # 헌재결정례: 사건번호 대표 번호·기관·처분 분류·분할 상태(결정적 가드의 입력). 판례 프로필의 출력은 바뀌지 않는다
+        nos = [x.strip() for x in (body.get("case_nos") or []) if isinstance(x, str) and x.strip()]
+        if nos:
+            out["case_id_number"] = nos[0]
+            if "case_number" not in out:
+                out["case_number"], out["case_number_tokens"] = nos[0], nos
+        out["institution"] = "constitutional_court"
+        out["dispositions"] = [x for x in (body.get("dispositions") or []) if isinstance(x, str)]
+        hs = body.get("headnote_split")
+        out["headnote_status"] = hs.get("headnote_split") if isinstance(hs, dict) else hs
+        out["opinion_status"] = body.get("opinion_status")
     return out
 
 
@@ -206,8 +220,10 @@ class Target:
 
 
 def _structure_candidate_doc(d: dict) -> bool:
-    """판례 문서(lawgo_*)는 lawapi.is_structure_candidate 를 통과해야 구조화한다. 다른 소스는 제한하지 않는다."""
-    if not str(d.get("source_id") or "").startswith("lawgo_"):
+    """판례 문서(lawgo_prec_supreme·lawgo_prec_refs 등 lawgo_*)는 lawapi.is_structure_candidate 를 통과해야 구조화한다. 다른 소스는 제한하지 않는다.
+    헌재결정례(lawgo_detc)는 사전 필터(판례 질의 규칙) 면제: 본문이 있으면(body.text_available) 후보다."""
+    sid = str(d.get("source_id") or "")
+    if not sid.startswith("lawgo_"):
         return True
     from .sources.lawapi import is_structure_candidate
     extra = d.get("extra_json")
@@ -216,7 +232,10 @@ def _structure_candidate_doc(d: dict) -> bool:
             extra = json.loads(extra or "{}")
         except ValueError:
             extra = {}
-    return is_structure_candidate(extra if isinstance(extra, dict) else (d.get("extra") or {}))
+    extra = extra if isinstance(extra, dict) else (d.get("extra") or {})
+    if sid == "lawgo_detc":
+        return bool((extra.get("body") or {}).get("text_available"))
+    return is_structure_candidate(extra)
 
 
 def find_targets(manifest: Manifest, *, source_ids: Optional[list] = None, att_ids: Optional[list] = None,
@@ -846,7 +865,7 @@ class Structurer:
         all_texts = loaded.texts
         pt_cache = {pid: sr.PageText(txt) for pid, txt in all_texts.items()}
         ordered = sorted(leaves, key=lambda x: x[0].start)
-        ledger = ledger_values(self.m, t.doc_id) if profile.name == "court_judgment" else {}
+        ledger = ledger_values(self.m, t.doc_id, detc=profile.detc_guards) if profile.name in LEDGER_PROFILES else {}
         outs: list[tuple[int, sr.CaseOut, str]] = []
         window_problems: list = []
         for order, (spec, sc) in enumerate(ordered):

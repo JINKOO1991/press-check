@@ -58,6 +58,7 @@ class Profile:
     authority_types: tuple
     guard_shared_quotes: bool = False      # G-D5: 같은 구간을 사건 2건 이상이 사실 인용으로 쓰면 버린다(병합 칸)
     links_ledger: bool = False             # G-D6: 소개된 판결의 사건번호를 법제처 장부와 결정적으로 연결한다(ingestion/links.py)
+    detc_guards: bool = False              # U3: 헌재결정례 전용 결정적 가드(의견 가드·처분 가드·주문 없는 창 규칙)와 장부 값 고정
 
 
 PROFILES: dict[str, Profile] = {
@@ -69,6 +70,9 @@ PROFILES: dict[str, Profile] = {
     "iendc_table": Profile("iendc_table", "iendc_table.md", ("iendc",), ("iendc_review",), guard_shared_quotes=True),
     "pac_judgment_cases": Profile("pac_judgment_cases", "pac_judgment_cases.md", ("pac", "other_body"), ("research",), links_ledger=True),
     "court_judgment": Profile("court_judgment", "court_judgment.md", COURT_INSTITUTIONS, ("judgment",)),
+    # U3(2026-10-19): 헌법재판소 결정례(lawgo_detc). court_judgment 의 프롬프트·프로필은 해시가 바뀌면 판례 재구조화 대상이 되므로 건드리지 않고 따로 둔다.
+    "constitutional_decision": Profile("constitutional_decision", "constitutional_decision.md", ("constitutional_court",), ("judgment",),
+                                      detc_guards=True),
 }
 # source_id -> 프로필. 여기에 없는 소스(연구 자료, 심의기준 고정 페이지 등)는 사건 구조화를 하지 않는다.
 SOURCE_PROFILE: dict[str, str] = {
@@ -78,6 +82,7 @@ SOURCE_PROFILE: dict[str, str] = {
     "pac_board_correction_status": "pac_board_status",
     "iendc_review_results": "iendc_table",
     "lawgo_prec_supreme": "court_judgment",
+    "lawgo_detc": "constitutional_decision",
     "pac_research_judgment_analysis": "pac_judgment_cases",
 }
 # 사건 구조화를 하지 않고 기준·규정 chunk 만 만드는 소스(G-D6): source_id -> chunk 의 authority_type.
@@ -404,6 +409,7 @@ class _Stats:
         self.total = 0
         self.ok = 0
         self.dropped: list[dict] = []
+        self.guard_errors: list[str] = []            # 결정적 가드가 사건 격리로 올리는 사유(접두 label_guard: 창 병합 뒤에도 남는다)
         self.anchors: dict[str, list] = {}           # page_id -> 이 사건의 일반 인용 시작 위치들(짧은 표 칸 인용이 어느 행 것인지 고르는 기준, G-D15)
 
     def drop(self, fld: str, reason: str) -> None:
@@ -531,6 +537,84 @@ def _clean_free(s: Any, n: int, ctx: WindowCtx) -> tuple[Optional[str], Optional
     return _clip(t, n), None
 
 
+# ---------------------------------------------------------------- 헌재결정례 가드(profile.detc_guards)
+# 하류 계약은 ingestion/sources/detc_parse.py 모듈 docstring: 의견 구간 종류는 쪽 quality_json 의 opinion_kind 로 오고,
+# 분할하지 못한 문서는 해당 필드·쪽을 needs_review 로 둔다. 장부 값(WindowCtx.ledger)은 structure.ledger_values(detc=True)가 채운다.
+DETC_MAJORITY_KINDS = frozenset({"majority", "main"})            # court_majority 를 쓸 수 있는 구간. majority_supplement·dissent·concurrence·vote_opinion 등은 아니다
+DETC_FLAG_STATUSES = ("unsplit", "needs_review")                 # detc_parse.STATUS_UNSPLIT / STATUS_REVIEW
+DETC_HEADNOTE_KINDS = ("headnote_holding", "headnote_opinion")
+DETC_OPINION_SECTIONS = ("reasons", "opinion", "heading") + DETC_HEADNOTE_KINDS
+DETC_DISPOSITIONS = ("위헌불선언", "헌법불합치", "한정위헌", "한정합헌", "심판절차종료", "합헌", "위헌", "인용", "각하", "기각")      # detc_parse.classify_orders 어휘(unknown 제외)
+DETC_EQUIVALENT = frozenset({"위헌", "인용"})     # 동치군: classify_orders 가 '위헌임을 확인한다' 주문(헌법소원 인용)을 인용으로 분류하므로 모델은 같은 주문을 위헌으로도 적을 수 있다
+_DECISION_SPLIT = re.compile(r"[,，、/·ㆍ;；\s]+|및|그리고")
+_PAREN = re.compile(r"[(（][^)）]*[)）]")
+
+
+def _page_quality(row: Any) -> dict:
+    try:
+        q = row.get("quality_json") if isinstance(row, dict) else None
+        q = json.loads(q) if isinstance(q, str) else q
+        return q if isinstance(q, dict) else {}
+    except ValueError:
+        return {}
+
+
+def window_has_order(ctx: "WindowCtx") -> bool:
+    """이 창에 【주 문】 쪽이 있는가. 다중 창 문서에서 주문은 첫 창에만 있고 반대의견은 후속 창에 온다."""
+    return any(_page_quality(ctx.page_meta.get(pid)).get("section_kind") == "order" for pid in ctx.pages)
+
+
+def detc_majority_barred(row: Any, ledger: dict) -> Optional[str]:
+    """이 쪽의 인용에 speaker court_majority 를 쓸 수 없으면 사유 문자열, 쓸 수 있으면 None.
+    (1) 쪽의 opinion_kind 가 법정의견(majority·main)이 아니다(반대·별개·보충·vote_opinion 구간). (2) 분할하지 못해 쪽을 needs_review 로 둔 의견 포함 구간.
+    (3) 결정요지가 unsplit|needs_review 인 문서의 결정요지 쪽(반대의견 요지가 섞여 있다). 표지·주문·판시사항·참조조문 쪽은 막지 않는다."""
+    q = _page_quality(row)
+    kind, section = q.get("opinion_kind"), q.get("section_kind")
+    if kind is not None and kind not in DETC_MAJORITY_KINDS:
+        return f"opinion_kind_{kind}"
+    if isinstance(row, dict) and row.get("needs_review") and section in DETC_OPINION_SECTIONS:
+        return "needs_review"
+    if section in DETC_HEADNOTE_KINDS and ledger.get("headnote_status") in DETC_FLAG_STATUSES:
+        return f"headnote_{ledger['headnote_status']}"
+    return None
+
+
+def map_decision_type(text: str) -> tuple:
+    """decision_type 표기 -> (classify_orders 어휘로 대응된 처분 집합, 대응하지 못한 조각 목록). '위헌, 각하' -> ({위헌, 각하}, [])."""
+    mapped: set = set()
+    rest: list = []
+    for part in _DECISION_SPLIT.split(_PAREN.sub(" ", text)):
+        p = part.strip().rstrip(".")
+        if p.endswith("결정") and p[:-2] in DETC_DISPOSITIONS:
+            p = p[:-2]
+        if not p:
+            continue
+        if p in DETC_DISPOSITIONS:
+            mapped.add(p)
+        else:
+            rest.append(p)
+    return mapped, rest
+
+
+def disposition_guard(decision_type: str, dispositions: Any, st: "_Stats") -> list:
+    """처분 가드: decision_type 에서 대응된 처분이 장부 body.dispositions(classify_orders 결과)에 없으면 격리 사유를 돌려준다.
+    대응 못 한 표기는 note 만. 장부 분류가 비었거나 전부 unknown 이면 가드를 쓰지 않는다. 일부만 unknown 이면 대응된 처분이 그 unknown 항목일 수 있어 note 만."""
+    ledger_labels = [x for x in (dispositions or []) if isinstance(x, str)]
+    known = {x for x in ledger_labels if x in DETC_DISPOSITIONS}
+    if not known:
+        return []
+    mapped, rest = map_decision_type(decision_type)
+    if rest:
+        st.note("decision_type", "disposition_unmapped:" + ",".join(rest)[:60])
+    bad = {x for x in mapped - known if not (x in DETC_EQUIVALENT and known & DETC_EQUIVALENT)}
+    if not bad:
+        return []
+    if "unknown" in ledger_labels:
+        st.note("decision_type", "disposition_not_in_classified_items:" + ",".join(sorted(bad)))
+        return []
+    return [f"label_guard: decision_type disposition {sorted(bad)} contradicts the order classification {sorted(known)}"]
+
+
 def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_page: Optional[str]) -> list:
     out: list[dict] = []
     seen: set = set()
@@ -553,6 +637,14 @@ def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_
         loc = _ground(it.get("quote"), ctx, st, where, hint_page)
         if loc is None:
             continue
+        if ctx.profile.detc_guards and speaker == "court_majority":          # 의견 가드: 반대·보충·별개·vote_opinion 구간의 인용은 법정의견이 아니다
+            why = detc_majority_barred(ctx.page_meta.get(loc["page_id"]), ctx.ledger)
+            if why:
+                if fld == "outcome" and window_has_order(ctx):
+                    st.guard_errors.append(f"label_guard: outcome court_majority quote lies in a barred section ({why}) at {loc['page_id']}")
+                else:
+                    st.note(where, f"opinion_guard:{why}")             # 항목만 버린다. 인용은 일치했으므로 실패율에 넣지 않는다(V-FID-04 와 같은 처리)
+                    continue
         key = (loc["page_id"], loc["start"], loc["end"], text)
         if key in seen:
             st.note(where, "duplicate_item")
@@ -638,6 +730,10 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
     if institution not in prof.institutions:
         st.note("institution", "not_in_profile_allowlist")
         institution = prof.institutions[0]
+    led_inst = _str(ctx.ledger.get("institution"))
+    if led_inst and institution != led_inst:                  # 헌재결정례: 기관은 장부 값으로 고정한다
+        st.note("institution", "not_in_ledger")
+        institution = led_inst
 
     case_number = _str(d.get("case_number"))
     if case_number is not None:
@@ -666,6 +762,16 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
         dates["decision_date"] = led_date
     inst_name, _w = _clean_free(d.get("institution_name"), 120, ctx)
     dec_type, _w2 = _clean_free(d.get("decision_type"), 80, ctx)
+    disp_errors: list[str] = []
+    has_order = True
+    if prof.detc_guards:
+        has_order = window_has_order(ctx)
+        if not has_order:                                       # 후속 창(반대의견 등)에는 처분 정보가 없다: 사건 전체 격리 대신 이 창의 값만 버린다
+            if d.get("decision_type") is not None:
+                st.note("decision_type", "no_order_in_window")
+            dec_type = None
+        elif dec_type:
+            disp_errors = disposition_guard(dec_type, ctx.ledger.get("dispositions"), st)
 
     parties = []
     for i, p in enumerate(d.get("parties") if isinstance(d.get("parties"), list) else []):
@@ -692,6 +798,9 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
 
     outcome = None
     out_raw = d.get("outcome")
+    if prof.detc_guards and not has_order and out_raw is not None:
+        st.note("outcome", "no_order_in_window")                 # 주문 없는 창의 결론은 반대의견 등에서 온 것이다(항목만 버린다)
+        out_raw = None
     if isinstance(out_raw, dict):
         got = _items([out_raw], "outcome", ctx, st, authority, hint)
         for dr in st.dropped:                       # 항목 이름을 outcome 으로 바로잡는다
@@ -791,7 +900,7 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
                                                  "dismissal_merits", "correction", "guideline", "research", "unknown"), "unknown")
     scope = _enum(d.get("outcome_scope"), ("whole", "partial", "procedural", "unclear"), "unclear")
     raw_outcome_type = d.get("outcome_type")
-    label_errors: list[str] = []
+    label_errors: list[str] = disp_errors + st.guard_errors
     if authority == "judgment" and outcome is not None and isinstance(raw_outcome_type, str) and raw_outcome_type not in ("judgment", "unknown"):
         # G-D2: 법원 판결의 처분(상고기각 등)은 outcome_type 이 아니다. 열거형 밖의 값을 unknown 으로 고쳐 통과시키지 않고 격리한다.
         label_errors.append(f"label_guard: court judgment outcome_type must be 'judgment' (got '{raw_outcome_type[:40]}'); "
@@ -813,7 +922,8 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
         sup = [hint] if hint else []
     sup.sort()
 
-    case_id = (f"{ctx.target_key}:{compact(case_number)}" if case_number else f"{ctx.target_key}:{ctx.unit}n{k:02d}")
+    id_no = _str(ctx.ledger.get("case_id_number")) or case_number          # 헌재결정례: 장부 case_nos 의 대표 번호
+    case_id = (f"{ctx.target_key}:{compact(id_no)}" if id_no else f"{ctx.target_key}:{ctx.unit}n{k:02d}")
     record = {
         "schema_version": "0.1", "case_id": case_id, "doc_id": ctx.doc_id, "att_id": ctx.att_id,
         "institution": institution, "institution_name": inst_name, "authority_type": authority, "decision_type": dec_type,
