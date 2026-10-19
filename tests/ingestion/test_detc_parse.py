@@ -1,0 +1,187 @@
+"""헌재결정례 본문 파서(detc_parse): 네트워크 없는 순수 함수 시험. 모든 fixture 는 합성이다(가짜 번호·'갑 재판관'·'A법 제1조').
+실제 결정문의 문장·당사자 성명은 넣지 않는다(공개 저장소, 재배포는 permission_required)."""
+import pytest
+
+from press_review.ingestion.sources import detc_parse as D
+from press_review.ingestion.sources.lawapi import BodyParseError
+
+
+def detc_xml(serial="900001", **over):
+    f = {"헌재결정례일련번호": serial, "종국일자": "20061231", "사건번호": "2001헌마10", "사건명": "A법 제1조 위헌확인",
+         "사건종류코드": "430201", "사건종류명": "헌마", "재판부구분코드": "430301", "판시사항": "가 쟁점", "결정요지": "나 요지",
+         "전문": "【주 문】\n기각한다.", "참조조문": "A법 제1조", "참조판례": "", "심판대상조문": ""}
+    f.update(over)
+    return "<DetcService>" + "".join(f"<{k}>{v}</{k}>" for k, v in f.items()) + "</DetcService>"
+
+
+def case(reasons_tail="", order="1. A법 제1조는 헌법에 위반된다."):
+    return f"【당 사 자】\n청구인 갑\n2001헌마10\n【주　　문】\n{order}\n【이  유】\n1. 사건\n다수 판단이다.\n{reasons_tail}"
+
+
+# ---------------------------------------------------------------- parse_detc_xml
+def test_parse_field_mapping_and_empty_fields():
+    p = D.parse_detc_xml(detc_xml(), expected_serial="900001")
+    assert (p["serial"], p["body_case_no"], p["case_nos"], p["title"]) == ("900001", "2001헌마10", ["2001헌마10"], "A법 제1조 위헌확인")
+    assert p["decision_date"] == "2006-12-31"
+    assert (p["headnote_issue"], p["headnote_holding"], p["ref_statutes"], p["full_text"]) == ("가 쟁점", "나 요지", "A법 제1조", "【주 문】\n기각한다.")
+    assert p["ref_cases"] is None and p["review_target"] is None            # 빈 필드는 None
+    assert p["extra"] == {"case_kind_name": "헌마", "case_kind_code": "430201", "bench_code": "430301"}
+    assert "link" not in str(p.keys()).lower() and p["warnings"] == []
+
+
+@pytest.mark.parametrize("raw,iso", [("20061231", "2006-12-31"), ("2006.12.31", "2006-12-31"), ("2006.1.5.", "2006-01-05")])
+def test_parse_date_forms(raw, iso):
+    assert D.parse_detc_xml(detc_xml(종국일자=raw))["decision_date"] == iso
+
+
+def test_parse_zero_and_empty_are_none_with_warning():
+    p = D.parse_detc_xml(detc_xml(종국일자="0", 판시사항="0", 전문=""))
+    assert p["decision_date"] is None and p["headnote_issue"] is None and p["full_text"] is None
+    assert {"decision_date_missing", "zero_value:판시사항", "full_text_missing"} <= set(p["warnings"])
+    assert D.parse_detc_xml(detc_xml(종국일자="없음"))["warnings"] == ["decision_date_unparsed"]
+
+
+@pytest.mark.parametrize("body,kind", [
+    ("<Error>일치하는 헌재결정례가 없습니다.</Error>", "no_match"),
+    ("<Error>권한이 없습니다. OC 필요</Error>", "denied"),
+    ("<html><body>x</body></html>", "denied"),
+    ("not xml", "malformed"),
+    ("<DetcService><a></DetcService>", "malformed"),
+    ('<!DOCTYPE x [<!ENTITY a "b">]><DetcService><사건번호>&a;</사건번호></DetcService>', "malformed"),
+])
+def test_parse_error_kinds(body, kind):
+    with pytest.raises(BodyParseError) as e:
+        D.parse_detc_xml(body)
+    assert e.value.kind == kind
+
+
+def test_parse_serial_mismatch_and_accept():
+    with pytest.raises(BodyParseError) as e:
+        D.parse_detc_xml(detc_xml(serial="900002"), expected_serial="900001")
+    assert e.value.kind == "serial_mismatch"
+    assert D.accept_detc_body(detc_xml().encode(), {}, "900001") is None
+    assert D.accept_detc_body(detc_xml().encode(), {}, "1").startswith("serial_mismatch")
+
+
+# ---------------------------------------------------------------- split_detc
+@pytest.mark.parametrize("party,order,reasons", [("【당 사 자】", "【주 문】", "【이 유】"), ("【당　사　자】", "【주　　문】", "【이　　유】"),
+                                                   ("【당사자】", "【주  문】", "【이  유】")])
+def test_split_marker_whitespace_variants(party, order, reasons):
+    text = f"{party}\n청구인 갑\n{order}\n기각한다.\n{reasons}\n판단이다.\n"
+    secs, info = D.split_detc(text)
+    assert [s.kind for s in secs] == ["party", "order", "reasons"]
+    assert secs[0].no_page is True and not secs[1].no_page and not secs[2].no_page
+    assert "".join(s.text for s in secs) == text and info["status"] == "none"
+
+
+@pytest.mark.parametrize("heading,kind,vote", [
+    ("재판관 갑의 법정의견에 대한 보충의견", "majority_supplement", None),
+    ("재판관 갑의 다수의견에 대한 보충의견", "majority_supplement", None),
+    ("재판관 갑의 한정위헌의견", "vote_opinion", "한정위헌"),
+    ("재판관 을의 반대의견에 대한 재판관 병의 보충의견", "dissent_supplement", None),
+    ("재판관 갑의 기각의견에 대한 보충의견", "supplement", None),
+    ("재판관 갑, 을의 반대의견(위헌)", "dissent", "위헌"),
+    ("재판관 갑의 별개의견", "concurrence", None),
+])
+def test_opinion_heading_kinds(heading, kind, vote):
+    text = case(f"6. {heading}\n의견 본문이다.\n")
+    secs, info = D.split_detc(text)
+    ops = [s for s in secs if s.kind == "opinion"]
+    assert info["status"] == "split" and len(ops) == 1
+    assert (ops[0].opinion_kind, ops[0].vote) == (kind, vote)
+    assert "".join(s.text for s in secs) == text
+    assert [s.opinion_kind for s in secs if s.kind == "reasons"] == ["majority"]
+
+
+def test_vote_opinion_without_label_word():
+    secs, _ = D.split_detc(case("(가) 재판관 갑, 을의 의견(헌법불합치)\n본문이다.\n"))
+    op = [s for s in secs if s.kind == "opinion"][0]
+    assert (op.opinion_kind, op.vote) == ("vote_opinion", "헌법불합치")
+
+
+def test_heading_variants_midline_nested_and_suffix():
+    tail = ("6. 적법요건에 대한 반대의견가. 재판관 갑의 반대의견(1) 서 언 본문이다.\n"       # 문장 중간 표제
+            "7. 본안\n사. (1) 재판관 을의 반대의견(합헌)\n요지다.\n"                          # 중첩 번호 머리 + 끝 표기
+            "(4) 제3항의 위헌 여부(가) 재판관 병, 정의 의견(위헌)\n본문이다.\n")
+    secs, info = D.split_detc(case(tail))
+    ops = [(s.opinion_kind, s.vote) for s in secs if s.kind == "opinion"]
+    assert info["status"] == "split" and ops == [("dissent", None), ("dissent", "합헌"), ("vote_opinion", "위헌")]
+
+
+def test_statements_are_not_headings():
+    tail = ("이 결정에는 재판관 갑의 다음 6.과 같은 반대의견이 있는 외에는 일치하였다.\n"
+            "이 부분은 뒤의 ‘7. 가.’와 같은 재판관 갑의 반대의견(위헌)이 있는 외에는 일치한 것이다.\n"
+            "이 부분은 재판관 전원의 의견일치에 따른 것이다.\n")
+    secs, info = D.split_detc(case(tail))
+    assert info["marker_count"] == 0 and not [s for s in secs if s.kind == "opinion"]
+    assert info["status"] == "unsplit"                                      # 언급은 있으나 표제 0개
+    assert D.split_detc(case("이 부분은 재판관 전원의 의견일치에 따른 것이다.\n"))[1]["status"] == "none"
+
+
+def test_needs_review_on_count_mismatch():
+    # 번호 없는 문장 시작 표제(느슨 검출만 잡음) + 번호 있는 표제 1개
+    secs, info = D.split_detc(case("다수 판단이다. 재판관 갑의 반대의견\n본문이다.\n6. 재판관 을의 별개의견\n본문이다.\n"))
+    assert info["status"] == "needs_review" and info["marker_count"] == 1 and info["loose_count"] == 2
+    # 결론 문장의 번호 수(6, 7)보다 적게 잡음
+    secs, info = D.split_detc(case("이 결정에는 아래 6.과 같은 반대의견과 아래 7.과 같은 별개의견이 있다.\n6. 재판관 갑의 반대의견\n본문이다.\n"))
+    assert info["status"] == "needs_review" and info["conclusion_numbers"] == [6, 7]
+
+
+def test_unsplit_when_mention_without_heading():
+    _, info = D.split_detc(case("다수 판단이다. 재판관 갑의 반대의견\n본문이다.\n"))
+    assert info["status"] == "unsplit"
+
+
+def test_split_roundtrip_and_no_page_party():
+    text = case("6. 재판관 갑의 반대의견\n본문이다.\n【별지】\n목록\n")
+    secs, _ = D.split_detc(text)
+    assert "".join(s.text for s in secs) == text
+    assert [s.kind for s in secs] == ["party", "order", "reasons", "opinion", "heading"]
+    assert secs[-1].opinion_kind == "dissent"                                # 그 밖의 표지는 앞 구간 종류를 잇는다
+    assert [s.no_page for s in secs] == [True, False, False, False, False]
+    assert D.split_detc("표지 없는 본문")[0][0].kind == "preamble"
+
+
+# ---------------------------------------------------------------- split_head_opinions
+def test_head_opinions_split_and_unsplit():
+    secs, info = D.split_head_opinions("다수 요지이다.\n(1) 재판관 갑의 반대의견\n반대 요지이다.\n(2) 재판관 을의 보충의견\n보충 요지이다.")
+    assert info == {"headnote_split": "split", "marker_count": 2}
+    assert [(s.kind, s.opinion_kind) for s in secs] == [("holding", "majority"), ("opinion", "dissent"), ("opinion", "supplement")]
+    assert D.split_head_opinions("요지이다. 재판관 갑의 반대의견이 있다.")[1]["headnote_split"] == "unsplit"
+    assert D.split_head_opinions("의견 언급 없는 요지")[1]["headnote_split"] == "none"
+    assert D.split_head_opinions(None) == ([], {"headnote_split": "none", "marker_count": 0})
+
+
+# ---------------------------------------------------------------- classify_orders
+@pytest.mark.parametrize("order,expected", [
+    ("1. A법 제1조는 헌법에 위반된다고 할 수 없다.", ["위헌불선언"]),
+    ("A법 제1조는 헌법에 위반된다고 선고할 수 없다.", ["위헌불선언"]),
+    ("1. A법 제1조는 헌법에 합치되지 아니한다.", ["헌법불합치"]),
+    ("1. A법 제1조를 갑으로 해석하는 한 헌법에 위반된다.", ["한정위헌"]),
+    ("1. A법 제1조를 갑으로 해석하는 한 헌법에 위반되지 아니한다.", ["한정합헌"]),
+    ("1. A법 제1조는 헌법에 위반되지 아니한다.", ["합헌"]),
+    ("1. A법 제1조는 헌법에 위반된다.", ["위헌"]),
+    ("1. 피청구인의 처분을 취소한다.", ["인용"]),
+    ("1. 갑의 청구는 위헌임을 확인한다. 2. 나머지 청구를 각하한다.", ["인용", "각하"]),
+    ("1. A법 제1조는 헌법에 합치되지 아니한다. 2. 나머지 청구를 기각한다. 3. 이 사건 심판절차는 종료되었다.", ["헌법불합치", "기각", "심판절차종료"]),
+    ("1. 달리 정한다.", ["unknown"]),
+    ("【주 문】\n청구를 기각한다.", ["기각"]),
+    ("", []),
+])
+def test_classify_orders(order, expected):
+    assert D.classify_orders(order) == expected
+
+
+# ---------------------------------------------------------------- 병합 번호·머리 쪽
+def test_extract_merged_numbers_party_section_only():
+    text = ("【당 사 자】\n청구인 갑\n2001헌마10, 2001 헌마 11 2002헌가3\n2001헌마10\n【주 문】\n기각한다.\n【이 유】\n선례 2009헌바9 를 본다.\n")
+    assert D.extract_merged_numbers(text) == ["2001헌마10", "2001헌마11", "2002헌가3"]          # 이유의 2009헌바9 제외, 중복 제거
+    assert D.extract_merged_numbers("판시사항 머리 2005헌마165 (병합)\n【주 문】\n기각") == ["2005헌마165"]    # 주문 앞 구간이면 뽑는다(필드 구분은 호출자 몫)
+    assert D.extract_merged_numbers("【당 사 자】\n2001헌마10") == []                          # 주문 표지가 없으면 구간 불명
+    assert D.extract_merged_numbers(case()) == ["2001헌마10"]
+
+
+def test_build_head_page():
+    assert D.build_head_page("2001헌마10", "2006-01-05") == "사건번호: 2001헌마10\n종국일자: 2006. 1. 5.\n기관: 헌법재판소"
+    assert D.build_head_page("2001헌마10", None) == "사건번호: 2001헌마10\n기관: 헌법재판소"
+    assert D.build_head_page(None, None) == ""
