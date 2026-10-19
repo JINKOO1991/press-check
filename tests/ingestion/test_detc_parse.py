@@ -315,3 +315,56 @@ def test_classify_orders_indented_item_heads():
     assert D.classify_orders("1. A법 제1조는 헌법에 위반된다.\n  2. 나머지 청구를 각하한다.") == ["위헌", "각하"]
     assert D.classify_orders("1. A법 제1조는 헌법에 위반된다.\n\u3000\u30002. 나머지 청구를 각하한다.") == ["위헌", "각하"]
     assert D.classify_orders("1. A법(2000. 1. 2. 법률 제1호)은 헌법에 위반된다.\n  2. 나머지 청구를 각하한다.") == ["위헌", "각하"]
+
+
+# ---------------------------------------------------------------- 독립 검토 3회차 후속(인용 절단어·따옴표 표제·입장어 병렬)
+@pytest.mark.parametrize("cite", ["종전 결정", "종전의 결정", "이전의 결정", "기존 결정례", "선행 사건", "관련 사건", "재심대상 결정", "재심대상결정",
+                                  "앞선 판례", "종전인 심판"])
+def test_cited_decision_variants_are_not_merged(cite):
+    text = f"【당 사 자】\n사건 2020헌아1 / {cite} 2018헌마1\n【주 문】\n각하한다.\n"
+    assert D.extract_merged_numbers(text) == ["2020헌아1"]
+
+
+def test_party_lines_that_merely_start_with_citation_words_are_kept():
+    text = ("【당 사 자】\n재심청구인 갑 (2020헌아1)\n사건 2020헌아2\n이전 청구인 을 (2020헌아4)\n관련 청구인 병 (2020헌아5)\n"
+            "2020헌아6, 2020헌아7 (병합)\n【주 문】\n각하한다.\n")
+    assert D.extract_merged_numbers(text) == ["2020헌아1", "2020헌아2", "2020헌아4", "2020헌아5", "2020헌아6", "2020헌아7"]
+
+
+@pytest.mark.parametrize("quoted", [
+    "재판관 갑은 ‘반대의견’을 인용했다.", "재판관 갑은 “반대의견”을 인용했다.", "재판관 갑은 「반대의견」을 인용했다.",
+    "재판관 갑은 『반대의견』을 인용했다.", "재판관 갑은 〈반대의견〉을 인용했다.", "재판관 갑은 \"반대의견\"을 인용했다.",
+    "재판관 갑은\n‘반대의견’을 인용했다.", "‘재판관 갑의 반대의견’이라 한다.", "그는 “다음 6. 재판관 갑의 반대의견”이라고 썼다.",
+])
+def test_quoted_opinion_words_are_not_headings(quoted):
+    secs, info = D.split_detc(case(quoted + "\n법정의견 본문이다.\n"))
+    assert not [s for s in secs if s.kind == "opinion"] and info["status"] in ("none", "unsplit")      # 언급 플래그(unsplit)는 안전한 쪽
+    assert [s.opinion_kind for s in secs if s.kind == "reasons"] == ["main"]
+
+
+@pytest.mark.parametrize("tail,kinds", [
+    ("6. 재판관 갑의 반대의견\n본문이다.\n", [("dissent", None)]),                                                      # 줄 머리
+    ("6. 적법요건에 대한 반대의견가. 재판관 갑의 반대의견(1) 서 언 본문이다.\n", [("dissent", None)]),                    # 문장 중간
+    ("사. (1) 재판관 을의 반대의견(합헌)\n요지다.\n", [("dissent", "합헌")]),                                           # 중첩 번호 머리 + 꼬리
+    ("6. 법 제2조 중 ‘정의’ 부분에 대한 재판관 갑의 반대의견(합헌)\n본문이다.\n", [("dissent", "합헌")]),                # 앞부분의 닫힌 따옴표 쌍
+    ("‘인용문\n6. 재판관 갑의 반대의견\n본문이다.\n", [("dissent", None)]),                                            # 앞 줄의 따옴표는 이어지지 않는다
+])
+def test_real_headings_survive_quote_filter(tail, kinds):
+    secs, info = D.split_detc(case(tail))
+    assert [(s.opinion_kind, s.vote) for s in secs if s.kind == "opinion"] == kinds and info["status"] == "split"
+
+
+@pytest.mark.parametrize("heading,vote", [
+    ("재판관 갑의 합헌 및 위헌의견", None),
+    ("재판관 갑의 합헌과 위헌의견", None),
+    ("재판관 갑의 합헌 또는 위헌의견", None),
+    ("재판관 갑의 합헌, 위헌 및 각하의견", None),
+    ("재판관 갑의 위헌, 헌법불합치의견", "헌법불합치"),
+    ("재판관 갑의 위헌 및 한정위헌 및 헌법불합치의견", "헌법불합치"),
+    ("재판관 갑의 위헌이라는 결과에 반대하는 합헌의견", "합헌"),
+    ("재판관 갑의 위헌이 아닌 합헌의견", "합헌"),
+    ("재판관 갑의 합헌이 아니라 위헌의견", "위헌"),
+    ("재판관 갑의 합헌의견", "합헌"),
+])
+def test_stance_is_the_word_before_opinion_and_only_its_parallel_chain(heading, vote):
+    assert D.classify_detc_opinion(heading) == ("vote_opinion", vote)

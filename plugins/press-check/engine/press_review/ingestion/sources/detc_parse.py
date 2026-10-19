@@ -134,7 +134,7 @@ def _section_marks(text: str) -> list[tuple[int, int, str]]:
 
 # 당사자 구간에서 병합 근거는 현 사건의 번호 나열뿐이다: '사건' 라벨 줄, 번호만 늘어놓은 줄, 번호만 든 괄호 주석('청구인 … (번호)'). 재심대상·종전·관련 결정이나 '선고' 날짜가 붙은 인용은
 # 그 표기부터 잘라 낸다(청구인 등 다른 라벨 줄의 번호도 인정하지 않는다).
-_CITE_CUT = re.compile(r"재심대상(?:\s*(?:결정|사건))?|재심사건|(?:종전|선행|관련|참조)\s*(?:결정|사건|판례)|대상결정|선고|\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}")
+_CITE_CUT = re.compile(r"(?:종전|이전|기존|앞선|선행|관련|참조|재심대상)(?:의|인)?\s*(?:결정례|결정|사건|판례|심판)|재심대상|재심사건|대상결정|선고|\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}")
 _LEAD_MARK = re.compile(r"^[ \t\u3000]*(?:【[^】]*】|[\[［][^\]］]*[\]］])")
 
 
@@ -204,13 +204,13 @@ _PFX = r"(?:\d{1,2}\.|[가-하]\.|\(\d{1,2}\)|\([가-하]\))"
 _PFX_MID = r"(?:\d{1,2}\.|\(\d{1,2}\)|\([가-하]\)|(?:(?<![가-힣])|(?<=견))[가-하]\.)"
 # 표제 본문: '재판관 … 의견' 의 마지막 명사구에서 끊는다. '…의견에 대한 / …의견의 보충' 은 이어지는 표제이므로 거기서 끊지 않는다.
 # 끝 뒤에 한글이 바로 이어지면(의견일치·의견이 있다) 진술문이다. 다만 목록 머리('가.')는 한글이어도 마침표가 붙어 있어 허용한다.
-_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.‘’'\"“”]{0,100}?재판관[^\n.]{0,150}?(?:\n[ \t　]*(?:(?![와과]\s*같은)[^\n.‘’'\"“”]){0,40}?)?의견(?!\s*(?:에\s*대한|의\s*보충))"
+_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.]{0,100}?재판관[^\n.]{0,150}?(?:\n[ \t　]*(?:(?![와과]\s*같은)[^\n.]){0,40}?)?의견(?!\s*(?:에\s*대한|의\s*보충))(?![’”」』〉'\"])"
          r"(?:\([가-힣]{1,12}\)(?![가-힣](?!\.))|(?!\([가-힣])(?![가-힣](?!\.)))")
 _LINE_START = r"(?:(?<=\n)|^)[ \t　]*"
 _NOT_REF = r"(?<!아래 )(?<!뒤의 )(?<!다음 )(?<!위의 )(?<!앞의 )(?<!아래)(?<!뒤의)(?<!다음)(?<!위의)(?<!앞의)"
 # strict: 줄 머리(번호 머리 선택) 또는 문장 중간(번호 머리 필수, 따옴표·'아래 N.' 인용 뒤 제외)
 HEAD_RE = re.compile(r"(?:" + _LINE_START + r"(?P<a>(?:" + _PFX + r"\s*)*" + _BODY + r")|"
-                     r"(?<![‘’'\"“”])" + _NOT_REF + r"(?P<b>(?:" + _PFX_MID + r"\s*)+" + _BODY + r"))")
+                     r"(?<![‘’'\"“”「」『』〈〉])" + _NOT_REF + r"(?P<b>(?:" + _PFX_MID + r"\s*)+" + _BODY + r"))")
 # loose: 줄 머리 또는 문장 시작(번호 머리 선택). strict 가 놓치는 '번호 없는 문장 시작 표제' 를 센다(누락 탐지용).
 LOOSE_RE = re.compile(r"(?:" + _LINE_START + r"|(?<=[.다])[ \t　]+)(?P<h>(?:" + _PFX + r"\s*)*" + _BODY + r")")
 _MENTION_RE = re.compile(r"재판관[^\n]{0,150}(?:반대|별개|보충|법정|위헌|합헌|헌법불합치|각하|인용|기각|한정위헌|한정합헌)의견")
@@ -236,11 +236,13 @@ def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
         return classify_opinion(core.replace("법정의견", "다수의견")), None
     m = _VOTE_TAIL.search(last)
     if m:
-        sides = set()
-        for piece in re.split(r"및|와|과|·|ㆍ|,|，", re.split(r"이?아닌|이?아니라", last)[-1]):          # '이 아닌' 앞의 입장어는 그 의견의 입장이 아니다
-            ws = _VOTE_ANY.findall(piece)
-            if ws:
-                sides.add(_VOTE_SIDE[ws[-1]])
+        tail = re.split(r"이?아닌|이?아니라", last)[-1]          # '이 아닌' 앞의 입장어는 그 의견의 입장이 아니다
+        ws = list(_VOTE_ANY.finditer(tail))
+        sides = {_VOTE_SIDE[ws[-1].group()]} if ws else set()
+        for prev, cur in zip(ws[-2::-1], ws[::-1]):          # '의견' 바로 앞 입장어에서 거슬러, 사이가 순수 접속어일 때만 같은 의견의 병렬 입장으로 묶는다
+            if not re.fullmatch(r"(?:및|와|과|·|ㆍ|,|，|또는)+", tail[prev.end():cur.start()]):
+                break
+            sides.add(_VOTE_SIDE[prev.group()])
         return "vote_opinion", (m.group(1) if len(sides) <= 1 else None)      # 병렬로 이은 입장어의 편이 갈리면 입장 불명
     if last.endswith("법정의견"):
         return "majority", None
@@ -252,7 +254,16 @@ def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
     return None, None
 
 
-_WRAP_RE = re.compile(r"재판관[^.]{0,80}?\n[^.]{0,80}?의견(?![가-힣](?!\.))")
+_WRAP_RE = re.compile(r"재판관[^.‘’'\"“”「」『』〈〉]{0,80}?\n[^.‘’'\"“”「」『』〈〉]{0,80}?의견(?![가-힣](?!\.))")
+_Q_OPEN, _Q_CLOSE = "‘“「『〈", "’”」』〉"
+
+
+def _quoted(text: str, a: int, b: int) -> bool:
+    """표제 후보 [a,b) 가 인용 속이면 True: 같은 줄 앞부분에서 열린 따옴표가 닫히지 않았거나, 후보 안에서 따옴표 쌍이 맞지 않는다."""
+    pre, span = text[text.rfind("\n", 0, a) + 1:a], text[a:b]
+    bal = lambda s: sum(s.count(c) for c in _Q_OPEN) - sum(s.count(c) for c in _Q_CLOSE)
+    odd = lambda s: s.count('"') % 2 or s.count("'") % 2
+    return bal(pre) > 0 or bal(span) != 0 or bool(odd(pre) or odd(span))
 
 
 def _scan(text: str, start: int, end: int) -> dict:
@@ -260,8 +271,9 @@ def _scan(text: str, start: int, end: int) -> dict:
     heads = []
     for m in HEAD_RE.finditer(text, start, end):
         g = "a" if m.group("a") is not None else "b"
-        heads.append((m.start(g), m.end(g), m.group(g)))
-    loose = sum(1 for _ in LOOSE_RE.finditer(text, start, end))
+        if not _quoted(text, m.start(g), m.end(g)):
+            heads.append((m.start(g), m.end(g), m.group(g)))
+    loose = sum(1 for m in LOOSE_RE.finditer(text, start, end) if not _quoted(text, m.start("h"), m.end("h")))
     # 줄바꿈을 건너뛰어 표제로 잡지 못한 '재판관 … 의견' 언급도 느슨 검출에 넣는다(표제 수와 어긋나 needs_review/unsplit 으로 수렴)
     loose += sum(1 for w in _WRAP_RE.finditer(text, start, end) if not any(w.start() < b and w.end() > a for a, b, _ in heads))
     seg = text[start:end]
