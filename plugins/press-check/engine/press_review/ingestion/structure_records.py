@@ -599,13 +599,19 @@ def vote_relabel_speaker(row: Any, ledger: dict) -> Optional[str]:
     return "court_concurring" if stance in sides else "court_dissenting"
 
 
+DETC_FRAGMENTS = frozenset({"확인", "확인한다", "취소", "취소한다"})      # 처분 문장이 쪼개져 남은 동사: 처분이 아니므로 note 없이 무시한다
+
+
 def _phrase_dispositions(piece: str) -> set:
     """인쇄된 처분 문장 -> 처분 집합. detc_parse.classify_orders 와 같은 구문 판정(부정형 우선)을 쓴다.
     classify_orders 가 '합치되지 아니한다' 만 헌법불합치로 보므로 '합치하지 아니한다' 표기는 여기서 보충한다. 대응 못 하면 빈 집합."""
     from .sources.detc_parse import classify_orders          # 지연 import: detc_parse -> lawapi 쪽 import 순환을 피한다
     out = {x for x in classify_orders(piece) if x in DETC_DISPOSITIONS}
-    if "합치하지아니한다" in re.sub(r"\s+", "", piece):
+    c = re.sub(r"\s+", "", piece)
+    if "합치하지아니한다" in c:
         out.add("헌법불합치")
+    if "위헌임을확인" in c or re.search(r"취소(한다)?$", c):        # classify_orders 는 '…확인한다'·'…취소한다' 를 인용으로 본다: 어미가 빠진 표기도 같게 본다
+        out.add("인용")
     return out
 
 
@@ -613,6 +619,7 @@ def map_decision_type(text: str) -> tuple:
     """decision_type 표기 -> (classify_orders 어휘로 대응된 처분 집합, 대응하지 못한 조각 목록). '위헌, 각하' -> ({위헌, 각하}, [])."""
     mapped: set = set()
     rest: list = []
+    mapped |= _phrase_dispositions(_PAREN.sub(" ", text))                  # 조각내기 전 전체 문자열의 구문 판정(조각별 판정과 합집합)
     for part in _DECISION_SEP.split(_PAREN.sub(" ", text)):
         p = part.strip().rstrip(".")
         if not p:
@@ -628,7 +635,7 @@ def map_decision_type(text: str) -> tuple:
         for t in toks:                                                # 일부만 어휘인 조각('일부 인용')
             if t in DETC_DISPOSITIONS:
                 mapped.add(t)
-            else:
+            elif t not in DETC_FRAGMENTS:
                 rest.append(t)
     return mapped, rest
 
@@ -966,6 +973,9 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
     outcome_type = _enum(d.get("outcome_type"), ("judgment", "decision", "settlement", "withdrawal", "dismissal_procedural",
                                                  "dismissal_merits", "correction", "guideline", "research", "unknown"), "unknown")
     scope = _enum(d.get("outcome_scope"), ("whole", "partial", "procedural", "unclear"), "unclear")
+    if prof.detc_guards and scope == "procedural":              # 계약: scope procedural 은 judgment 에 붙을 수 없다. 각하의 절차성은 decision_type 이 나타낸다
+        st.note("outcome_scope", "procedural_not_allowed_for_judgment")
+        scope = "unclear"
     raw_outcome_type = d.get("outcome_type")
     label_errors: list[str] = disp_errors + st.guard_errors
     if authority == "judgment" and outcome is not None and isinstance(raw_outcome_type, str) and raw_outcome_type not in ("judgment", "unknown"):
