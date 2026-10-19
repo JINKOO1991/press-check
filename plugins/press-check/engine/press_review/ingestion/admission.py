@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from fractions import Fraction
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from .manifest import Manifest
 
@@ -247,6 +247,14 @@ class MigrationError(Exception):
     pass
 
 
+def _sql_literal(v: Any) -> str:
+    if v is None:
+        return "NULL"
+    if isinstance(v, (int, float)):
+        return repr(v)
+    return "'" + str(v).replace("'", "''") + "'"
+
+
 def _migration_plan(m: Manifest, source_id: str, min_quote_rate: float) -> list:
     prefix = CASE_ID_PREFIX[source_id]
     rows = m.select("SELECT target FROM failures WHERE stage=? AND resolved_at IS NULL ORDER BY id", (MANUAL_STAGE,))
@@ -267,7 +275,11 @@ def migrate_manual(m: Manifest, source_id: str, *, min_quote_rate: float = MIN_Q
             q = t.replace("'", "''")
             sql += [f"UPDATE cases SET verification_status='quarantined' WHERE case_id='{q}';",
                     f"UPDATE failures SET resolved_at=NULL WHERE target='{q}' AND stage='{MANUAL_STAGE}';",
-                    f"DELETE FROM failures WHERE target='{q}' AND stage='{STAGE}' AND error_class='{CASE_ERROR_CLASS}';"]
+                    f"DELETE FROM failures WHERE target='{q}' AND stage='{STAGE}';"]
+            # 이전 admission 행(해결된 것 포함)은 record_failure 가 덮어쓰므로, 쓰기 전 값을 읽어 undo 가 그대로 복원한다. 컬럼은 SELECT * 결과에서 읽는다.
+            for row in m.select("SELECT * FROM failures WHERE target=? AND stage=?", (t, STAGE)):
+                cols = list(row)
+                sql.append(f"INSERT INTO failures({', '.join(cols)}) VALUES({', '.join(_sql_literal(row[c]) for c in cols)});")
         sql.append("COMMIT;")
         with open(undo_out, "x", encoding="utf-8") as f:       # 기존 파일을 덮어쓰지 않는다
             f.write("\n".join(sql) + "\n")

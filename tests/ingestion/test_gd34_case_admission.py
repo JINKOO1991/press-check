@@ -194,3 +194,29 @@ def test_migrate_undo_sql_restores(tmp_path):
     assert state(path) == s0
     with pytest.raises(FileExistsError):
         admission.migrate_manual(Manifest(path), PREC, undo_out=undo)       # 기존 파일 덮어쓰기 거부
+
+
+def test_migrate_undo_restores_prior_resolved_admission_row(tmp_path):
+    import sqlite3
+    path = build_manual(tmp_path / "c")
+    m = Manifest(path)
+    m.record_failure(MANUAL[0], "admission", "case_excluded", "이전 메시지 'q' 포함", retry_count=3)
+    m.resolve_failures(MANUAL[0], "admission")                 # 이전의 해결된 행
+    m.close()
+
+    def rows():
+        mm = Manifest(path, in_memory_copy=True)
+        r = mm.select("SELECT * FROM failures WHERE stage='admission' ORDER BY target")
+        mm.close()
+        return r
+    orig = [r for r in rows() if r["target"] == MANUAL[0]]
+    assert len(orig) == 1 and orig[0]["resolved_at"] is not None
+    s0 = state(path)
+    undo = tmp_path / "u.sql"
+    run(tmp_path / "c", "--source", PREC, "--migrate-manual", "--apply", "--undo-out", str(undo))
+    assert [r for r in rows() if r["target"] == MANUAL[0]] != orig        # 이행이 덮어썼다
+    con = sqlite3.connect(str(path), isolation_level=None)
+    con.executescript(undo.read_text(encoding="utf-8"))
+    con.close()
+    assert [r for r in rows() if r["target"] == MANUAL[0]] == orig        # 값 그대로(id·메시지·retry_count·시각) 복원
+    assert state(path) == s0
