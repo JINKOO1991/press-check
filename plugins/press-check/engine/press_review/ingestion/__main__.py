@@ -29,7 +29,8 @@ _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 # 디스크를 쓰는 어댑터 -> (항목당 예상 종류, 표시 이름). 읽기 전용(status·export-*·rights show·admission 보고)과 --dry-run 에는 가드를 걸지 않는다
 DISK_GUARDED = {"fetch": ("pdf", "PDF 수신"), "extract": ("struct", "본문 추출"), "build_index": ("struct", "색인 빌드"),
                 "lawapi": ("case_json", "판례 수집"), "lawapi_body": ("case_json", "판례 본문 수집"),
-                "pac": ("case_json", "PAC 수집"), "iendc": ("case_json", "IENDC 수집")}
+                "pac": ("case_json", "PAC 수집"), "iendc": ("case_json", "IENDC 수집"),
+                "lawapi_detc": ("case_json", "헌재결정례 번호 해석"), "lawapi_detc_body": ("case_json", "헌재결정례 본문 수집")}
 
 
 def available_sources() -> list[str]:
