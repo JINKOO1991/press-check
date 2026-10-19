@@ -132,6 +132,35 @@ def _section_marks(text: str) -> list[tuple[int, int, str]]:
     return sorted(out)
 
 
+# 당사자 구간에서 병합 근거는 현 사건의 번호 나열뿐이다: '사건' 라벨 줄, 번호만 늘어놓은 줄, 번호만 든 괄호 주석('청구인 … (번호)'). 재심대상·종전·관련 결정이나 '선고' 날짜가 붙은 인용은
+# 그 표기부터 잘라 낸다(청구인 등 다른 라벨 줄의 번호도 인정하지 않는다).
+_CITE_CUT = re.compile(r"재심|종전|선행|관련|참조|대상결정|선고|\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}")
+_LEAD_MARK = re.compile(r"^[ \t\u3000]*(?:【[^】]*】|[\[［][^\]］]*[\]］])")
+
+
+def _tokens_of(s: str) -> list[str]:
+    return [m.group(1) + "헌" + m.group(2) + m.group(3) for m in _CASE_TOKEN.finditer(s)]
+
+
+def _only_tokens(s: str) -> bool:
+    """사건번호 토큰이 있고 그 밖에는 구분 기호·'병합'·'등'만 있는가."""
+    return bool(_CASE_TOKEN.search(s)) and re.sub(r"병합|등|및|[\s,，、·ㆍ()/\-]", "", _CASE_TOKEN.sub("", s)) == ""
+
+
+def _party_line_tokens(line: str) -> list[str]:
+    s = _LEAD_MARK.sub("", line)
+    cut = _CITE_CUT.search(s)
+    if cut:
+        s = s[:cut.start()]
+    if re.sub(r"\s+", "", s).startswith("사건") or _only_tokens(s):
+        return _tokens_of(s)
+    out: list[str] = []
+    for g in re.findall(r"\(([^()]*)\)", s):               # '청구인 … (2005헌마165)' 처럼 번호만 든 괄호 주석
+        if _only_tokens(g):
+            out += _tokens_of(g)
+    return out
+
+
 def extract_merged_numbers(full_text: str) -> list[str]:
     """``【당 사 자】`` 구간(본문 시작~``【주 문】`` 직전)의 사건번호 토큰만. NFKC·공백 제거 후 등장 순서, 중복 제거.
     ``【주 문】`` 표지가 없으면 구간을 정할 수 없으므로 빈 목록이다. 판시사항 등 다른 필드의 번호는 근거가 아니다."""
@@ -140,10 +169,10 @@ def extract_merged_numbers(full_text: str) -> list[str]:
     if end is None:
         return []
     out: list[str] = []
-    for m in _CASE_TOKEN.finditer(text[:end]):
-        tok = m.group(1) + "헌" + m.group(2) + m.group(3)
-        if tok not in out:
-            out.append(tok)
+    for line in text[:end].split("\n"):
+        for tok in _party_line_tokens(line):
+            if tok not in out:
+                out.append(tok)
     return out
 
 
@@ -175,7 +204,7 @@ _PFX = r"(?:\d{1,2}\.|[가-하]\.|\(\d{1,2}\)|\([가-하]\))"
 _PFX_MID = r"(?:\d{1,2}\.|\(\d{1,2}\)|\([가-하]\)|(?:(?<![가-힣])|(?<=견))[가-하]\.)"
 # 표제 본문: '재판관 … 의견' 의 마지막 명사구에서 끊는다. '…의견에 대한 / …의견의 보충' 은 이어지는 표제이므로 거기서 끊지 않는다.
 # 끝 뒤에 한글이 바로 이어지면(의견일치·의견이 있다) 진술문이다. 다만 목록 머리('가.')는 한글이어도 마침표가 붙어 있어 허용한다.
-_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.‘’'\"“”]{0,100}?재판관[^\n.]{0,150}?의견(?!\s*(?:에\s*대한|의\s*보충))"
+_BODY = (r"(?![^\n]{0,60}?[와과]\s*같은)[^\n.‘’'\"“”]{0,100}?재판관[^\n.]{0,150}?(?:\n[ \t　]*[^\n.]{0,40}?)?의견(?!\s*(?:에\s*대한|의\s*보충))"
          r"(?:\([가-힣]{1,12}\)(?![가-힣](?!\.))|(?!\([가-힣])(?![가-힣](?!\.)))")
 _LINE_START = r"(?:(?<=\n)|^)[ \t　]*"
 _NOT_REF = r"(?<!아래 )(?<!뒤의 )(?<!다음 )(?<!위의 )(?<!앞의 )(?<!아래)(?<!뒤의)(?<!다음)(?<!위의)(?<!앞의)"
@@ -191,6 +220,11 @@ _VOTE_TAIL = re.compile(r"(" + "|".join(_VOTE_WORDS) + r")의견$")
 _PFX_STRIP = re.compile(r"^(?:" + _PFX + r")+")
 
 
+_VOTE_ANY = re.compile("|".join(_VOTE_WORDS))
+_VOTE_SIDE = {"한정위헌": "INV", "단순위헌": "INV", "위헌": "INV", "헌법불합치": "INV", "인용": "INV",
+              "합헌": "UPH", "한정합헌": "UPH", "기각": "UPH", "각하": "DISM"}
+
+
 def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
     """표제 → (opinion_kind, vote). '…의견' 으로 끝나는 마지막 명사구로 판정한다('…반대의견에 대한 재판관 병의 보충의견' 은 보충).
     위헌·합헌·헌법불합치·각하·인용·기각의견은 vote_opinion(법정의견 여부 불명)이며 vote 에 표기를 남긴다."""
@@ -202,7 +236,8 @@ def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
         return classify_opinion(core.replace("법정의견", "다수의견")), None
     m = _VOTE_TAIL.search(last)
     if m:
-        return "vote_opinion", m.group(1)
+        words = _VOTE_ANY.findall(last)
+        return "vote_opinion", (m.group(1) if len({_VOTE_SIDE[w] for w in words}) <= 1 else None)      # 편이 갈리는 복합 표제는 입장 불명
     if last.endswith("법정의견"):
         return "majority", None
     kind = classify_opinion(last)
@@ -213,6 +248,9 @@ def classify_detc_opinion(label: str) -> tuple[Optional[str], Optional[str]]:
     return None, None
 
 
+_WRAP_RE = re.compile(r"재판관[^.]{0,80}?\n[^.]{0,80}?의견(?![가-힣](?!\.))")
+
+
 def _scan(text: str, start: int, end: int) -> dict:
     """[start,end) 에서 strict 표제, loose 표제 수, 결론 문장 번호, 언급 여부."""
     heads = []
@@ -220,6 +258,8 @@ def _scan(text: str, start: int, end: int) -> dict:
         g = "a" if m.group("a") is not None else "b"
         heads.append((m.start(g), m.end(g), m.group(g)))
     loose = sum(1 for _ in LOOSE_RE.finditer(text, start, end))
+    # 줄바꿈을 건너뛰어 표제로 잡지 못한 '재판관 … 의견' 언급도 느슨 검출에 넣는다(표제 수와 어긋나 needs_review/unsplit 으로 수렴)
+    loose += sum(1 for w in _WRAP_RE.finditer(text, start, end) if not any(w.start() < b and w.end() > a for a, b, _ in heads))
     seg = text[start:end]
     return {"heads": heads, "loose": loose, "nums": sorted({int(n) for n in _CONCL_NO_RE.findall(seg)}),
             "mention": bool(_MENTION_RE.search(seg))}
@@ -302,7 +342,18 @@ def split_head_opinions(headnote_holding: Optional[str]) -> tuple[list[Section],
 
 
 # ---------------------------------------------------------------- 주문 분류기
-_ITEM_NO = re.compile(r"(?<![\d가-힣.])(\d{1,2})\.\s")
+_ITEM_NO = re.compile(r"(?:\A|(?<=\n)|(?<=[.다])[ \t\u3000]+)(\d{1,2})\.\s")
+_MASK_DATE = re.compile(r"\d{4}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?")
+_MASK_PAREN = re.compile(r"\([^()]*\)")
+
+
+def _mask(text: str) -> str:
+    """항목 경계 후보에서 법령 날짜와 괄호 안을 뺀다(같은 길이로 가려 offset 을 보존). 판정은 원문 기준이다."""
+    s = _MASK_DATE.sub(lambda m: "_" * len(m.group()), text)
+    prev = None
+    while prev != s:
+        prev, s = s, _MASK_PAREN.sub(lambda m: "_" * len(m.group()), s)
+    return s
 _NOT_UNCONST = ("위반된다고할수없다", "위반된다고선고할수없다", "선고할수없다")     # 위헌보다 먼저(반증 검토 4)
 
 
@@ -340,7 +391,7 @@ def classify_orders(order_text: str) -> list[str]:
         return []
     text = re.sub(r"^(?:【[^】]*】|[\[［][^\]］]{1,10}[\]］])\s*", "", text)
     starts, want = [], 1
-    for m in _ITEM_NO.finditer(text):
+    for m in _ITEM_NO.finditer(_mask(text)):
         if int(m.group(1)) == want:
             starts.append((m.start(), m.end()))
             want += 1

@@ -429,3 +429,53 @@ def test_reparse_rebuilds_pages_from_raw_without_requests(corpus, seeded, monkey
     raw_path.write_bytes(raw_before + b" ")
     code, out = run_cli("lawapi_detc_body", ["--reparse"], corpus, Server().transport())
     assert out["result"]["reparsed"] == 0 and out["result"]["reparse_skipped"] == 1
+
+
+# ------------------------------------------------------------------------------------------------ 목록·본문 종국일자 충돌(독립 검토 1회차)
+def body_failures(corpus):
+    m = Manifest(corpus / "manifest.sqlite")
+    try:
+        return {f["target"]: f for f in m.failures() if f["stage"] == "body"}
+    finally:
+        m.close()
+
+
+def test_body_date_conflict_with_list_date_blocks_extraction(corpus, seeded):
+    seed(seeded, 1, iso="2020-01-02")
+    srv = Server(bodies={"1": detc_xml(1, date="20210102")})
+    code, out = run_cli("lawapi_detc_body", ["--serial", "1"], corpus, srv.transport())
+    assert out["result"]["date_mismatch"] == 1 and out["result"]["extracted"] == 0
+    d, extra, pages = doc(corpus, "lawgo_detc:1")
+    assert pages == [] and d["status"] == "failed" and body_failures(corpus)["lawgo_detc:1"]["error_class"] == "date_mismatch"
+
+
+def test_body_dates_agree_or_one_side_missing_extracts(corpus, seeded):
+    seed(seeded, 1, iso="2020-01-02")
+    seeded.upsert_document("lawgo_detc:2", D.SOURCE_ID, canonical_url=D.PUBLIC_VIEW + "2", title="합성", decision_date=None,
+                           extra={"serial": "2", "case_no": "2020헌마5", "court": "헌법재판소"})
+    srv = Server(bodies={"1": detc_xml(1, date="2020.01.02"), "2": detc_xml(2, "2020헌마5", date="20210102")})
+    code, out = run_cli("lawapi_detc_body", ["--serial", "1", "--serial", "2"], corpus, srv.transport())
+    assert out["result"]["extracted"] == 2 and out["result"]["date_mismatch"] == 0
+
+
+def test_body_date_conflict_with_reference_ledger(corpus, seeded):
+    seed(seeded, 1, iso="2020-01-02")
+    seeded.update_document_fields("lawgo_detc:1", extra_merge={"resolved_numbers": ["2020헌마1"]})
+    seed_ref(seeded, "2020헌마1", "2019-05-05")
+    srv = Server(bodies={"1": detc_xml(1, date="20200102")})
+    code, out = run_cli("lawapi_detc_body", ["--serial", "1"], corpus, srv.transport())
+    assert out["result"]["date_mismatch"] == 1 and doc(corpus, "lawgo_detc:1")[2] == []
+
+
+def test_merged_search_blocks_list_vs_body_date_conflict(corpus, seeded):
+    cand = list_item(31, "2020헌마1", date="2020.01.02")
+    body = lambda d: detc_xml(31, "2020헌마1", date=d, full=case_text("2020헌마1\n2020헌마5 (병합)"))
+    code, out = run_cli("lawapi_detc", ["--number", "2020헌마5", "--merged-search"], corpus,
+                        Server(search={"2020헌마5": [cand]}, bodies={"31": body("20210102")}).transport())
+    assert out["result"]["date_mismatch"] == 1 and out["result"]["resolved_merged"] == 0
+    assert doc(corpus, "lawgo_detc:31")[0] is None and failures(corpus)["lawgo_detc_no:2020헌마5"]["error_class"] == "date_mismatch"
+    cand2 = list_item(32, "2020헌마1", date="2020.01.02")                      # 같은 날짜: 정상 연결(HTTP 캐시를 피하려고 다른 일련번호)
+    code, out = run_cli("lawapi_detc", ["--number", "2020헌마6", "--merged-search"], corpus,
+                        Server(search={"2020헌마6": [cand2]}, bodies={"32": detc_xml(32, "2020헌마1", date="20200102",
+                                                                                  full=case_text("2020헌마1\n2020헌마6 (병합)"))}).transport())
+    assert out["result"]["resolved_merged"] == 1 and doc(corpus, "lawgo_detc:32")[0] is not None

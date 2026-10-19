@@ -176,7 +176,7 @@ def test_classify_orders(order, expected):
 def test_extract_merged_numbers_party_section_only():
     text = ("【당 사 자】\n청구인 갑\n2001헌마10, 2001 헌마 11 2002헌가3\n2001헌마10\n【주 문】\n기각한다.\n【이 유】\n선례 2009헌바9 를 본다.\n")
     assert D.extract_merged_numbers(text) == ["2001헌마10", "2001헌마11", "2002헌가3"]          # 이유의 2009헌바9 제외, 중복 제거
-    assert D.extract_merged_numbers("판시사항 머리 2005헌마165 (병합)\n【주 문】\n기각") == ["2005헌마165"]    # 주문 앞 구간이면 뽑는다(필드 구분은 호출자 몫)
+    assert D.extract_merged_numbers("판시사항 머리 2005헌마165 (병합)\n【주 문】\n기각") == []        # 사건 라벨 줄·번호만 나열한 줄이 아니면 병합 근거가 아니다
     assert D.extract_merged_numbers("【당 사 자】\n2001헌마10") == []                          # 주문 표지가 없으면 구간 불명
     assert D.extract_merged_numbers(case()) == ["2001헌마10"]
 
@@ -234,3 +234,48 @@ def test_legacy_order_sentences(order_text, expected):
 def test_modern_markers_unchanged_by_legacy_support():
     text = case("6. 재판관 갑의 반대의견\n본문이다.\n")
     assert [s.kind for s in D.split_detc(text)[0]] == ["party", "order", "reasons", "opinion"]
+
+
+# ---------------------------------------------------------------- 독립 검토 1회차 후속(병합 번호·줄바꿈 표제·복합 입장·주문 날짜)
+def test_merged_numbers_exclude_cited_decisions():
+    modern = ("【당 사 자】\n사 건 2020헌아1 재심청구\n재심대상결정 헌법재판소 2018. 5. 1. 선고 2018헌마1 결정\n종전 결정 2017헌바2\n(2020헌아3)\n"
+              "【주 문】\n각하한다.\n")
+    assert D.extract_merged_numbers(modern) == ["2020헌아1", "2020헌아3"]
+    one_line = "【당 사 자】\n사건 2020헌아1 / 재심대상결정 헌법재판소 2018. 5. 1. 선고 2018헌마1 결정\n【주 문】\n각하한다.\n"
+    assert D.extract_merged_numbers(one_line) == ["2020헌아1"]
+    old = "[당사자]\n사건 2020헌아1\n재심대상결정 2018. 5. 1. 선고 2018헌마1 결정\n관련사건 2019헌바7\n[주 문]\n각하한다.\n"
+    assert D.extract_merged_numbers(old) == ["2020헌아1"]
+    labeled = "【당 사 자】\n청구인 갑 (2020헌마3)\n청구인 을 (이전 청구 2019헌마5)\n2020헌마1, 2020헌마2 (병합)\n【주 문】\n기각한다.\n"
+    assert D.extract_merged_numbers(labeled) == ["2020헌마3", "2020헌마1", "2020헌마2"]      # 사건 라벨 줄·번호만 나열한 줄·번호만 든 괄호 주석만 인정한다
+
+
+def test_heading_wrapped_across_lines():
+    secs, info = D.split_detc(case("6. 재판관 갑, 을의\n반대의견\n반대 이유 문장이다.\n"))
+    ops = [s for s in secs if s.kind == "opinion"]
+    assert info["status"] == "split" and len(ops) == 1 and ops[0].opinion_kind == "dissent"
+    assert [s.opinion_kind for s in secs if s.kind == "reasons"] == ["majority"]
+    # 줄바꿈이 둘 이상이라 표제로 잡지 못해도 검토 대상으로 수렴한다
+    _, info2 = D.split_detc(case("6. 재판관 갑, 을의\n\n반대의견\n반대 이유 문장이다.\n"))
+    assert info2["status"] in ("unsplit", "needs_review")
+    assert D.split_detc(case("이 부분은 재판관 전원의\n의견일치에 따른 것이다.\n"))[1]["status"] == "none"
+
+
+@pytest.mark.parametrize("heading,vote", [
+    ("재판관 갑의 합헌 및 위헌의견", None),
+    ("재판관 갑의 각하 및 합헌의견", None),
+    ("재판관 갑의 위헌 및 헌법불합치의견", "헌법불합치"),
+    ("재판관 갑의 한정위헌 및 위헌의견", "위헌"),
+    ("재판관 갑의 위헌의견", "위헌"),
+])
+def test_compound_vote_opinion(heading, vote):
+    assert D.classify_detc_opinion(heading) == ("vote_opinion", vote)
+
+
+@pytest.mark.parametrize("order,expected", [
+    ("1. A법(2000. 1. 2. 법률 제1호)은 헌법에 위반된다. 2. 나머지 청구를 각하한다.", ["위헌", "각하"]),
+    ("1. A법(2000. 1. 2. 법률 제1호, 2003. 3. 4. 개정)은 헌법에 합치되지 아니한다.\n2. 나머지 청구를 기각한다.", ["헌법불합치", "기각"]),
+    ("1. A법 제1조(제2조 2. 항 참조)는 헌법에 위반되지 아니한다. 2. 청구를 각하한다.", ["합헌", "각하"]),
+    ("1. 청구인의 심판청구를 기각한다.\n2. 심판청구 중 일부를 각하한다.", ["기각", "각하"]),
+])
+def test_classify_orders_masks_dates_and_parentheses(order, expected):
+    assert D.classify_orders(order) == expected

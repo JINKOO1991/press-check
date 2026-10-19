@@ -275,7 +275,7 @@ class _Run:
             self.fail(number, err, "merged-search list not usable")
             return
         cands = [i for i in parse_detc_list(r.body)[1][:MERGED_CANDIDATES] if str(i.get("헌재결정례일련번호", "")).strip().isdigit()]
-        verified, unverifiable, mention = [], False, False
+        verified, unverifiable, mention, conflict = [], False, False, False
         for it in cands:
             serial = str(it["헌재결정례일련번호"]).strip()
             br, berr = self.get(body_url(serial), lambda b, h, s=serial: accept_detc_body(b, h, s))
@@ -290,7 +290,12 @@ class _Run:
             ft = parsed["full_text"] or ""
             party = extract_merged_numbers(ft)
             if number in party or number in parsed["case_nos"]:       # 근거는 【당 사 자】 구간·대표 번호뿐. 판시사항 머리의 번호는 근거가 아니다
-                verified.append((serial, parse_detc_date(it.get("종국일자")) or parsed["decision_date"], it))
+                list_iso, body_iso = parse_detc_date(it.get("종국일자")), parsed["decision_date"]
+                refs = self.ref_dates(number)
+                if (list_iso and body_iso and list_iso != body_iso) or (refs and any(d and d not in refs for d in (list_iso, body_iso))):
+                    conflict = True                                    # 목록·본문·참조 장부 날짜 중 하나라도 어긋나면 연결하지 않는다
+                    continue
+                verified.append((serial, list_iso or body_iso, it))
                 continue
             if not party:
                 unverifiable = True                                    # 당사자 구간을 정할 수 없어 부재도 확인하지 못했다
@@ -299,6 +304,8 @@ class _Run:
         if verified:
             if self.link(number, verified, "merged"):
                 self.c["resolved_merged"] += 1
+        elif conflict:
+            self.fail(number, "date_mismatch", "list, body and ledger decision dates disagree (not linked)")
         elif unverifiable or mention:
             self.fail(number, "merged_unverified", "candidates exist but the number is not in any verified party section")
         else:

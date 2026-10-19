@@ -158,7 +158,7 @@ class _BodyRun:
         self.consecutive_failures = 0
         self.attempted: set = set()
         self.c = {"candidates_seen": 0, "fetched": 0, "resumed_from_raw": 0, "extracted": 0, "failed": 0, "no_match": 0, "serial_mismatch": 0,
-                  "refetch_unchanged": 0, "skipped_exhausted": 0, "pages_written": 0, "mismatch_docs": 0, "reparsed": 0, "reparse_skipped": 0}
+                  "refetch_unchanged": 0, "skipped_exhausted": 0, "pages_written": 0, "mismatch_docs": 0, "reparsed": 0, "reparse_skipped": 0, "date_mismatch": 0}
         self.opinion = {"none": 0, "split": 0, "unsplit": 0, "needs_review": 0}
         self.limit_hit = False
 
@@ -236,6 +236,10 @@ class _BodyRun:
         except L.BodyParseError as e:
             self._fail(doc_id, "serial_mismatch" if e.kind == "serial_mismatch" else "raw_unparsable", f"{e.kind}: {e}", counts_toward_stop=False)
             return
+        why = self._date_conflict(doc, parsed)
+        if why:
+            self._fail(doc_id, "date_mismatch", why, counts_toward_stop=False)          # 쪽을 만들지 않는다
+            return
         built = build_extraction(parsed, doc, L._doc_extra(doc))
         body = persist_extraction(self.ctx, doc, serial, hashlib.sha256(raw).hexdigest(), raw_rel, fetched_at, built)
         self.c["extracted"] += 1
@@ -243,6 +247,21 @@ class _BodyRun:
         self.opinion[built["opinion_status"]] += 1
         if built["mismatches"]:
             self.c["mismatch_docs"] += 1
+
+    def _date_conflict(self, doc: dict, parsed: dict) -> Optional[str]:
+        """목록(문서 등록) 종국일자·본문 종국일자·참조 장부(lawgo_ref) 날짜가 서로 어긋나면 사유, 아니면 None(한쪽이 없으면 비교하지 않는다)."""
+        body_iso, list_iso = parsed["decision_date"], doc.get("decision_date")
+        if not body_iso:
+            return None
+        if list_iso and list_iso != body_iso:
+            return f"list decision date {list_iso} differs from body {body_iso}"
+        for n in dict.fromkeys(list(L._doc_extra(doc).get("resolved_numbers") or []) + list(parsed["case_nos"])):
+            refs = {r["dt"] for r in self.m._q(
+                "SELECT d.decision_date AS dt FROM documents d, json_each(d.extra_json,'$.numbers') j WHERE d.source_id=? "
+                "AND json_extract(d.extra_json,'$.court_class')='constitutional' AND j.value=?", (L.SOURCE_REFS, n)) if r["dt"]}
+            if refs and body_iso not in refs:
+                return f"body decision date {body_iso} is not in the reference ledger dates for {n}"
+        return None
 
     def reparse(self, serials: Optional[list]) -> None:
         """저장된 raw 로 다시 추출한다(네트워크 없음). raw 가 없거나 sha 가 장부와 다르거나 파싱이 안 되면 건드리지 않고 reparse_skipped 로 센다.
@@ -268,6 +287,14 @@ class _BodyRun:
             except L.BodyParseError:
                 self.c["reparse_skipped"] += 1
                 continue
+            why = self._date_conflict(doc, parsed)
+            if why:
+                m.delete_derived(doc_id=doc["doc_id"])
+                if not ctx.dry_run:
+                    for f in (ctx.corpus_dir / D.TEXT_DIR / serial).glob("[sh][0-9][0-9][0-9].txt"):
+                        f.unlink()
+                self._fail(doc["doc_id"], "date_mismatch", why, counts_toward_stop=False)
+                continue
             built = build_extraction(parsed, doc, L._doc_extra(doc))
             new = persist_extraction(ctx, doc, serial, body["raw_sha256"], body["raw_path"], body.get("fetched_at") or "", built)
             self.c["reparsed"] += 1
@@ -278,7 +305,7 @@ class _BodyRun:
         m = self.m
         m.record_failure(doc_id, "body", error_class, message)
         m.set_document_status(doc_id, "failed")
-        self.c["no_match" if error_class == "no_match" else "serial_mismatch" if error_class == "serial_mismatch" else "failed"] += 1
+        self.c[error_class if error_class in ("no_match", "serial_mismatch", "date_mismatch") else "failed"] += 1
         if counts_toward_stop:
             self.bump_fail("body")
 
