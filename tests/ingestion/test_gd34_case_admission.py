@@ -220,3 +220,31 @@ def test_migrate_undo_restores_prior_resolved_admission_row(tmp_path):
     con.close()
     assert [r for r in rows() if r["target"] == MANUAL[0]] == orig        # 값 그대로(id·메시지·retry_count·시각) 복원
     assert state(path) == s0
+
+
+def test_migrate_undo_restores_nul_and_special_text(tmp_path):
+    import sqlite3
+    path = build_manual(tmp_path / "c")
+    m = Manifest(path)
+    m.record_failure(MANUAL[0], "admission", "case_excluded", "x", retry_count=1)
+    m.resolve_failures(MANUAL[0], "admission")
+    m.close()
+    weird = "a\x00b 'q' \"d\"\n줄\x00"
+    con = sqlite3.connect(str(path), isolation_level=None)
+    con.execute("UPDATE failures SET message=? WHERE target=? AND stage='admission'", (weird, MANUAL[0]))
+    con.close()
+
+    def row():
+        mm = Manifest(path, in_memory_copy=True)
+        r = mm.select("SELECT * FROM failures WHERE target=? AND stage='admission'", (MANUAL[0],))
+        mm.close()
+        return r
+    orig = row()
+    assert orig[0]["message"] == weird
+    undo = tmp_path / "u.sql"
+    run(tmp_path / "c", "--source", PREC, "--migrate-manual", "--apply", "--undo-out", str(undo))
+    assert row() != orig
+    con = sqlite3.connect(str(path), isolation_level=None)
+    con.executescript(undo.read_text(encoding="utf-8"))
+    con.close()
+    assert row() == orig

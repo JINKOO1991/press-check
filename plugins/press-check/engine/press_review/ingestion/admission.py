@@ -252,7 +252,9 @@ def _sql_literal(v: Any) -> str:
         return "NULL"
     if isinstance(v, (int, float)):
         return repr(v)
-    return "'" + str(v).replace("'", "''") + "'"
+    if isinstance(v, (bytes, bytearray)):
+        return f"X'{bytes(v).hex()}'"
+    return f"CAST(X'{str(v).encode('utf-8').hex()}' AS TEXT)"      # NUL·따옴표·개행이 있어도 리터럴이 깨지지 않는다
 
 
 def _migration_plan(m: Manifest, source_id: str, min_quote_rate: float) -> list:
@@ -279,7 +281,8 @@ def migrate_manual(m: Manifest, source_id: str, *, min_quote_rate: float = MIN_Q
             # 이전 admission 행(해결된 것 포함)은 record_failure 가 덮어쓰므로, 쓰기 전 값을 읽어 undo 가 그대로 복원한다. 컬럼은 SELECT * 결과에서 읽는다.
             for row in m.select("SELECT * FROM failures WHERE target=? AND stage=?", (t, STAGE)):
                 cols = list(row)
-                sql.append(f"INSERT INTO failures({', '.join(cols)}) VALUES({', '.join(_sql_literal(row[c]) for c in cols)});")
+                sql.append(f'INSERT INTO "failures"({", ".join(chr(34) + c.replace(chr(34), chr(34) * 2) + chr(34) for c in cols)}) '
+                           f"VALUES({', '.join(_sql_literal(row[c]) for c in cols)});")
         sql.append("COMMIT;")
         with open(undo_out, "x", encoding="utf-8") as f:       # 기존 파일을 덮어쓰지 않는다
             f.write("\n".join(sql) + "\n")
