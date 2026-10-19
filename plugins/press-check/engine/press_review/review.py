@@ -412,6 +412,11 @@ def search_cases(
     if passages and any(p.get("display_truncated") for p in passages):
         out["citation_rule"] = (f"text 는 내부 판단용 전문이다. 사용자 화면에 원문을 인용할 때는 display_text 만 쓴다"
                                 f"(재배포 허락이 없는 소스는 {corpus_sqlite.DISPLAY_QUOTE_MAX_CP}자 이내).")
+    attributed = [p for p in passages if corpus_sqlite.attribution_for(p.get("source_id"))]
+    if attributed:        # 출처 표시 요건(UDEC-11): passage 공개 키는 그대로 두고 응답 단위로 알린다. 해당 passage 가 없으면 필드를 붙이지 않는다
+        sids = sorted({p["source_id"] for p in attributed})
+        out["source_attribution"] = {"text": " / ".join(dict.fromkeys(corpus_sqlite.attribution_for(s) for s in sids)),
+                                     "source_ids": sids, "passage_ids": [p["passage_id"] for p in attributed]}
     return out
 
 

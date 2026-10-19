@@ -44,6 +44,15 @@ INDEX_DIR_NAME = "index"
 CURRENT_POINTER = "CURRENT"
 KEEP_INDEXES = 3
 DISPLAY_QUOTE_MAX_CP = 300     # 재배포 허락이 없는 소스의 사용자 화면 인용 상한(P3_DESIGN §1). README 에도 적는다.
+# 출처 표시 요건(UDEC-11, 설계 D5): 이 소스의 passage 를 쓰는 검색 응답·설명·상태 출력에 문구를 출처로 적는다.
+# passage 단위 공개 키(corpus.PUBLIC_KEYS)에는 넣지 않고 응답·상태 단위로 알린다.
+SOURCE_ATTRIBUTION = {"lawgo_detc": "헌법재판소 결정, 법제처 국가법령정보센터 제공"}
+
+
+def attribution_for(source_id: Any) -> str | None:
+    """passage 의 source_id 는 문서 id(``lawgo_detc:<일련번호>``)이므로 ``:`` 앞의 장부 소스 id 로 출처 문구를 찾는다."""
+    return SOURCE_ATTRIBUTION.get(str(source_id).split(":", 1)[0])
+
 EVAL_MAX_LIMIT = 50            # 평가 하네스 전용 limit 상한(search_eval). MCP·엔진 경로는 search() 를 쓰므로 MAX_LIMIT 그대로다.
 CANDIDATE_CAP = 200            # 단계별 후보 상한
 MAX_PHRASES = 24
@@ -614,6 +623,10 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                 "by_chunk_kind": dict(sorted(by_kind.items())), "aliases": len(aliases),
                 "cases_by_authority_type": {k: len(v) for k, v in sorted(cases_by_auth.items())}, "date_unknown_passages": date_unknown,
                 "latest_decision_date": max(dates) if dates else None, "index_dir": str(od)}
+        pending = _case_admission_pending(conn)               # G-D34: 사건 단위 인입 평가가 아직 반영되지 않은 사건 수(읽기 전용 계획, 건수만)
+        base["case_admission_pending"] = pending
+        if pending:
+            base["warnings"] = [f"case_admission_pending: {pending} (run admission --apply)"]
         if n == 0:
             return {"status": "no_passages", **base}
         target = od / f"corpus-{snapshot}.sqlite"
@@ -644,7 +657,8 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                                       "by_chunk_kind": base["by_chunk_kind"], "aliases": len(aliases),
                                       "cases_by_authority_type": base["cases_by_authority_type"], "date_unknown_passages": date_unknown,
                                       "by_source_family": dict(sorted(by_family.items())), "sources": sources,
-                                      "excluded": base["excluded"]}, ensure_ascii=False, sort_keys=True),
+                                      "excluded": base["excluded"],
+                                      "case_admission_pending": pending}, ensure_ascii=False, sort_keys=True),
         }
         _guard_index_build(od, force=force_disk, on_force=on_force)    # 임시 파일을 만들기 전에 C: 여유 확인(색인 폴더가 다른 드라이브여도 같은 기준)
         config.private_mkdir(od)
@@ -664,6 +678,32 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
         return {"status": "built", "path": str(target), "fts_trigram": use_fts, "pruned": pruned, **base}
     finally:
         conn.close()
+
+
+class _ReadOnlyRows:
+    """``admission.evaluate_cases`` 가 쓰는 ``select()`` 만 가진 읽기 전용 어댑터(이미 열린 ``mode=ro`` 연결 위에서 dict 행을 준다)."""
+
+    def __init__(self, conn: sqlite3.Connection):
+        self._conn = conn
+
+    def select(self, sql: str, params: tuple = ()) -> list[dict]:
+        cur = self._conn.execute(sql, params)
+        names = [d[0] for d in cur.description]
+        return [dict(zip(names, row)) for row in cur.fetchall()]
+
+
+def _case_admission_pending(conn: sqlite3.Connection) -> int:
+    """CASE_ADMISSION_SOURCES 각각의 평가 계획(``pending_changes``: 새로 기록·해제될 행 수) 합계. 장부는 쓰지 않는다.
+    사건·실패 테이블이 없는 옛 장부는 0 이다."""
+    from .ingestion import admission
+    m = _ReadOnlyRows(conn)
+    total = 0
+    for src in admission.CASE_ADMISSION_SOURCES:
+        try:
+            total += admission.evaluate_cases(m, src)["summary"]["pending_changes"]
+        except sqlite3.OperationalError:
+            return 0
+    return total
 
 
 def _guard_index_build(od: Path, *, force: bool = False, on_force: Callable[[str], None] | None = None) -> None:
@@ -1067,6 +1107,10 @@ class SqliteCorpus(Corpus):
         if not self._fts:
             warnings.append("이 환경의 SQLite 에 FTS5 trigram 이 없어 bigram 전용 검색으로 동작합니다." if self._index_has_fts
                             else "이 색인은 FTS5 trigram 없이 만들어져 bigram 전용 검색으로 동작합니다.")
+        n_pend = int(st.get("case_admission_pending", 0) or 0)
+        if n_pend:
+            warnings.append(f"사건 단위 인입 평가가 아직 반영되지 않은 사건 {n_pend}건이 색인 대상에 있었다(색인 구축 시점 수치, case_admission_pending). "
+                            "admission --apply 로 평가를 반영한 뒤 색인을 다시 만들기 전까지 평가 대상 사건이 색인에 들어 있을 수 있다.")
         if by_v.get("verified", 0) < int(self._meta.get("passage_count", "0")):
             warnings.append(f"검수 완료(verified) passage {by_v.get('verified', 0)}건, 미검수(unverified) {by_v.get('unverified', 0)}건. 미검수 자료는 모델 구조화 결과이며 사람 검수 전이다.")
         return {
@@ -1078,7 +1122,9 @@ class SqliteCorpus(Corpus):
             "by_authority_type": st.get("by_authority_type", {}), "by_source_family": st.get("by_source_family", {}),
             "cases_by_authority_type": st.get("cases_by_authority_type", {}), "date_unknown_count": n_undated, "core_coverage": cc,
             "by_verification_status": by_v,
-            "sources": {f: {k: v for k, v in x.items() if k != "documents_by_status"} for f, x in sources.items()},
+            "sources": {f: {**{k: v for k, v in x.items() if k != "documents_by_status"},
+                            **({"attribution": SOURCE_ATTRIBUTION[f]} if f in SOURCE_ATTRIBUTION else {})} for f, x in sources.items()},
+            **({"case_admission_pending": st["case_admission_pending"]} if "case_admission_pending" in st else {}),
             "rights_hold": rights_hold, "missing": missing, "warnings": warnings,
             "search_mode": "trigram+bigram" if self._fts else "bigram_only", "display_limit_chars": DISPLAY_QUOTE_MAX_CP,
             "notice": ("로컬 검색 색인(수집 장부의 chunk). passage 수는 전체 사건 수가 아니며 목록 대비 커버리지가 아니다. "

@@ -19,6 +19,10 @@ allowed-tools: mcp__plugin_press-check_press-review__corpus_status
 
 `core_coverage.no_actionable_findings_allowed`가 `false`이면 "이 색인으로는 '검토 권고 항목 없음'을 말할 수 없다"고 한 줄로 알리고 `core_coverage.reason`을 그대로 보여 준다. `warnings`가 있으면 그대로 보여 준다(예: 미검수 자료 비율, trigram 미지원으로 bigram 전용 검색). `rights_hold`의 소스는 사용자 화면 인용을 300자 이내로 제한한다는 점도 한 줄로 알린다.
 
+## 출처 표시·평가 미반영
+
+`sources`의 소스에 `attribution`이 있으면(예: `lawgo_detc`) 그 소스 줄에 문구("헌법재판소 결정, 법제처 국가법령정보센터 제공")를 그대로 적는다. `case_admission_pending`이 0이 아니거나 `warnings`에 같은 취지의 항목이 있으면 사건 단위 인입 평가가 반영되지 않은 사건이 색인 대상에 있다는 뜻이므로 숨기지 않는다(색인 구축 시점 수치다).
+
 ## fixture 코퍼스일 때 경고
 
 결과가 fixture(합성) 코퍼스를 가리키면 표 위에 다음 경고를 그대로 쓴다.

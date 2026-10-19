@@ -27,6 +27,14 @@
 - 순위 B 연구자료: 2,676개 대상에서 research chunk 45,625개(API 0건).
 - DeepSeek 비용: 전량 실행 $28.07(3,686회, 2026-10-09 14:08 이후). 게이트·미니 게이트 누적은 api_usage 장부 참조.
 
+## 헌재 결정례 소스(`lawgo_detc`) 단위 상태 (2026-10-19)
+
+- 구현됨(합성 장부·합성 응답 시험): U1 사건 단위 인입 평가(`admission`, G-D34), U2 어댑터 `lawapi_detc`·`lawapi_detc_body`와 본문 파서, U3 구조화 프로필 `constitutional_decision`(의견 가드·처분 가드), U4 출처 표시(`search_cases`의 `source_attribution`, `explain`·`review`·`corpus-status` 스킬 규칙, `corpus_status` 소스 줄)와 평가 미반영 경고(`build_index` 결과의 `case_admission_pending`·`warnings`, `corpus_status` 경고). 상세 docs/P2_DESIGN.md G-D34.
+- 미구현·미실시: 실제 헌재 결정 수집(코퍼스에 헌재 결정 없음), 파일럿(S1) 미실시, 권리 기록 `rights set law_go_kr --source lawgo_detc` 미실행(소스 권리는 기본값 unknown이라 어댑터가 `rights_not_recorded`로 멈춘다), 색인 재빌드 미실시.
+- 한계(미측정): `needs_review` 과잉 제거 가능성, `【주 문】` 쪽이 없는 문서에서 outcome이 폐기되는 빈도. `case_admission_pending` 수치는 색인 구축 시점 값이다.
+
+## 검증
+
 ## 검증
 
 - 테스트 1,291 passed, 1 xfailed(2026-10-17 마지막 실행 `python3 -m pytest tests -q`). 이전 기록 1,184 passed, 1 xfailed(2026-10-16, docs/coverage/P3_rebuild_result.md 기록. 이전 확인 1,173; 실행: `PYTHONPATH=plugins/press-check/engine python3 -m pytest tests -q`).

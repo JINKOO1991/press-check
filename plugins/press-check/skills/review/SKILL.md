@@ -92,6 +92,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 - 결과의 `verification_status`가 `unverified`이면 모델이 구조화한 자료이며 사람 검수 전이다. 그 사실을 `uncertainty`에 적는다. 조정 합의(`pac_settlement`)를 위법 인정으로, 심의 의결을 판결로, 연구(`research`)를 현행 법리로 읽지 않는다.
 - 결과의 `opinion_kinds`/`opinion_kind`: `dissenting`이 있거나 `mixed`이면 반대의견·별개의견 문장이 섞여 있다. 다수의견 결론으로 인용하기 전에 text에서 구분한다.
 - 결과 `text`는 내부 판단용 전문이다. 사용자 화면에 원문을 인용할 때는 `display_text`만 쓴다(재배포 허락이 없는 소스는 300자 이내로 잘려 있다. `display_truncated`가 true). 직접 인용부호로 옮길 때는 passage의 글자를 바꾸지 않는다.
+- 응답에 `source_attribution`이 있으면(`source_id`가 `lawgo_detc:`로 시작하는 헌법재판소 결정 passage 포함) 보고서·표의 근거 인용에 그 `text`("헌법재판소 결정, 법제처 국가법령정보센터 제공")를 출처로 함께 적는다.
 - 결과에 `is_fixture: true`가 있으면 합성 자료다(색인이 없는 상태). 표 아래에 "근거가 합성 예제 코퍼스에서 나옴"을 적고, `corpus_status`의 경고(실자료 미적재)를 그대로 알린다.
 - 검색 질의에 취재원 실명, 연락처, 원고의 미공개 내용을 그대로 넣지 않는다. 쟁점을 일반화한 문구로 검색한다.
 
