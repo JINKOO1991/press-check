@@ -392,3 +392,40 @@ def test_oc_value_is_absent_from_every_stored_artifact(corpus):
     assert any(p.name == "manifest.sqlite" for p in files) and any("http_cache" in str(p) for p in files) and any(p.suffix == ".xml" for p in files)
     hits = [str(p.relative_to(corpus)) for p in files if FAKE_OC.encode() in p.read_bytes()]
     assert hits == []
+
+
+# ------------------------------------------------------------------------------------------------ --reparse
+def test_reparse_rebuilds_pages_from_raw_without_requests(corpus, seeded, monkeypatch):
+    from pathlib import Path
+
+    from press_review.ingestion.sources.detc_parse import Section
+    legacy_full = "[당사자]\n청구인 갑\n2020헌마1\n[주 문]\n1. 청구를 기각한다.\n[이 유]\n가. 사건의 개요\n다수 판단이다.\n"
+    seed(seeded, 1)
+    srv = Server(bodies={"1": detc_xml(1, full=legacy_full)})
+    # 구형 표지를 못 읽던 분할기를 흉내 낸다: 전문 전체가 표지 없는 한 구간
+    monkeypatch.setattr(B, "split_detc", lambda t: ([Section("preamble", "", None, 0, len(t), t)], {"status": "none", "marker_count": 0, "loose_count": 0,
+                                                                                              "conclusion_numbers": [], "markers": []}))
+    code, out = run_cli("lawapi_detc_body", ["--serial", "1"], corpus, srv.transport())
+    assert code == 0 and out["result"]["extracted"] == 1
+    d, extra, pages = doc(corpus, "lawgo_detc:1")
+    assert extra["body"]["dispositions"] == [] and "lawgo_detc:1#s005" in [p["page_id"] for p in pages]
+    raw_path = corpus / extra["body"]["raw_path"]
+    raw_before = raw_path.read_bytes()
+    monkeypatch.undo()
+    srv2 = Server()                                                      # 본문이 하나도 없는 서버: 요청이 나가면 호출 기록에 남는다
+    code, out = run_cli("lawapi_detc_body", ["--reparse"], corpus, srv2.transport())
+    r = out["result"]
+    assert code == 0 and r["reparsed"] == 1 and r["fetched"] == 0 and r["reparse_skipped"] == 0 and srv2.service_calls == []
+    d, extra, pages = doc(corpus, "lawgo_detc:1")
+    ids = [p["page_id"] for p in pages]
+    assert extra["body"]["dispositions"] == ["기각"] and d["status"] == "extracted" and d["extractor_version"] == B.EXTRACTOR_VERSION
+    assert "lawgo_detc:1#s005" not in ids and "lawgo_detc:1#s006" in ids and "lawgo_detc:1#s007" in ids      # 당사자는 쪽 없음, 주문·이유 쪽 생성
+    kinds = {json.loads(p["quality_json"])["locator"]: json.loads(p["quality_json"])["section_kind"] for p in pages}
+    assert kinds["s006"] == "order" and kinds["s007"] == "reasons"
+    files = sorted(f.name for f in (corpus / "text" / "lawgo_detc" / "1").glob("*.txt"))
+    assert files == sorted(Path(p["text_path"]).name for p in pages)      # 이전 쪽 파일 잔여 없음
+    assert raw_path.read_bytes() == raw_before
+    # sha 가 장부와 다르면 건드리지 않는다
+    raw_path.write_bytes(raw_before + b" ")
+    code, out = run_cli("lawapi_detc_body", ["--reparse"], corpus, Server().transport())
+    assert out["result"]["reparsed"] == 0 and out["result"]["reparse_skipped"] == 1

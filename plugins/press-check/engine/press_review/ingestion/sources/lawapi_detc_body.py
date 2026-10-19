@@ -20,7 +20,7 @@ from . import lawapi_detc as D
 from .detc_parse import (STATUS_REVIEW, STATUS_UNSPLIT, accept_detc_body, build_head_page, classify_orders, extract_merged_numbers,
                          parse_detc_xml, split_detc, split_head_opinions)
 
-EXTRACTOR_VERSION = "lawgo-detc-xml-1"       # 쪽 구성 규칙을 바꾸면 올린다.
+EXTRACTOR_VERSION = "lawgo-detc-xml-2"       # 쪽 구성 규칙을 바꾸면 올린다. 2: 구형 [당사자]/[주 문]/[이 유] 표지 인식.
 STATE_FILE = "lawgo_detc_body.json"
 HEAD_PAGES = (("판시사항", "headnote_issue", 0), ("결정요지", "headnote_holding", 1), ("참조조문", "ref_statutes", 2),
               ("참조판례", "ref_cases", 3), ("심판대상조문", "review_target", 4))      # 머리 필드는 비어도 번호를 비워 둔다
@@ -143,6 +143,9 @@ def persist_extraction(ctx, doc: dict, serial: str, raw_sha: str, raw_rel: str, 
 def add_arguments(parser) -> None:
     parser.add_argument("--serial", action="append", dest="serials", metavar="ID",
                         help="헌재결정례일련번호(반복 가능, 장부에 있는 문서만). 없으면 받을 문서 전부. 예: python -m press_review.ingestion lawapi_detc_body --serial 137285")
+    parser.add_argument("--reparse", action="store_true",
+                        help="저장된 raw 로 쪽·extra 를 다시 만든다(네트워크 없음, 요청 0). raw 가 있고 sha 가 장부와 같은 문서만이며 다른 모드 동작은 하지 않는다. "
+                             "쪽·파생 행(chunks·cases)은 새 분할 결과로 교체되고 문서 상태는 extracted 로 돌아간다")
     parser.add_argument("--limit", type=int, default=None,
                         help="이번 실행에서 새로 받을 본문 수 상한. 목록용 --limit-pages 와 별개이며 이 모드는 --limit-pages 를 읽지 않는다")
 
@@ -151,10 +154,11 @@ class _BodyRun:
     def __init__(self, ctx, args):
         self.ctx, self.m = ctx, ctx.manifest
         self.limit = getattr(args, "limit", None)
+        self.reparse_mode = bool(getattr(args, "reparse", False))
         self.consecutive_failures = 0
         self.attempted: set = set()
         self.c = {"candidates_seen": 0, "fetched": 0, "resumed_from_raw": 0, "extracted": 0, "failed": 0, "no_match": 0, "serial_mismatch": 0,
-                  "refetch_unchanged": 0, "skipped_exhausted": 0, "pages_written": 0, "mismatch_docs": 0}
+                  "refetch_unchanged": 0, "skipped_exhausted": 0, "pages_written": 0, "mismatch_docs": 0, "reparsed": 0, "reparse_skipped": 0}
         self.opinion = {"none": 0, "split": 0, "unsplit": 0, "needs_review": 0}
         self.limit_hit = False
 
@@ -165,6 +169,8 @@ class _BodyRun:
 
     def candidates(self, serials: Optional[list]) -> list:
         m = self.m
+        if self.reparse_mode:
+            return []                                   # --reparse 는 새로 받는 후보가 없다(요청 0)
         exhausted = {f["target"] for f in m.failures() if f["stage"] == "body" and f["retry_count"] + 1 >= L.MAX_BODY_RETRIES}
         statuses = ("discovered", "failed", "fetched") + (L.DONE_STATUSES if self.ctx.refresh else ())
         where = f"source_id=? AND status IN ({','.join(repr(x) for x in statuses)})"
@@ -238,6 +244,36 @@ class _BodyRun:
         if built["mismatches"]:
             self.c["mismatch_docs"] += 1
 
+    def reparse(self, serials: Optional[list]) -> None:
+        """저장된 raw 로 다시 추출한다(네트워크 없음). raw 가 없거나 sha 가 장부와 다르거나 파싱이 안 되면 건드리지 않고 reparse_skipped 로 센다.
+        persist_extraction 이 문서의 쪽·chunks·cases 를 지우고 새로 쓰므로 구조화가 끝난 문서도 extracted 로 돌아간다(재구조화 필요)."""
+        m, ctx = self.m, self.ctx
+        where = f"source_id=? AND status IN ({','.join(repr(x) for x in ('fetched',) + L.DONE_STATUSES)})"
+        params: list = [D.SOURCE_ID]
+        if serials:
+            where += f" AND doc_id IN ({','.join('?' * len(serials))})"
+            params += [f"{D.DOC_PREFIX}:{s}" for s in serials]
+        for r in m._q(f"SELECT doc_id FROM documents WHERE {where} ORDER BY doc_id", tuple(params)):
+            ctx.check_time()
+            doc = m.get_document(r["doc_id"])
+            serial = doc["doc_id"].split(":", 1)[1]
+            body = L._doc_extra(doc).get("body") or {}
+            p = ctx.corpus_dir / body["raw_path"] if body.get("raw_path") else None
+            data = p.read_bytes() if p is not None and p.is_file() else None
+            if data is None or hashlib.sha256(data).hexdigest() != body.get("raw_sha256"):
+                self.c["reparse_skipped"] += 1
+                continue
+            try:
+                parsed = parse_detc_xml(data, serial)
+            except L.BodyParseError:
+                self.c["reparse_skipped"] += 1
+                continue
+            built = build_extraction(parsed, doc, L._doc_extra(doc))
+            new = persist_extraction(ctx, doc, serial, body["raw_sha256"], body["raw_path"], body.get("fetched_at") or "", built)
+            self.c["reparsed"] += 1
+            self.c["pages_written"] += new["pages"]
+            self.opinion[built["opinion_status"]] += 1
+
     def _fail(self, doc_id: str, error_class: str, message: str, *, counts_toward_stop: bool) -> None:
         m = self.m
         m.record_failure(doc_id, "body", error_class, message)
@@ -258,6 +294,8 @@ def run(ctx, args) -> dict:
     missing = [s for s in serials if m.get_document(f"{D.DOC_PREFIX}:{s}") is None]
     state_path = ctx.inventory_dir / STATE_FILE
     try:
+        if run_.reparse_mode:
+            run_.reparse(serials or None)
         for row in run_.candidates(serials or None):
             if run_.limit is not None and run_.c["fetched"] >= run_.limit:
                 run_.limit_hit = True

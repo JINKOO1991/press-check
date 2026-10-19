@@ -185,3 +185,52 @@ def test_build_head_page():
     assert D.build_head_page("2001헌마10", "2006-01-05") == "사건번호: 2001헌마10\n종국일자: 2006. 1. 5.\n기관: 헌법재판소"
     assert D.build_head_page("2001헌마10", None) == "사건번호: 2001헌마10\n기관: 헌법재판소"
     assert D.build_head_page(None, None) == ""
+
+
+# ---------------------------------------------------------------- 구형 표지 [당사자]/[주 문]/[이 유] (1990년대 결정, 합성)
+def legacy(party="[당사자]", order="[주 문]", reasons="[이 유]", tail="", order_text="1. 청구인의 심판청구를 기각한다."):
+    return f"{party}\n청구인 갑\n2001헌마10\n{order}\n{order_text}\n{reasons}\n가. 사건의 개요\n다수 판단이다.\n{tail}"
+
+
+@pytest.mark.parametrize("party,order,reasons", [("[당사자]", "[주 문]", "[이 유]"), ("[당 사 자]", "[주문]", "[이유]"),
+                                                   ("［당사자］", "[주\u3000\u3000문]", " [이  유]")])
+def test_legacy_bracket_markers_recognized(party, order, reasons):
+    text = legacy(party, order, reasons)
+    secs, info = D.split_detc(text)
+    assert [s.kind for s in secs] == ["party", "order", "reasons"] and secs[0].no_page is True
+    assert "".join(s.text for s in secs) == text and info["status"] == "none"
+    assert D.extract_merged_numbers(text) == ["2001헌마10"]
+    assert D.classify_orders(secs[1].text) == ["기각"]
+
+
+def test_legacy_markers_only_at_line_start_and_only_three_names():
+    # 줄 머리가 아닌 [주 문], 다른 이름의 대괄호, 조문 인용 [1] 은 표지가 아니다
+    text = "머리 글 [주 문] 문자열이다.\n[별지]\n[1] 조문 인용이다.\n[이 유]\n다수 판단이다.\n"
+    secs, _ = D.split_detc(text)
+    assert [s.kind for s in secs] == ["preamble", "reasons"] and secs[1].text.startswith("[이 유]")
+    assert D.extract_merged_numbers("[당사자]\n2001헌마10\n본문 [주 문] 이다.\n") == []              # 줄 머리 [주 문] 이 없으면 구간 불명
+    assert D.extract_merged_numbers(legacy()) == ["2001헌마10"]
+
+
+def test_legacy_signature_and_title_lines_are_not_headings():
+    tail = "재판관 갑(재판장) 을 병 정 무\n"
+    secs, info = D.split_detc(legacy(tail=tail + "3. 판단\n4. 결론\n"))
+    assert info["status"] == "none" and info["marker_count"] == 0 and [s.kind for s in secs] == ["party", "order", "reasons"]
+    secs, info = D.split_detc(legacy(tail="1. 재판관 갑의 반대의견\n반대 이유이다.\n" + tail))
+    assert info["status"] == "split" and [s.opinion_kind for s in secs if s.kind == "opinion"] == ["dissent"]
+
+
+@pytest.mark.parametrize("order_text,expected", [
+    ("1. 청구인의 심판청구를 기각한다.", ["기각"]),
+    ("A법 제1조는 헌법에 위반된다.", ["위헌"]),
+    ("1. 피청구인의 처분은 위헌임을 확인한다. 2. 나머지 청구를 각하한다.", ["인용", "각하"]),
+    ("이 사건 심판청구를 각하한다.", ["각하"]),
+])
+def test_legacy_order_sentences(order_text, expected):
+    secs, _ = D.split_detc(legacy(order_text=order_text))
+    assert D.classify_orders(next(s.text for s in secs if s.kind == "order")) == expected
+
+
+def test_modern_markers_unchanged_by_legacy_support():
+    text = case("6. 재판관 갑의 반대의견\n본문이다.\n")
+    assert [s.kind for s in D.split_detc(text)[0]] == ["party", "order", "reasons", "opinion"]

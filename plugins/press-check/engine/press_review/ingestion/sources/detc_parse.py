@@ -119,11 +119,24 @@ def _bracket_label(m) -> str:
     return re.sub(r"\s+", "", m.group(1))
 
 
+# 구형 문서(1990년대 결정)는 【】 대신 줄 머리의 ASCII/전각 대괄호 표지를 쓴다. 이름을 당사자·주문·이유로 한정하고 줄 머리에서만 인정한다
+# ([별지]·[1] 조문 인용·문장 중간의 [주 문] 문자열은 표지가 아니다). 【】 처리는 그대로다.
+_SP = r"[ \t\u3000]*"
+_BR_LEGACY = re.compile(r"(?m)^" + _SP + r"(?P<b>[\[［]" + _SP + r"(?P<n>당" + _SP + r"사" + _SP + r"자|주" + _SP + r"문|이" + _SP + r"유)" + _SP + r"[\]］])")
+
+
+def _section_marks(text: str) -> list[tuple[int, int, str]]:
+    """(표지 시작, 표지 끝, 공백 제거한 이름) 오름차순. 【…】 는 어디서나, 구형 […] 는 줄 머리의 당사자·주문·이유만."""
+    out = [(m.start(), m.end(), _bracket_label(m)) for m in _BR.finditer(text)]
+    out += [(m.start("b"), m.end("b"), re.sub(r"\s+", "", m.group("n"))) for m in _BR_LEGACY.finditer(text)]
+    return sorted(out)
+
+
 def extract_merged_numbers(full_text: str) -> list[str]:
     """``【당 사 자】`` 구간(본문 시작~``【주 문】`` 직전)의 사건번호 토큰만. NFKC·공백 제거 후 등장 순서, 중복 제거.
     ``【주 문】`` 표지가 없으면 구간을 정할 수 없으므로 빈 목록이다. 판시사항 등 다른 필드의 번호는 근거가 아니다."""
     text = unicodedata.normalize("NFKC", full_text or "")
-    end = next((m.start() for m in _BR.finditer(text) if _bracket_label(m) == "주문"), None)
+    end = next((st for st, _en, label in _section_marks(text) if label == "주문"), None)
     if end is None:
         return []
     out: list[str] = []
@@ -230,20 +243,19 @@ def split_detc(text: str) -> tuple[list[Section], dict]:
     marks: list[tuple[int, str, str, Optional[str], Optional[str], bool]] = []     # offset, kind, label, opinion_kind, vote, no_page
     seen_core = False
     reasons_end = None
-    for m in _BR.finditer(text):
-        label = _bracket_label(m)
+    for st, en, label in _section_marks(text):
         if label == "당사자":
-            marks.append((m.start(), "party", label, None, None, True))
+            marks.append((st, "party", label, None, None, True))
         elif label == "주문":
             seen_core = True
-            marks.append((m.start(), "order", label, None, None, False))
+            marks.append((st, "order", label, None, None, False))
         elif label == "이유":
             seen_core = True
-            marks.append((m.start(), "reasons", label, None, None, False))
+            marks.append((st, "reasons", label, None, None, False))
             if reasons_end is None:
-                reasons_end = m.end()
+                reasons_end = en
         elif seen_core:
-            marks.append((m.start(), "heading", label, None, None, False))
+            marks.append((st, "heading", label, None, None, False))
     scan = {"heads": [], "loose": 0, "nums": [], "mention": False}
     if reasons_end is not None:
         scan = _scan(text, reasons_end, len(text))
@@ -326,7 +338,7 @@ def classify_orders(order_text: str) -> list[str]:
     text = (order_text or "").strip()
     if not text:
         return []
-    text = re.sub(r"^【[^】]*】\s*", "", text)
+    text = re.sub(r"^(?:【[^】]*】|[\[［][^\]］]{1,10}[\]］])\s*", "", text)
     starts, want = [], 1
     for m in _ITEM_NO.finditer(text):
         if int(m.group(1)) == want:
