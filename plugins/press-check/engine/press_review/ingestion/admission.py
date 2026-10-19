@@ -158,3 +158,133 @@ def apply(m: Manifest, report: dict) -> dict:
         elif a["status"] == "admitted":
             resolved += m.resolve_failures(a["att_id"], STAGE)
     return {"failures_recorded": excluded, "failures_resolved": resolved}
+
+
+# ---- 사건 단위 인입 평가(G-D34, 판례·헌재 결정; 설계 caselaw_design_20261017 D6·D8, 반증 6) ----
+CASE_ADMISSION_SOURCES = ("lawgo_prec_supreme", "lawgo_detc")
+# failures 에는 소스 열이 없고 target 이 case_id 뿐이라 orphan 해제는 case_id 접두로 소스를 가른다(한 소스의 apply 가 다른 소스의 행을 풀면 안 된다).
+# lawgo_prec 접두는 실제 코퍼스에서 확인했다. lawgo_detc 접두는 어댑터가 아직 없어 같은 규칙(<source_family 접두>:)을 가정한 것이다.
+CASE_ID_PREFIX = {"lawgo_prec_supreme": "lawgo_prec:", "lawgo_detc": "lawgo_detc:"}
+CASE_ERROR_CLASS = "case_excluded"
+MANUAL_STAGE = "manual_exclusion"
+MIGRATION_NOTE = "migrated from manual_exclusion 2026-10-17"
+
+_CASE_SQL = """
+SELECT c.case_id AS case_id, c.case_number AS case_number, c.verification_status AS status,
+       c.quote_total AS quote_total, c.quote_ok AS quote_ok
+FROM cases c JOIN documents d ON d.doc_id = c.doc_id
+WHERE d.source_id = ? ORDER BY c.case_id
+"""
+
+
+def _open_case_rows(m: Manifest, prefix: str) -> set:
+    rows = m.select("SELECT target FROM failures WHERE stage=? AND error_class=? AND resolved_at IS NULL", (STAGE, CASE_ERROR_CLASS))
+    return {r["target"] for r in rows if r["target"].startswith(prefix)}
+
+
+def _case_message(ok: int, total: int, min_quote_rate: float) -> str:
+    return f"G-D34 case admission: quote_rate {ok}/{total} < {min_quote_rate}"
+
+
+def evaluate_cases(m: Manifest, source_id: str, *, case_ids: Optional[list] = None, min_quote_rate: float = MIN_QUOTE_RATE) -> dict:
+    """읽기 전용. 사건 1건 = 1단위. 격리 사건은 skipped_quarantined, quote_total=0 은 no_quotes('평가 제외': 기록하지 않는다).
+    case_ids 를 주면 그 사건만 평가하고 orphan 해제를 하지 않는다(일부 실행이 다른 행을 풀지 않게)."""
+    if source_id not in CASE_ADMISSION_SOURCES:
+        raise ValueError(f"case admission does not apply to '{source_id}' (allowed: {', '.join(CASE_ADMISSION_SOURCES)})")
+    prefix = CASE_ID_PREFIX[source_id]
+    rows = m.select(_CASE_SQL, (source_id,))
+    all_ids = {r["case_id"] for r in rows}
+    want = set(case_ids) if case_ids else None
+    open_rows = _open_case_rows(m, prefix)
+    passed, excluded, record = 0, [], []          # record: 새로 기록할 행
+    skipped_q = no_quotes = 0
+    resolve, partial_scope = [], {}
+    for r in rows:
+        if want is not None and r["case_id"] not in want:
+            continue
+        if r["status"] == "quarantined":
+            skipped_q += 1
+            continue
+        qt, qo = r["quote_total"] or 0, r["quote_ok"] or 0
+        status, reasons = judge(1, 0, qt, qo, min_quote_rate=min_quote_rate)
+        if reasons and reasons[0] == "no_quotes":
+            no_quotes += 1
+        elif status == "excluded":
+            excluded.append(r["case_id"])
+            if r["case_id"] not in open_rows:
+                record.append({"case_id": r["case_id"], "message": _case_message(qo, qt, min_quote_rate)})
+        else:
+            passed += 1
+            if r["case_id"] in open_rows:
+                resolve.append(r["case_id"])
+    ex = set(excluded)
+    by_num: dict = {}
+    for r in rows:
+        if r["case_number"] and str(r["case_number"]).strip():
+            by_num.setdefault(r["case_number"], []).append(r["case_id"])
+    partial = sum(1 for ids in by_num.values() if len(ids) > 1 and 0 < len([i for i in ids if i in ex]) < len(ids))
+    orphans = [] if want is not None else sorted(open_rows - all_ids)
+    unknown = sorted(want - all_ids) if want is not None else []
+    evaluated = skipped_q + no_quotes + passed + len(excluded)
+    return {"source": source_id, "criteria": {"min_quote_rate": min_quote_rate},
+            "summary": {"evaluated": evaluated, "admitted": passed, "excluded": len(excluded), "no_quotes": no_quotes,
+                        "skipped_quarantined": skipped_q, "orphans_resolved": len(orphans),
+                        "pending_changes": len(record) + len(resolve) + len(orphans), "case_number_partial": partial,
+                        "unknown_cases": len(unknown)},
+            "excluded_cases": excluded, "record": record, "resolve": resolve, "orphans": orphans}
+
+
+def apply_cases(m: Manifest, report: dict) -> dict:
+    """evaluate_cases 의 계획을 한 트랜잭션으로 쓴다: 새 제외 기록, 통과 사건의 이전 행 해결, orphan 해결. 이미 열린 제외 행은 건드리지 않는다."""
+    with m.transaction():
+        for r in report["record"]:
+            m.record_failure(r["case_id"], STAGE, CASE_ERROR_CLASS, r["message"], retry_count=0)
+        resolved = sum(m.resolve_failures(t, STAGE) for t in report["resolve"] + report["orphans"])
+    return {"failures_recorded": len(report["record"]), "failures_resolved": resolved}
+
+
+class MigrationError(Exception):
+    pass
+
+
+def _migration_plan(m: Manifest, source_id: str, min_quote_rate: float) -> list:
+    prefix = CASE_ID_PREFIX[source_id]
+    rows = m.select("SELECT target FROM failures WHERE stage=? AND resolved_at IS NULL ORDER BY id", (MANUAL_STAGE,))
+    return [r["target"] for r in rows if r["target"].startswith(prefix)]
+
+
+def migrate_manual(m: Manifest, source_id: str, *, min_quote_rate: float = MIN_QUOTE_RATE, undo_out: Optional[Path] = None) -> dict:
+    """열린 manual_exclusion 행을 case_excluded 로 옮긴다(전부 한 트랜잭션, 하나라도 사전조건 위반이면 전체 롤백).
+    undo_out 이 있으면 쓰기 전에 되돌리는 SQL 파일을 새로 만든다(이미 있으면 거부)."""
+    if source_id != "lawgo_prec_supreme":
+        raise ValueError("--migrate-manual applies to lawgo_prec_supreme only")
+    targets = _migration_plan(m, source_id, min_quote_rate)
+    if not targets:
+        return {"migrated": 0, "case_ids": [], "undo_out": None}
+    if undo_out is not None:
+        sql = ["BEGIN;"]
+        for t in targets:
+            q = t.replace("'", "''")
+            sql += [f"UPDATE cases SET verification_status='quarantined' WHERE case_id='{q}';",
+                    f"UPDATE failures SET resolved_at=NULL WHERE target='{q}' AND stage='{MANUAL_STAGE}';",
+                    f"DELETE FROM failures WHERE target='{q}' AND stage='{STAGE}' AND error_class='{CASE_ERROR_CLASS}';"]
+        sql.append("COMMIT;")
+        with open(undo_out, "x", encoding="utf-8") as f:       # 기존 파일을 덮어쓰지 않는다
+            f.write("\n".join(sql) + "\n")
+    with m.transaction():
+        for t in targets:
+            c = m.get_case(t)
+            if c is None:
+                raise MigrationError(f"{t}: case not found")
+            if c["verification_status"] != "quarantined":
+                raise MigrationError(f"{t}: current status is {c['verification_status']}, expected quarantined")
+            if (c["record"] or {}).get("verification_status") != "unverified":
+                raise MigrationError(f"{t}: record_json status is not unverified")
+            qt, qo = c["quote_total"] or 0, c["quote_ok"] or 0
+            status, reasons = judge(1, 0, qt, qo, min_quote_rate=min_quote_rate)
+            if status != "excluded" or not reasons or reasons[0] == "no_quotes":
+                raise MigrationError(f"{t}: judge() does not exclude (quote {qo}/{qt})")
+            m.set_case_verification(t, "unverified")
+            m.record_failure(t, STAGE, CASE_ERROR_CLASS, _case_message(qo, qt, min_quote_rate) + f" ({MIGRATION_NOTE})", retry_count=0)
+            m.resolve_failures(t, MANUAL_STAGE)
+    return {"migrated": len(targets), "case_ids": targets, "undo_out": str(undo_out) if undo_out else None}

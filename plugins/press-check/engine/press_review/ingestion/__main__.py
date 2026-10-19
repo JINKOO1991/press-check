@@ -53,6 +53,39 @@ def _emit(out: Any, payload: dict) -> None:
     out.flush()
 
 
+def _case_admission(args: Any, ns: Any, root: Path, out: Any, forced: list, parser: argparse.ArgumentParser) -> int:
+    """사건 단위 admission(G-D34)과 --migrate-manual. 쓰기는 --apply 가 있고 --dry-run 이 아닐 때만, 그때만 디스크 가드를 건다."""
+    from . import admission
+    writing = bool(args.apply and not ns.dry_run)
+    if writing:
+        try:
+            diskguard.require_free(0, "admission 적용", force=ns.force_disk, fallback_path=root, on_force=forced.append)
+        except diskguard.DiskGuardError as e:
+            return _disk_stop(out, "admission", e)
+    rate = args.min_quote_rate if args.min_quote_rate is not None else admission.MIN_QUOTE_RATE
+    m = Manifest(root / "manifest.sqlite", in_memory_copy=not writing)
+    try:
+        if args.migrate_manual:
+            undo = Path(args.undo_out) if (args.undo_out and writing) else None
+            try:
+                res = admission.migrate_manual(m, args.source, min_quote_rate=rate, undo_out=undo)
+            except (admission.MigrationError, FileExistsError, OSError) as e:
+                _emit(out, {"command": "admission", "mode": "migrate-manual", "source": args.source, "applied": False,
+                            "error": type(e).__name__, "message": str(e)})
+                return 1
+            _emit(out, {"command": "admission", "mode": "migrate-manual", "source": args.source, "applied": writing, **res,
+                        **({"disk_guard_forced": forced} if forced else {})})
+            return 0
+        report = admission.evaluate_cases(m, args.source, case_ids=args.case, min_quote_rate=rate)
+        written = admission.apply_cases(m, report) if args.apply else None
+        _emit(out, {"command": "admission", "mode": "case", "source": args.source, "applied": writing, "written": written,
+                    "criteria": report["criteria"], "summary": report["summary"], "excluded_cases": report["excluded_cases"],
+                    **({"disk_guard_forced": forced} if forced else {})})
+        return 0
+    finally:
+        m.close()
+
+
 def _rights_command(extras: list, root: Path, out: Any, parser: argparse.ArgumentParser) -> int:
     """``rights show`` / ``rights set <source_family> --<권리> <값> --note 근거 [--by 기록자]``. 값은 설치자가 직접 정한다."""
     import getpass
@@ -124,6 +157,9 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
         parser.add_argument("--min-quote-rate", type=float, default=None, help="admission: 첨부 인용 일치율 하한(기본 admission.MIN_QUOTE_RATE)")
         parser.add_argument("--max-quarantine-rate", type=float, default=None, help="admission: 첨부 격리율 상한(기본 admission.MAX_QUARANTINE_RATE)")
         parser.add_argument("--min-completeness", type=float, default=None, help="admission: 장부 사건 수 / 본문 사건번호 수 하한(기본 admission.MIN_COMPLETENESS)")
+        parser.add_argument("--case", action="append", default=None, help="admission(사건 단위 소스): 이 case_id 만 평가한다(반복 가능, orphan 해제 안 함)")
+        parser.add_argument("--migrate-manual", action="store_true", help="admission --source lawgo_prec_supreme: 열린 manual_exclusion 행을 case_excluded 로 옮긴다(--apply 가 있어야 쓴다)")
+        parser.add_argument("--undo-out", default=None, help="admission --migrate-manual --apply: 되돌리는 SQL 을 쓸 새 파일 경로(기본 경로 없음)")
     args = ns if target == "rights" else parser.parse_args(argv)   # rights 는 아래 전용 파서가 나머지 인자를 읽는다
 
     root = Path(corpus) if corpus else default_corpus_dir()
@@ -173,8 +209,10 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
 
     if target == "admission":
         from . import admission
-        if args.source not in admission.ADMISSION_SOURCES:
-            parser.error(f"admission requires --source one of: {', '.join(admission.ADMISSION_SOURCES)}")
+        if args.source not in admission.ADMISSION_SOURCES + admission.CASE_ADMISSION_SOURCES:
+            parser.error(f"admission requires --source one of: {', '.join(admission.ADMISSION_SOURCES + admission.CASE_ADMISSION_SOURCES)}")
+        if args.source in admission.CASE_ADMISSION_SOURCES:
+            return _case_admission(args, ns, root, out, forced, parser)
         kw = {k: v for k, v in (("min_quote_rate", args.min_quote_rate), ("max_quarantine_rate", args.max_quarantine_rate),
                                                   ("min_completeness", args.min_completeness)) if v is not None}
         if args.apply and not ns.dry_run:            # 장부에 쓰는 경우에만 가드(보고만 하는 경로는 읽기 전용)

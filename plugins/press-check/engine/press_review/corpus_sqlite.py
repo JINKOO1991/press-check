@@ -395,6 +395,9 @@ def _iter_eligible(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict,
     # G-D33: 첨부 단위 인입 기준에서 제외된 첨부(failures stage='admission' 미해결)의 사건은 격리 사건처럼 뺀다.
     adm_excluded = {r[0] for r in conn.execute(
         "SELECT target FROM failures WHERE stage='admission' AND error_class='attachment_excluded' AND resolved_at IS NULL")}
+    # G-D34: 사건 단위 인입 기준에서 제외된 사건(case_excluded 미해결)은 구조화 격리 다음에 뺀다. 통계는 case_quarantined·case_att_excluded 와 따로 센다.
+    adm_case = {r[0] for r in conn.execute(
+        "SELECT target FROM failures WHERE stage='admission' AND error_class='case_excluded' AND resolved_at IS NULL")}
     cur = conn.execute(_LEDGER_SQL)
     cur.row_factory = sqlite3.Row
     for i, r in enumerate(cur):
@@ -402,6 +405,9 @@ def _iter_eligible(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict,
             check()
         if r["case_status"] in ("quarantined", "rejected"):
             excluded["case_" + r["case_status"]] = excluded.get("case_" + r["case_status"], 0) + 1
+            continue
+        if r["case_id"] and r["case_id"] in adm_case:
+            excluded["case_admission_excluded"] = excluded.get("case_admission_excluded", 0) + 1
             continue
         if r["case_id"] and r["att_id_eff"] in adm_excluded:     # G-D33: 사건 없는 쪽 chunk(case_id 없음)는 이 제외의 대상이 아니다(P2_DESIGN)
             excluded["case_att_excluded"] = excluded.get("case_att_excluded", 0) + 1
