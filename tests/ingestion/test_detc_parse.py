@@ -387,3 +387,45 @@ def test_stance_is_the_word_before_opinion_and_only_its_parallel_chain(heading, 
 ])
 def test_classify_orders_multiple_dispositions_in_one_item(order, expected):
     assert D.classify_orders(order) == expected
+
+
+# ---------------------------------------------------------------- S3 파일럿 후속(구형 줄 표지·주문 어휘·결론 번호 대조)
+PLAIN = "결 정\n사 건 2001헌마10\n주   문\n1. 청구를 기각한다.\n이   유\n판단이다.\n"
+
+
+def test_plain_line_markers_without_brackets():
+    secs, info = D.split_detc(PLAIN)
+    assert [s.kind for s in secs] == ["preamble", "order", "reasons"] and "".join(s.text for s in secs) == PLAIN
+    assert D.classify_orders(secs[1].text) == ["기각"]
+    unnumbered = D.split_detc("결 정\n주   문\n청구를 각하한다.\n이   유\n판단이다.\n")[0]
+    assert D.classify_orders(unnumbered[1].text) == ["각하"]
+
+
+def test_plain_line_markers_are_only_a_fallback():
+    modern = case("판단이다.\n이 유\n본문이다.\n")                           # 【】 표지가 있으면 단독 줄 '이 유' 는 표지가 아니다
+    assert [s.kind for s in D.split_detc(modern)[0]] == ["party", "order", "reasons"]
+    assert [s.kind for s in D.split_detc("본문 주 문 이 유 일 뿐이다.\n")[0]] == ["preamble"]       # 줄 전체가 표지명일 때만
+
+
+@pytest.mark.parametrize("order,expected", [
+    ("1. A법 제1조는 헌법에 합치하지 아니한다.", ["헌법불합치"]),
+    ("1. A법 제1조는 헌법에 합치되지 아니한다.", ["헌법불합치"]),
+    ("피청구인 갑을 파면한다.", ["인용"]),
+    ("1. A법 제1조는 헌법에 합치하지 아니한다.\n2. 위 조항은 2026. 12. 31.까지 계속 적용된다.", ["헌법불합치", "unknown"]),     # 계속 적용 항목은 처분이 아니다
+    ("피청구인 갑은 직을 상실한다.", ["unknown"]),                                                                      # 의미가 불분명한 서술어는 unknown 유지
+    ("1. A법 제1조는 헌법에 합치하는 한 합헌이다.", ["unknown"]),                                                      # '합치하지' 만 불합치다
+])
+def test_classify_orders_vocabulary_additions(order, expected):
+    assert D.classify_orders(order) == expected
+
+
+def test_conclusion_numbers_only_count_opinion_references_without_a_heading_line():
+    # '위 3.' 같은 참조 번호는 의견 번호가 아니다
+    t1 = case("이 결정에는 아래 6.과 같은 반대의견이 있다. 위 3.에서 본 바와 같다.\n6. 재판관 갑의 반대의견\n본문이다.\n")
+    assert D.split_detc(t1)[1]["status"] == "split" and D.split_detc(t1)[1]["conclusion_numbers"] == [6]
+    # 재판관 이름이 없는 번호 제목 줄('3. … 반대의견') 이 있으면 그 번호는 채워진 것이다
+    t2 = case("이 결정에는 아래 3.과 같은 반대의견이 있다.\n3. 반대의견 개요\n가. 재판관 갑의 반대의견\n본문이다.\n")
+    assert D.split_detc(t2)[1]["status"] == "split"
+    # 번호 제목 줄이 없으면 여전히 검토 대상이다
+    t3 = case("이 결정에는 아래 5.와 같은 반대의견이 있다.\n6. 재판관 갑의 반대의견\n본문이다.\n")
+    assert D.split_detc(t3)[1]["status"] == "needs_review"

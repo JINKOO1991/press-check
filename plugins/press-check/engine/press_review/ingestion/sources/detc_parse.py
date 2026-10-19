@@ -125,10 +125,15 @@ _SP = r"[ \t\u3000]*"
 _BR_LEGACY = re.compile(r"(?m)^" + _SP + r"(?P<b>[\[［]" + _SP + r"(?P<n>당" + _SP + r"사" + _SP + r"자|주" + _SP + r"문|이" + _SP + r"유)" + _SP + r"[\]］])")
 
 
+_BR_PLAIN = re.compile(r"(?m)^" + _SP + r"(?P<b>(?P<n>당" + _SP + r"사" + _SP + r"자|주" + _SP + r"문|이" + _SP + r"유))" + _SP + r"$")
+
+
 def _section_marks(text: str) -> list[tuple[int, int, str]]:
     """(표지 시작, 표지 끝, 공백 제거한 이름) 오름차순. 【…】 는 어디서나, 구형 […] 는 줄 머리의 당사자·주문·이유만."""
     out = [(m.start(), m.end(), _bracket_label(m)) for m in _BR.finditer(text)]
     out += [(m.start("b"), m.end("b"), re.sub(r"\s+", "", m.group("n"))) for m in _BR_LEGACY.finditer(text)]
+    if not any(label in ("주문", "이유") for _s, _e, label in out):                  # 표지가 하나도 없는 문서만 단독 줄 '주 문'/'이 유' 를 쓴다
+        out += [(m.start("b"), m.end("b"), re.sub(r"\s+", "", m.group("n"))) for m in _BR_PLAIN.finditer(text)]
     return sorted(out)
 
 
@@ -214,7 +219,7 @@ HEAD_RE = re.compile(r"(?:" + _LINE_START + r"(?P<a>(?:" + _PFX + r"\s*)*" + _BO
 # loose: 줄 머리 또는 문장 시작(번호 머리 선택). strict 가 놓치는 '번호 없는 문장 시작 표제' 를 센다(누락 탐지용).
 LOOSE_RE = re.compile(r"(?:" + _LINE_START + r"|(?<=[.다])[ \t　]+)(?P<h>(?:" + _PFX + r"\s*)*" + _BODY + r")")
 _MENTION_RE = re.compile(r"재판관[^\n]{0,150}(?:반대|별개|보충|법정|위헌|합헌|헌법불합치|각하|인용|기각|한정위헌|한정합헌)의견")
-_CONCL_NO_RE = re.compile(r"(?:다음|아래|뒤의|뒤|위)\s*[‘']?\s*(\d{1,2})\s*\.")      # '아래 6.과 같은 …의견' 의 번호
+_CONCL_NO_RE = re.compile(r"(?:다음|아래|뒤의|뒤|위)\s*[‘']?\s*(\d{1,2})\s*\.(?=[^.\n]{0,60}?의견)")      # '아래 6.과 같은 …의견' 의 번호
 _VOTE_WORDS = ("한정위헌", "한정합헌", "단순위헌", "헌법불합치", "위헌", "합헌", "각하", "인용", "기각")
 _VOTE_TAIL = re.compile(r"(" + "|".join(_VOTE_WORDS) + r")의견$")
 _PFX_STRIP = re.compile(r"^(?:" + _PFX + r")+")
@@ -277,15 +282,16 @@ def _scan(text: str, start: int, end: int) -> dict:
     # 줄바꿈을 건너뛰어 표제로 잡지 못한 '재판관 … 의견' 언급도 느슨 검출에 넣는다(표제 수와 어긋나 needs_review/unsplit 으로 수렴)
     loose += sum(1 for w in _WRAP_RE.finditer(text, start, end) if not any(w.start() < b and w.end() > a for a, b, _ in heads))
     seg = text[start:end]
-    return {"heads": heads, "loose": loose, "nums": sorted({int(n) for n in _CONCL_NO_RE.findall(seg)}),
-            "mention": bool(_MENTION_RE.search(seg))}
+    nums = sorted({int(n) for n in _CONCL_NO_RE.findall(seg)})
+    unmatched = [n for n in nums if not re.search(r"(?m)^[ \t\u3000]*%d\s*\.[^\n]*의견" % n, seg)]       # 그 번호로 시작하는 '의견' 제목 줄이 없다
+    return {"heads": heads, "loose": loose, "nums": nums, "unmatched": unmatched, "mention": bool(_MENTION_RE.search(seg))}
 
 
 def _status(scan: dict) -> str:
     n = len(scan["heads"])
     if n == 0:
         return STATUS_UNSPLIT if (scan["mention"] or scan["loose"]) else STATUS_NONE
-    if scan["loose"] != n or len(scan["nums"]) > n:
+    if scan["loose"] != n or scan["unmatched"]:
         return STATUS_REVIEW
     return STATUS_SPLIT
 
@@ -377,7 +383,7 @@ def _classify_item(item: str) -> str:
     t = re.sub(r"\s+", "", item)
     if any(k in t for k in _NOT_UNCONST):
         return "위헌불선언"
-    if "합치되지아니한다" in t or "헌법불합치" in t:
+    if "합치되지아니한다" in t or "합치하지아니한다" in t or "헌법불합치" in t:
         return "헌법불합치"
     if "해석하는한" in t:
         if "위반되지아니한다" in t:
@@ -388,7 +394,7 @@ def _classify_item(item: str) -> str:
         return "합헌"
     if "위반된다" in t:
         return "위헌"
-    if "취소한다" in t or "위헌임을확인한다" in t or "인용한다" in t:
+    if "취소한다" in t or "위헌임을확인한다" in t or "인용한다" in t or "파면한다" in t:        # 파면: 탄핵심판 인용
         return "인용"
     if re.search(r"(?<!기)각하", t):                       # '기각하고' 안의 '각하' 는 기각이다
         return "각하"
@@ -437,7 +443,7 @@ def classify_orders(order_text: str) -> list[str]:
     text = (order_text or "").strip()
     if not text:
         return []
-    text = re.sub(r"^(?:【[^】]*】|[\[［][^\]］]{1,10}[\]］])\s*", "", text)
+    text = re.sub(r"^(?:【[^】]*】|[\[［][^\]］]{1,10}[\]］]|주[ \t\u3000]*문[ \t\u3000]*(?=\n))\s*", "", text)
     starts, want = [], 1
     for m in _ITEM_NO.finditer(_mask(text)):
         if int(m.group(1)) == want:
