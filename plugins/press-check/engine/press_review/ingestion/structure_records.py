@@ -409,6 +409,7 @@ class _Stats:
         self.total = 0
         self.ok = 0
         self.dropped: list[dict] = []
+        self.relabels = {"court_concurring": 0, "court_dissenting": 0}      # vote_opinion 구간 court_majority 항목의 재표기 건수(note 로만 남긴다)
         self.guard_errors: list[str] = []            # 결정적 가드가 사건 격리로 올리는 사유(접두 label_guard: 창 병합 뒤에도 남는다)
         self.anchors: dict[str, list] = {}           # page_id -> 이 사건의 일반 인용 시작 위치들(짧은 표 칸 인용이 어느 행 것인지 고르는 기준, G-D15)
 
@@ -579,6 +580,25 @@ def detc_majority_barred(row: Any, ledger: dict) -> Optional[str]:
     return None
 
 
+# vote_opinion 재표기(사용자 결정 A안): 법정의견 표기 없는 '재판관 ○○의 위헌/합헌/각하 … 의견' 구간의 court_majority 항목은 지우지 않고
+# 의견의 입장 편이 최종 주문(장부 dispositions)의 편 집합 안에 있으면 court_concurring, 밖이면 court_dissenting 으로 다시 매긴다.
+# 한계: 다중 주문(예: 위헌+기각+각하)은 sides(D)가 여러 편이라 입장의 편이 그중 하나면 concurring 이다. 입장 불명·장부 분류 없음은 제거.
+VOTE_SIDES = {"위헌": "INV", "단순위헌": "INV", "헌법불합치": "INV", "한정위헌": "INV", "인용": "INV",
+              "합헌": "UPH", "한정합헌": "UPH", "위헌불선언": "UPH", "기각": "UPH", "각하": "DISM", "심판절차종료": "DISM"}
+
+
+def vote_relabel_speaker(row: Any, ledger: dict) -> Optional[str]:
+    """vote_opinion 쪽의 court_majority 를 다시 매길 화자. 재표기할 수 없으면 None(= 항목 제거)."""
+    q = _page_quality(row)
+    if q.get("opinion_kind") != "vote_opinion" or (isinstance(row, dict) and row.get("needs_review")):
+        return None
+    stance = VOTE_SIDES.get(re.sub(r"\s+", "", str(q.get("vote") or "")))
+    sides = {VOTE_SIDES[x] for x in (ledger.get("dispositions") or []) if x in VOTE_SIDES}
+    if stance is None or not sides:
+        return None
+    return "court_concurring" if stance in sides else "court_dissenting"
+
+
 def _phrase_dispositions(piece: str) -> set:
     """인쇄된 처분 문장 -> 처분 집합. detc_parse.classify_orders 와 같은 구문 판정(부정형 우선)을 쓴다.
     classify_orders 가 '합치되지 아니한다' 만 헌법불합치로 보므로 '합치하지 아니한다' 표기는 여기서 보충한다. 대응 못 하면 빈 집합."""
@@ -656,7 +676,10 @@ def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_
             continue
         if ctx.profile.detc_guards and speaker == "court_majority":          # 의견 가드: 반대·보충·별개·vote_opinion 구간의 인용은 법정의견이 아니다
             why = detc_majority_barred(ctx.page_meta.get(loc["page_id"]), ctx.ledger)
-            if why:
+            relabel = vote_relabel_speaker(ctx.page_meta.get(loc["page_id"]), ctx.ledger) if why == "opinion_kind_vote_opinion" and fld != "outcome" else None
+            if relabel:
+                speaker = relabel                                       # 항목은 남기고 화자만 다시 매긴다(인용 검증 대상 그대로)
+            elif why:
                 if fld == "outcome" and window_has_order(ctx):
                     st.guard_errors.append(f"label_guard: outcome court_majority quote lies in a barred section ({why}) at {loc['page_id']}")
                 else:
@@ -668,6 +691,8 @@ def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_
             continue
         seen.add(key)
         st.keep()
+        if ctx.profile.detc_guards and speaker in st.relabels and it.get("speaker") == "court_majority":
+            st.relabels[speaker] += 1
         out.append({"text": text, "speaker": speaker, "quote": loc})
     return out
 
@@ -812,6 +837,8 @@ def assemble_case(d: Any, ctx: WindowCtx, k: int) -> Optional[CaseOut]:
     seed_anchors(d, ctx, st, hint)                  # V-FID-01: 한 곳에만 있는 인용의 위치를 먼저 기준점으로
     rec_items = {f: _items(d.get(f), f, ctx, st, authority, hint) for f in ITEM_FIELDS}
     _fix_article_speaker_items(rec_items, st, authority, ctx)
+    if prof.detc_guards and any(st.relabels.values()):
+        st.note("vote_relabel", f"{st.relabels['court_concurring']}_concurring/{st.relabels['court_dissenting']}_dissenting")
 
     outcome = None
     out_raw = d.get("outcome")
