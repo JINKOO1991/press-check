@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import copy
 import datetime as _dt
+import re
+import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -158,6 +160,42 @@ def _undated_evidence(findings: list[dict], corpus: Any) -> list[str]:
     return out
 
 
+# ---- 설명문 인용 대조(U8). 호스트가 explanations 에 인용부호로 옮긴 판례·기사 문구가 원문에 있는지 본다. 경고만 내고 제출은 막지 않는다. ----
+QUOTE_TAG = "[인용대조]"
+QUOTE_FIELDS = ("support", "differences", "counter_arguments")
+MIN_QUOTE_CP = 8       # 공백 축약 뒤 이 글자 수 미만인 인용부호 구간('단정'·"실명" 같은 강조·용어 표기)은 대조하지 않는다
+_QUOTE_UNIFY = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})      # 짝이 어긋난 따옴표도 구간으로 잡는다(전각은 NFKC 가 먼저 바꾼다)
+_QUOTE_SPAN = re.compile(r'"([^"]+)"|「([^」]+)」|『([^』]+)』|\'([^\'\n]+)\'')
+_ELLIPSIS = re.compile(r"…|⋯|\.{3}|\(중략\)|\[중략\]")
+_QUOTE_EDGE = " .,，、;:"
+
+
+def _norm_quote_text(s: str) -> str:
+    return " ".join(unicodedata.normalize("NFKC", s).split())      # NFKC 가 전각 공백을 바꾸고 split 이 줄바꿈·연속 공백을 접는다
+
+
+def _quote_warnings(explanations: dict, findings: list[dict], blocks: dict, corpus: Any, warns: list[str]) -> None:
+    """explanations 의 support·differences·counter_arguments 안 인용부호 구간이 기사 문단 또는 이 보고서 근거 passage 의 부분문자열(공백 축약)이 아니면 경고한다.
+
+    대조 범위는 보고서 수준이다(finding 별이 아니라 보고서 근거 passage 전체와 기사 전문). ``…``·``(중략)`` 으로 이은 구간은 조각마다 대조한다."""
+    pool = [_norm_quote_text(t) for t in blocks.values()]
+    for f in findings:
+        for ev in f.get("evidence", []):
+            p = corpus.get_passage(ev["source_id"], ev["passage_id"])
+            if p and isinstance(p.get("text"), str):
+                pool.append(_norm_quote_text(p["text"]))
+    for fid, fields in explanations.items():
+        for name in QUOTE_FIELDS:
+            v = fields.get(name)
+            for s in ([v] if isinstance(v, str) else [x for x in v if isinstance(x, str)] if isinstance(v, list) else []):
+                for m in _QUOTE_SPAN.finditer(unicodedata.normalize("NFKC", s).translate(_QUOTE_UNIFY)):
+                    for part in _ELLIPSIS.split(next(g for g in m.groups() if g is not None)):
+                        q = _norm_quote_text(part).strip(_QUOTE_EDGE)
+                        if len(q) >= MIN_QUOTE_CP and not any(q in t for t in pool):
+                            warns.append(f"{QUOTE_TAG} explanations[{fid}].{name}: 인용부호 안의 구간 '{q[:30]}…'이 기사 원문과 이 보고서가 근거로 든 passage 원문에서 확인되지 않습니다. "
+                                         "인용은 원문 글자를 그대로 옮기고, 요약·의역에는 인용부호를 쓰지 마세요(보고서 제출은 막지 않습니다).")
+
+
 def _collect_edits(findings: list[dict]) -> list[dict]:
     """mode 'replace' 인 finding 의 수정 구간(본 구간 + related_edits). 모양이 맞지 않는 항목은 건너뛴다(스키마 검증이 따로 잡는다)."""
     out: list[dict] = []
@@ -254,6 +292,7 @@ def build_report_ex(
             errs.append(f"explanations[{k}]: must be an object of strings or string lists")
         else:
             expl[k] = v
+    _quote_warnings(expl, good, blocks, corpus, warns)
 
     _, hmode = hashing.article_sha256(article, raw_bytes)
     notes = list(coverage_notes or [])
@@ -387,6 +426,87 @@ def prepare_article(
     }
 
 
+# ---- search_cases 응답 다듬기(U4 1단계). corpus 계약(PUBLIC_KEYS)은 그대로이고 이 함수의 응답에서만 줄인다. ----
+# limit<=5: 정보 손실 없음. 값이 아래 기본값과 같은 비공개 부가 키와, text 와 같은 display_text 를 뺀다(restore_passage 로 되살린다).
+PASSAGE_DEFAULTS: dict[str, Any] = {
+    "reference_date": None, "reference_date_basis": None, "date_unknown": False, "case_number": None, "institution": None, "outcome_type": None,
+    "issue_tags": [], "risk_channels": [], "opinion_kinds": [], "opinion_kind": None, "includes_dissent": False, "counter_signals": [],
+    "display_truncated": False, "display_limit_chars": None,
+}
+# limit>5: 긴 passage 는 text 를 빼고 원문 부분문자열 조각(excerpts)만 준다. MCP 출력 상한(25,000 토큰) 안에 limit=10 응답을 넣기 위한 조치이며 PUBLIC_KEYS 의 text 가 빠진다.
+EXCERPT_FROM_LIMIT = 5
+EXCERPT_TOTAL_CP = 1200
+EXCERPT_HEAD_CP = 300
+EXCERPT_WINDOW_CP = 450
+EXCERPT_MAX_WINDOWS = 3        # 앞 300자 + 질의어 주변 2곳(300 + 450×2 = 1,200자)
+
+
+def restore_passage(p: dict) -> dict:
+    """limit<=5 응답의 passage 에서 뺀 기본값·중복 display_text 를 되살린다(시험·호스트 쪽 복원 규칙의 정본)."""
+    out = {**copy.deepcopy(PASSAGE_DEFAULTS), **p}
+    if "redistributable" in out and "display_text" not in out and "text" in out:
+        out["display_text"] = out["text"]
+    return out
+
+
+def _trim_passage(p: dict) -> dict:
+    out = {k: v for k, v in p.items() if not (k in PASSAGE_DEFAULTS and type(v) is type(PASSAGE_DEFAULTS[k]) and v == PASSAGE_DEFAULTS[k])}
+    if "display_text" in p and p["display_text"] == p.get("text") and not p.get("display_truncated"):
+        del out["display_text"]       # 재배포 허락 passage(또는 상한 이내 본문)는 display_text 가 text 와 같다
+    return out
+
+
+def _query_words(query: str) -> list[str]:
+    """발췌 창을 잡을 질의어: 정규화한 낱말과 조사를 뗀 꼴(trigram 유무에 좌우되는 색인 쪽 _stem 은 쓰지 않는다)."""
+    out: list[str] = []
+    for w in corpus_sqlite.runs(query):
+        for x in (corpus_sqlite.strip_josa(w), w):
+            if len(x) >= 2 and x not in out:
+                out.append(x)
+    return out
+
+
+def _excerpt_spans(text: str, words: list[str]) -> list[tuple[int, int]]:
+    n = len(text)
+    hay = text.lower() if len(text.lower()) == n else text
+    spans = [(0, EXCERPT_HEAD_CP)]
+    for w in words:
+        if len(spans) >= EXCERPT_MAX_WINDOWS:
+            break
+        pos = hay.find(w)
+        while pos != -1 and any(s <= pos < e for s, e in spans):
+            pos = hay.find(w, pos + 1)
+        if pos != -1:
+            start = max(0, pos - (EXCERPT_WINDOW_CP - len(w)) // 2)
+            spans.append((start, min(n, start + EXCERPT_WINDOW_CP)))
+    merged: list[tuple[int, int]] = []
+    for s, e in sorted(spans):
+        if merged and s <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(e, merged[-1][1]))
+        else:
+            merged.append((s, e))
+    return merged
+
+
+def _keeps_full_text(p: dict) -> bool:
+    kinds = p.get("opinion_kinds") or []
+    return len(kinds) > 1 or "dissenting" in kinds or p.get("opinion_kind") in ("mixed", "dissenting")      # 다수·반대의견 혼합 passage 는 구분이 걸려 있어 자르지 않는다
+
+
+def _excerpt_passage(p: dict, words: list[str]) -> dict:
+    text = p.get("text")
+    if not isinstance(text, str) or len(text) <= EXCERPT_TOTAL_CP or _keeps_full_text(p):
+        return p
+    out = dict(p)
+    del out["text"]
+    if out.get("display_text") == text and not out.get("display_truncated"):
+        del out["display_text"]          # 전문과 같은 display_text 를 남기면 발췌가 소용없다
+    out["excerpts"] = [{"start": s, "end": e, "text": text[s:e]} for s, e in _excerpt_spans(text, words)]
+    out["text_len"] = len(text)
+    out["text_truncated"] = True
+    return out
+
+
 def search_cases(
     corpus: Any,
     *,
@@ -403,6 +523,9 @@ def search_cases(
                                  institution=institution, stance=stance)
     except ValueError as e:
         return {"ok": False, "errors": [str(e)]}
+    full = passages                      # 안내문 조건은 줄이기 전 passage 로 판단한다
+    words = _query_words(query) if limit > EXCERPT_FROM_LIMIT else []
+    passages = [_trim_passage(_excerpt_passage(p, words) if limit > EXCERPT_FROM_LIMIT else p) for p in full]
     out = {"ok": True, "count": len(passages), "snapshot_id": corpus.snapshot_id, "is_fixture": corpus.is_fixture, "stance": stance, "passages": passages}
     if not passages:
         out["message"] = "코퍼스에서 해당 조건에 맞는 자료를 찾지 못했습니다. 없는 근거를 만들지 마세요."
@@ -410,8 +533,13 @@ def search_cases(
         out["date_rule"] = ("date_unknown 인 passage 는 결정일도 수록 간행물 발행일도 없어 as_of 필터에서 빠지지 않았다. 기사 발행일 이후 자료일 수 있으니 "
                             "근거로 쓰면 보고서 coverage_notes 에 날짜를 확인하지 못했다고 적는다(서버가 자동으로도 남긴다).")
     if passages and any(p.get("display_truncated") for p in passages):
-        out["citation_rule"] = (f"text 는 내부 판단용 전문이다. 사용자 화면에 원문을 인용할 때는 display_text 만 쓴다"
-                                f"(재배포 허락이 없는 소스는 {corpus_sqlite.DISPLAY_QUOTE_MAX_CP}자 이내).")
+        out["citation_rule"] = (f"display_text 가 있는 passage 의 text 는 내부 판단용 전문이다. 사용자 화면에 원문을 인용할 때는 display_text 만 쓴다"
+                                f"(재배포 허락이 없는 소스는 {corpus_sqlite.DISPLAY_QUOTE_MAX_CP}자 이내). "
+                                f"display_text 가 없는 passage 는 재배포 허락 소스이거나 text 가 {corpus_sqlite.DISPLAY_QUOTE_MAX_CP}자 이내이므로 text(발췌 응답이면 excerpts[].text)를 인용할 수 있다.")
+    if any("excerpts" in p for p in passages):
+        out["excerpt_rule"] = (f"limit 이 {EXCERPT_FROM_LIMIT}을 넘어 긴 passage 는 text 대신 excerpts(원문 부분문자열 조각 {{start, end, text}}, 앞 {EXCERPT_HEAD_CP}자와 질의어 주변)와 "
+                               "text_len 만 준다. 조각을 이어 붙이거나 조각 밖 내용을 짐작해 인용하지 않는다. 사실 전제·반대의견 구분에 전문이 필요하면 "
+                               f"사건번호를 질의에 넣거나 limit 을 {EXCERPT_FROM_LIMIT} 이하로 줄여 다시 검색한다.")
     attributed = [p for p in passages if corpus_sqlite.attribution_for(p.get("source_id"))]
     if attributed:        # 출처 표시 요건(UDEC-11): passage 공개 키는 그대로 두고 응답 단위로 알린다. 해당 passage 가 없으면 필드를 붙이지 않는다
         sids = sorted({p["source_id"] for p in attributed})

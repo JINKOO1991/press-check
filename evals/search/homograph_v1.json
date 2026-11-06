@@ -1,0 +1,20 @@
+{
+ "schema_version": 1,
+ "label_source": "llm_preliminary",
+ "note": "동형어 12낱말의 어절 유형별 참·거짓 규칙. Claude 판정의 임시 라벨이며 사람 검수 전이다(P4 §10-7). 어두 쪽에 유리하게 짜였을 가능성이 있다(특히 '고의'는 참 정의 자체가 어두 위주). passage 본문·발췌·파일럿 질의 문구를 담지 않는다. 설계: search_design_20261106 §2·§4.",
+ "rule": "어절(정규화한 영숫자·한글 구간)에 term 이 있고, true_pattern 이 있으면 그 정규식이 어절에서 찾아질 때만 참이다. true_pattern 이 없으면 false_pattern 에 걸린 구간을 지운 뒤에도 term 이 남을 때 참이다. 한 passage 의 어절 중 참이 하나도 없으면 '확장 금지' 사건이다(하네스 Q6 와 같은 방식).",
+ "terms": [
+  {"term": "고의", "true_pattern": "^고의|적고의|과실고의|범의고의|의고의|중대고의", "false_pattern": null},
+  {"term": "실명", "true_pattern": null, "false_pattern": "금융실명|금융거래실명|실명거래"},
+  {"term": "공인", "true_pattern": null, "false_pattern": "공인중개|공인회계|공인인증|공인노무|공인된|공인을받|국가공인|주인공인|소상공인|상공인|공인기관|공인시험|공인자격|대한공인"},
+  {"term": "사과", "true_pattern": null, "false_pattern": "수사과|박사과|조사과|심사과|석사과|외사과|형사과|감사과|검사과|정사과|교사과|이사과|회사과|인사과|사과나무|사과농"},
+  {"term": "보도", "true_pattern": null, "false_pattern": "횡단보도|보도블록|보도블럭|보도위|인도보도|지하보도|육교보도|보도교"},
+  {"term": "사고", "true_pattern": null, "false_pattern": "형사고|시사고|자사고|사고방식|사고하|사고력|사고체계|공사고|조사고|회사고|감사고|검사고|민사고|판사고|기사고|수사고|보도사고"},
+  {"term": "의도", "true_pattern": null, "false_pattern": "여의도|논의도|동의도|명의도|혐의도|정의도|합의도|이의도|심의도|회의도|강의도|협의도|고의도|주의도|결의도|건의도|신의도|유의도|의의도|제의도|민의도"},
+  {"term": "기자", "true_pattern": null, "false_pattern": "자기자|기자재|이기자|누기자|투기자|용기자"},
+  {"term": "인용", "true_pattern": null, "false_pattern": "개인용|공인용|법인용|상인용|군인용|부인용|성인용|노인용|타인용|본인용"},
+  {"term": "초상", "true_pattern": null, "false_pattern": "초상집|초상화"},
+  {"term": "수사", "true_pattern": null, "false_pattern": "수사적|수사학|미사여구수사|화려한수사"},
+  {"term": "청구", "true_pattern": null, "false_pattern": "요청구|신청구|청구역|청구동|청구대"}
+ ]
+}

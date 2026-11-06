@@ -2,6 +2,7 @@
 
 현재 색인을 읽기 전용(``immutable=1``)으로 열어 질의 세트를 돌린다. 엔진 코드는 바꾸지 않는다.
 - ``run``: 질의 세트 실행 -> 라벨 없는 분포 지표 + 자동 gold 판정 + 순위 상수 변형 비교 + (선택) 지연 측정 -> JSON.
+- ``homograph``: ``search/homograph_v1.json`` 의 12낱말 단독 질의 상위 10 에서 확장 금지 사건 수를 센다(임시 라벨). 파일럿 질의는 ``--pilot-file`` 로 로컬에서만 준다.
 - ``gen-gold``: 색인에서 자동 gold 질의(Q1 사건번호·Q2 조문·Q6 동형어 금지 사건·Q7 무답)를 고정 seed 로 뽑아 ``evals/search/gold_auto_dev.json`` 에 쓴다.
 
 한계(결과 JSON 의 ``limits`` 에도 적는다)
@@ -21,6 +22,7 @@ import math
 import os
 import platform
 import random
+import re
 import sqlite3
 import statistics
 import subprocess
@@ -38,11 +40,12 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 SEARCH_DIR = HERE / "search"
 GOLD_FILE = SEARCH_DIR / "gold_auto_dev.json"
+HOMOGRAPH_FILE = SEARCH_DIR / "homograph_v1.json"
 SEED = 20261010
 ORIG_LIST_FAMILIES = tuple(cs.LIST_CHUNK_FAMILIES)     # 변형이 상수를 덮어써도 라벨 없는 지표는 원래 정의로 센다
 ORIG_WEIGHTS = dict(cs.AUTHORITY_WEIGHTS)
 WARMUP, REPEATS = 3, 20
-VARIANTS = ("current", "no_weights", "no_demote", "bigram_only")
+VARIANTS = ("current", "no_weights", "no_demote", "bigram_only", "no_edge")
 TUNE_EXACT = {"99나27325", "2011서울조정1462"}        # 순위 작업 기록에 있던 정확 검색 질의: gold 표본에서 뺀다
 Q2_CITES = ["언론중재법 제16조", "언론중재법 제17조", "형법 제307조", "형법 제310조", "형법 제309조", "헌법 제21조"]   # 제14조는 tune 기록에 있어 뺐다
 Q6_SPECS = [  # (질의, 목표어, 금지 숙주어): 숙주어를 지우면 목표어가 남지 않는 passage 가 금지 사건 후보. 자동 후보이며 사람 확인 전이다
@@ -85,6 +88,7 @@ def git_info() -> dict:
 def variant(name: str, corpus: cs.SqliteCorpus):
     saved_w, saved_fam, saved_sql, saved_fts = dict(cs.AUTHORITY_WEIGHTS), cs.LIST_CHUNK_FAMILIES, cs._LIST_SQL, corpus._fts
     saved_kind, saved_sql3 = cs.LIST_KIND, cs._LIST_SQL_V3
+    saved_ne = corpus._has_ne
     try:
         if name == "no_weights":            # 키는 두고 값만 1.0: 빈 표는 _rank_sql 의 CASE 문법을 깨뜨린다
             for k in cs.AUTHORITY_WEIGHTS:
@@ -96,6 +100,8 @@ def variant(name: str, corpus: cs.SqliteCorpus):
             cs.LIST_KIND = "__none__"
         elif name == "bigram_only":
             corpus._fts = False
+        elif name == "no_edge":             # 어절 경계 가중을 끈 같은 색인: 가중 1.0, df 는 gram 이 있는 전체 행(설계 정정 절의 C0)
+            corpus._has_ne = False
         elif name != "current":
             raise ValueError(name)
         yield
@@ -103,6 +109,7 @@ def variant(name: str, corpus: cs.SqliteCorpus):
         cs.AUTHORITY_WEIGHTS.clear()
         cs.AUTHORITY_WEIGHTS.update(saved_w)
         cs.LIST_CHUNK_FAMILIES, cs._LIST_SQL, corpus._fts = saved_fam, saved_sql, saved_fts
+        corpus._has_ne = saved_ne
         cs.LIST_KIND, cs._LIST_SQL_V3 = saved_kind, saved_sql3
 
 
@@ -385,6 +392,57 @@ def cmd_gen_gold(a) -> int:
     return 0
 
 
+# ------------------------------------------------------------------ 동형어 평가(U5)
+
+def load_homograph(path: Path) -> dict:
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    terms = [e["term"] for e in doc["terms"]]
+    if len(set(terms)) != len(terms):
+        raise ValueError(f"duplicate term in {path.name}")
+    return doc
+
+
+def is_true_word(entry: dict, eojeol: str) -> bool:
+    """어절이 낱말의 뜻 그대로인가(은라벨 규칙). 낱말이 없으면 거짓, true_pattern 이 있으면 그 규칙만, 없으면 false_pattern 구간을 지운 뒤 낱말이 남는지."""
+    term = entry["term"]
+    if term not in eojeol:
+        return False
+    if entry.get("true_pattern"):
+        return bool(re.search(entry["true_pattern"], eojeol))
+    masked = re.sub(entry["false_pattern"], lambda m: "#" * len(m.group(0)), eojeol) if entry.get("false_pattern") else eojeol
+    return term in masked
+
+
+def judge_homograph(entry: dict, results: list[dict]) -> dict:
+    """상위 결과 중 참 어절이 하나도 없는 passage 수(확장 금지 사건)."""
+    forb = sum(not any(is_true_word(entry, w) for w in cs.runs(r["text"])) for r in results)
+    return {"forbidden@10": forb, "n": len(results)}
+
+
+def cmd_homograph(a) -> int:
+    """12낱말 단독 질의의 상위 10 에서 확장 금지 사건 수를 센다. 로컬 파일럿 질의(--pilot-file, JSON 문자열 배열)는 질의 문구 없이 순번과 passage id 만 남긴다."""
+    doc = load_homograph(HOMOGRAPH_FILE)
+    pilot = json.loads(Path(a.pilot_file).read_text(encoding="utf-8")) if a.pilot_file else []
+    corpus = cs.SqliteCorpus(resolve_index(a.index))
+    try:
+        terms = {}
+        for e in doc["terms"]:
+            res = corpus.search(e["term"], limit=10)
+            terms[e["term"]] = {**judge_homograph(e, res), "ids": [r["passage_id"] for r in res]}
+        pilot_out = {f"pilot-{i:02d}": {"ids": [r["passage_id"] for r in corpus.search(q, limit=10)]} for i, q in enumerate(pilot, 1)}
+        result = {"what": "동형어 확장 금지 사건 수(임시 라벨 기준). 사건 관련성이 아니라 라벨 어절 포함 여부이며 Recall·nDCG 는 재지 않는다.",
+                  "label_source": doc["label_source"], "snapshot_id": corpus.snapshot_id, "index_format": corpus._meta.get("format"), "git": git_info(),
+                  "homograph_file_sha256": hashlib.sha256(HOMOGRAPH_FILE.read_bytes()).hexdigest()[:16], "terms": terms,
+                  "totals": {"forbidden@10": sum(v["forbidden@10"] for v in terms.values()), "n": sum(v["n"] for v in terms.values())}, "pilot": pilot_out}
+    finally:
+        corpus.close()
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    sys.stdout.write(json.dumps({"out": str(out), "snapshot_id": result["snapshot_id"], "forbidden@10": result["totals"]["forbidden@10"]}) + "\n")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -398,9 +456,15 @@ def main(argv=None) -> int:
     r.add_argument("--env-note", default="")
     g = sub.add_parser("gen-gold")
     g.add_argument("--index", default=None)
+    h = sub.add_parser("homograph")
+    h.add_argument("--index", default=None, help="색인 파일(기본: CURRENT). 읽기 전용으로만 연다")
+    h.add_argument("--pilot-file", default=None, help="로컬 파일럿 질의 JSON 문자열 배열(저장소 밖에 둔다). 출력에는 순번과 passage id 만 남긴다")
+    h.add_argument("--out", required=True, help="결과 JSON 경로(저장소에 커밋하지 않는다)")
     a = ap.parse_args(argv)
     if a.cmd == "run" and "current" not in a.variants:
         a.variants = ["current", *a.variants]
+    if a.cmd == "homograph":
+        return cmd_homograph(a)
     return cmd_run(a) if a.cmd == "run" else cmd_gen_gold(a)
 
 

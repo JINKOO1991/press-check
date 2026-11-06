@@ -36,8 +36,8 @@ from . import pubyear
 from .corpus import (AUTHORITY_TYPES, MAX_LIMIT, MAX_QUERY_CP, RISK_CHANNELS, Corpus, CorpusError, _check_search_args, reference_date)
 from .ingestion.structure_records import LIST_CHUNK_AUTHORITY
 
-INDEX_FORMAT = "pdr-index-4"       # 4: chunk_kind 열, 같은 본문 passage 중복 제거와 passage_alias 표(P3 재빌드). 3: counter_signals 계산 변경(파기·환송 문맥과 면책 부정 태그 제외, CX1-8). 2: reference_date·reference_date_basis 열(G-D23), stats 의 cases_by_authority_type(G-D22)
-READABLE_FORMATS = ("pdr-index-3", INDEX_FORMAT)   # 3번 형식 색인(chunk_kind 열·별칭 표 없음)도 연다: 재빌드 뒤에도 이전 snapshot 으로 되돌릴 수 있게 한다
+INDEX_FORMAT = "pdr-index-5"       # 5: bigram_terms 의 ne 열(어절 첫머리·조사를 뗀 어절 끝 일치 횟수, 어절 경계 가중). 4: chunk_kind 열, 같은 본문 passage 중복 제거와 passage_alias 표(P3 재빌드). 3: counter_signals 계산 변경(파기·환송 문맥과 면책 부정 태그 제외, CX1-8). 2: reference_date·reference_date_basis 열(G-D23), stats 의 cases_by_authority_type(G-D22)
+READABLE_FORMATS = ("pdr-index-3", "pdr-index-4", INDEX_FORMAT)   # 3번 형식(chunk_kind 열·별칭 표 없음)과 4번 형식(ne 열 없음)도 연다: 재빌드 뒤에도 이전 snapshot 으로 되돌릴 수 있게 한다. ne 가 없는 색인은 이전 2글자 점수로 돈다
 SNAPSHOT_PREFIX = "idx-"
 SNAPSHOT_HEX_LEN = 16
 INDEX_DIR_NAME = "index"
@@ -76,6 +76,9 @@ _LIST_SQL_V3 = "(p.source_family IN (%s) AND p.verification_status='not_applicab
 # 2글자 질의어 점수: Σ idf(g)·n(k1+1)/(n + k1) (BM25 의 IDF·빈도 포화, 길이 정규화 없음). 흔한 어휘의 반복이 드문 어휘 일치를 이기지 않게 한다.
 # 길이 정규화(b>0)는 짧은 조정 사례 요약을 같은 빈도의 긴 판결보다 앞세울 수 있어 쓰지 않는다(사용자 결정 2026-10-10).
 BIGRAM_K1 = 1.2
+# 어절 경계 가중(UDEC-21): 2글자 질의어가 어절 첫머리 또는 조사를 뗀 어절 끝에 있으면 1.0, 어절 안쪽이면 이 값으로 센다(원고의 -> '고의' 같은 경계 교차 일치).
+# 점수식 e = ne + EDGE_INTERIOR_WEIGHT·(n − ne). 안쪽 일치도 후보에서 빠지지 않는다. 3글자 이상 낱말을 쪼갠 gram(trigram 없는 환경)에는 쓰지 않는다.
+EDGE_INTERIOR_WEIGHT = 0.25
 # 권위 유형 가중(일반 질의 tier 2·3 의 점수에 곱한다. 정확 검색·구문 일치 tier 0·1 에는 쓰지 않는다): 판례 > 심의·조정 사례 > 연구자료.
 # 표에 없는 유형(guideline·statute·correction)은 1.0. 목록 장 chunk 는 가중 대신 강등한다. 순위 등급은 rank_class 와 _rank_sql 두 곳이 이 표만 읽는다.
 AUTHORITY_WEIGHTS: dict[str, float] = {
@@ -142,8 +145,8 @@ _CASE_GAP = re.compile(r"(\d{2,4}[가-힣]{1,8})\s+(?=\d)")   # 사건부호와 
 _QUERY_CASE = re.compile(r"\d{2,4}[가-힣]{1,8}\d{1,8}")
 _NOT_CASE_KINDS = {"년", "월", "일", "시", "분", "초", "세", "호", "조", "항", "회", "차", "건", "명", "원", "개", "번", "위", "대", "주", "기", "부"}
 _CITE = re.compile(r"(?:([가-힣A-Za-z][가-힣A-Za-z·]{0,30}?(?:법률|법|령|규칙|규정|조례))\s*)?제\s*(\d+)\s*조(?:\s*의\s*(\d+))?")
-_JOSA3 = ("으로는", "에서는", "에게는", "입니다")
-_JOSA2 = ("에서", "으로", "에게", "부터", "까지", "에는", "에도", "이라", "라고", "이다", "보다", "처럼", "마저", "조차", "로서", "로써", "이나", "이며")
+_JOSA3 = ("으로는", "에서는", "에게는", "입니다", "이라는", "에서의", "으로서", "으로써", "에게서", "으로의")      # 뒤 6개는 복합 조사(UDEC-21)
+_JOSA2 = ("에서", "으로", "에게", "부터", "까지", "에는", "에도", "이라", "라고", "이다", "보다", "처럼", "마저", "조차", "로서", "로써", "이나", "이며", "한테", "께서")
 _JOSA1 = "은는이가을를의에로와과도만"
 _HANGUL_ONLY = re.compile(r"[가-힣]+")
 _OC_PARAM = re.compile(r"(?i)[?&;]oc=")
@@ -157,13 +160,31 @@ def runs(s: str) -> list[str]:
     return _RUN.findall(norm_text(s))
 
 
-def bigram_counts(text: str) -> dict[str, int]:
-    out: dict[str, int] = {}
+def bigram_counts(text: str) -> dict[str, tuple[int, int]]:
+    """gram -> (n, ne). n 은 2글자 gram 의 전체 출현 수, ne 는 어절 경계 일치 수다(UDEC-21).
+
+    어절은 ``runs`` 의 한 구간이다. 한글 gram 의 ne 는 구간마다 최대 둘: 구간 첫 두 글자(첫머리), 그리고 구간이 3자 이상이고 조사를 뗀 어간
+    ``strip_josa(구간)`` 이 3자 이상일 때 어간의 끝 두 글자(첫머리와 같은 gram 이면 한 번만 센다). 한글이 아닌 gram(영숫자 포함)은 경계를 보지 않고 ne=n 이다.
+    """
+    out: dict[str, list[int]] = {}
     for run in runs(text):
+        head = run[:2] if len(run) >= 2 else None
+        tail = None
+        if len(run) > 2:
+            stem = strip_josa(run)
+            if len(stem) > 2 and stem[-2:] != head:
+                tail = stem[-2:]
         for i in range(len(run) - 1):
             g = run[i:i + 2]
-            out[g] = out.get(g, 0) + 1
-    return out
+            rec = out.setdefault(g, [0, 0])
+            rec[0] += 1
+            if not _HANGUL_ONLY.fullmatch(g):
+                rec[1] += 1
+        if head is not None and _HANGUL_ONLY.fullmatch(head):
+            out[head][1] += 1
+        if tail is not None and _HANGUL_ONLY.fullmatch(tail):
+            out[tail][1] += 1
+    return {g: (n, ne) for g, (n, ne) in out.items()}
 
 
 def case_numbers(raw: str | None) -> list[str]:
@@ -227,6 +248,12 @@ def strip_josa(w: str) -> str:
     if len(w) >= 3 and w[-1] in _JOSA1:
         return w[:-1]
     return w
+
+
+def ne_stem_rules() -> str:
+    """색인의 ne 열을 만들 때 쓴 조사 규칙의 버전(조사 표의 해시). strip_josa 규칙을 고치면 값이 달라져 snapshot 이 바뀌므로, 같은 passage 라도 재빌드가
+    ``unchanged`` 로 건너뛰어 옛 ne 가 남지 않는다. 질의 쪽 ``_stem`` 의 색인 증거 대조는 ne 계산에 쓰지 않는다."""
+    return "josa-" + hashlib.sha256(json.dumps([_JOSA3, _JOSA2, _JOSA1], ensure_ascii=False).encode("utf-8")).hexdigest()[:12]
 
 
 def _fts_phrase(s: str) -> str:
@@ -531,7 +558,7 @@ CREATE INDEX passages_institution ON passages(institution);
 CREATE TABLE passage_risk(rid INTEGER NOT NULL, channel TEXT NOT NULL, PRIMARY KEY(channel, rid)) WITHOUT ROWID;
 CREATE TABLE case_numbers(norm TEXT NOT NULL, rid INTEGER NOT NULL, PRIMARY KEY(norm, rid)) WITHOUT ROWID;
 CREATE TABLE cites(cite TEXT NOT NULL, rid INTEGER NOT NULL, PRIMARY KEY(cite, rid)) WITHOUT ROWID;
-CREATE TABLE bigram_terms(gram TEXT NOT NULL, rid INTEGER NOT NULL, n INTEGER NOT NULL, PRIMARY KEY(gram, rid)) WITHOUT ROWID;
+CREATE TABLE bigram_terms(gram TEXT NOT NULL, rid INTEGER NOT NULL, n INTEGER NOT NULL, ne INTEGER NOT NULL, PRIMARY KEY(gram, rid)) WITHOUT ROWID;
 """
 _FTS_SCHEMA = "CREATE VIRTUAL TABLE passages_fts USING fts5(text, tags, tokenize='trigram');"
 
@@ -571,8 +598,8 @@ def _write_index(path: Path, passages: Iterator[dict], meta: dict[str, str], use
                 cites = list(dict.fromkeys(cites_in(p["text"]) + [c for t in p["issue_tags"] for c in cites_in(t)] + p["provisions"]))
                 conn.executemany("INSERT OR IGNORE INTO cites(cite, rid) VALUES (?,?)", [(c, rid) for c in cites])
                 tags_blob = " ".join(p["issue_tags"] + [p["title"]] + cns)
-                conn.executemany("INSERT INTO bigram_terms(gram, rid, n) VALUES (?,?,?)",
-                                 [(g, rid, c) for g, c in sorted(bigram_counts(p["text"] + " " + tags_blob).items())])
+                conn.executemany("INSERT INTO bigram_terms(gram, rid, n, ne) VALUES (?,?,?,?)",
+                                 [(g, rid, n_, ne_) for g, (n_, ne_) in sorted(bigram_counts(p["text"] + " " + tags_blob).items())])
                 if use_fts:
                     conn.execute("INSERT INTO passages_fts(rowid, text, tags) VALUES (?,?,?)", (rid, norm_text(p["text"]), norm_text(tags_blob)))
             conn.executemany("INSERT INTO passage_alias(%s) VALUES (%s)" % (",".join(_ALIAS_COLS), ",".join("?" * len(_ALIAS_COLS))),
@@ -621,6 +648,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
         excluded: dict[str, int] = {}
         h = hashlib.sha256()
         h.update(INDEX_FORMAT.encode("utf-8") + b"\n")
+        h.update(ne_stem_rules().encode("utf-8") + b"\n")        # ne 열이 조사 규칙에 좌우되므로 규칙이 바뀌면 snapshot 도 바뀐다
         by_auth: dict[str, int] = {}
         cases_by_auth: dict[str, set] = {}
         date_unknown = 0
@@ -678,7 +706,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                             "redistribute_derivatives": rr.get("redistribute_derivatives", "unknown")}
         use_fts = fts_trigram_available()
         meta = {
-            "format": INDEX_FORMAT, "snapshot_id": snapshot, "built_at": now.isoformat(timespec="seconds"),
+            "format": INDEX_FORMAT, "ne_stem_rules": ne_stem_rules(), "snapshot_id": snapshot, "built_at": now.isoformat(timespec="seconds"),
             "passage_count": str(n), "fts_trigram": "1" if use_fts else "0",
             "latest_decision_date": max(dates) if dates else "", "earliest_decision_date": min(dates) if dates else "",
             "display_limit_chars": str(DISPLAY_QUOTE_MAX_CP),
@@ -817,6 +845,7 @@ class SqliteCorpus(Corpus):
             raise CorpusError("index format is not supported (rebuild it with the build_index command)")
         self._meta = meta
         self._legacy = meta.get("format") == "pdr-index-3"      # chunk_kind 열·passage_alias 표 없음
+        self._has_ne = meta.get("format") == INDEX_FORMAT        # bigram_terms.ne 열(어절 경계 가중). 3·4번 형식은 이전 2글자 점수(롤백 경로)
         self._snapshot = meta["snapshot_id"]
         self._index_has_fts = meta.get("fts_trigram") == "1"
         self._fts = self._index_has_fts and fts_trigram_available()
@@ -926,6 +955,7 @@ class SqliteCorpus(Corpus):
 
         phrases: list[str] = []
         grams: list[str] = []
+        edge: set[str] = set()          # 2글자 질의어 자체인 gram 만 어절 경계 가중을 받는다. 3글자 이상 낱말을 쪼갠 gram 은 이전 점수(안쪽이 전부 0.25가 되는 것을 막는다)
         for w in words:
             v = self._stem(w)
             if len(v) >= 3 and self._fts:
@@ -934,6 +964,7 @@ class SqliteCorpus(Corpus):
                 grams += [v[i:i + 2] for i in range(len(v) - 1)]
             elif len(v) == 2:
                 grams.append(v)
+                edge.add(v)
         phrases = list(dict.fromkeys(phrases))[:MAX_PHRASES]
         grams = list(dict.fromkeys(grams))[:MAX_GRAMS]
 
@@ -980,8 +1011,8 @@ class SqliteCorpus(Corpus):
         if grams:
             # counter 는 뒤에서 재정렬하므로 n 에서 자르면 표지 있는 후보가 상한 밖에 남는다: 후보 상한까지 채운다
             fill = CANDIDATE_CAP if stance == "counter" else max(0, n - len(cand))
-            rows = self._bigram_scores(grams, fsql, fparams, cpre + lpre, weight=wsql) if fill > 0 else []     # 채울 자리가 없으면 전역 상위는 필요 없다
-            have = self._bigram_scores(grams, fsql, fparams, "", rids=list(cand)) if cand else []
+            rows = self._bigram_scores(grams, fsql, fparams, cpre + lpre, weight=wsql, edge=edge) if fill > 0 else []     # 채울 자리가 없으면 전역 상위는 필요 없다
+            have = self._bigram_scores(grams, fsql, fparams, "", rids=list(cand), edge=edge) if cand else []
             top = max([r["s"] for r in rows] + [r["s"] for r in have], default=0.0) or 1.0
             for r in have:
                 cand[r["rid"]]["bg"] = max(cand[r["rid"]]["bg"], r["s"] / top)
@@ -1078,16 +1109,27 @@ class SqliteCorpus(Corpus):
         return self._total
 
     def _bigram_scores(self, grams: list[str], fsql: str, fparams: list, order_pre: str, rids: list[int] | None = None,
-                       weight: str = "1") -> list[dict]:
-        """2글자 질의어 점수. rids 가 없으면 전역 상위 CANDIDATE_CAP 개(order_pre 정렬 우선), 있으면 그 후보 전부의 점수."""
+                       weight: str = "1", edge: set[str] | None = None) -> list[dict]:
+        """2글자 질의어 점수. rids 가 없으면 전역 상위 CANDIDATE_CAP 개(order_pre 정렬 우선), 있으면 그 후보 전부의 점수.
+
+        ne 열이 있는 색인(5번 형식)에서 ``edge`` 의 gram(기본: 전부)은 어절 경계 가중을 받는다: e = ne + EDGE_INTERIOR_WEIGHT·(n − ne), df 는 ne>0 인 행 수.
+        그 밖의 gram 과 3·4번 형식 색인은 e = n, df 는 gram 이 있는 행 수(이전 점수)다. 점수 Σ idf·e(k1+1)/(e+k1).
+        """
         total = self._passage_total()
+        edge = (set(grams) if edge is None else set(edge)) if self._has_ne else set()
         idf = []
         for g in grams:
-            df = self._db.execute("SELECT count(*) FROM bigram_terms WHERE gram=?", (g,)).fetchone()[0]
+            df = self._db.execute("SELECT count(*) FROM bigram_terms WHERE gram=?" + (" AND ne>0" if g in edge else ""), (g,)).fetchone()[0]
             idf += [g, math.log(1 + (total - df + 0.5) / (df + 0.5))]
         case = "CASE b.gram " + " ".join("WHEN ? THEN ?" for _ in grams) + " ELSE 0 END"
-        s = f"SUM(({case}) * b.n * ? / (b.n + ?))"
-        sp = [*idf, BIGRAM_K1 + 1, BIGRAM_K1]
+        if self._has_ne:
+            lam = "CASE b.gram " + " ".join("WHEN ? THEN ?" for _ in grams) + " ELSE 1.0 END"      # gram 별 안쪽 일치 가중(경계 가중이 아니면 1.0)
+            e = f"(b.ne + ({lam}) * (b.n - b.ne))"
+            lp = [x for g in grams for x in (g, EDGE_INTERIOR_WEIGHT if g in edge else 1.0)]
+        else:
+            e, lp = "b.n", []
+        s = f"SUM(({case}) * {e} * ? / ({e} + ?))"
+        sp = [*idf, *lp, BIGRAM_K1 + 1, *lp, BIGRAM_K1]
         marks = ",".join("?" * len(grams))
         head = f"SELECT b.rid AS rid, {s} AS s FROM bigram_terms b JOIN passages p ON p.rid=b.rid WHERE b.gram IN ({marks}){fsql}"
         if rids is None:

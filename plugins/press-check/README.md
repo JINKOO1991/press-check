@@ -84,7 +84,7 @@ claude plugin install press-check@press-check
 
 - 근거 검색은 **로컬 SQLite 색인**만 씁니다(`<data>/index/corpus-<snapshot>.sqlite`, 위치는 `PRESS_DISPUTE_DATA_DIR`). 웹 검색을 하지 않고 원고 내용을 외부 검색어로 보내지 않습니다. 색인은 저장소에 들어 있지 않으며, 수집 CLI(`python -m press_review.ingestion build_index`)로 각자 만듭니다. 색인이 없으면 `search_cases`·`submit_report`가 오류를 돌려주고(`PRESS_REVIEW_ALLOW_SYNTHETIC=1`이면 합성 코퍼스로 동작) `corpus-status`에 '실자료 미적재'가 표시됩니다(오류와 경고에 조회한 데이터 폴더·색인 경로가 적히며, `--plugin-dir`로 직접 로드하면 `CLAUDE_PLUGIN_DATA`가 우선하므로 색인이 기본 위치에 있으면 `PRESS_DISPUTE_DATA_DIR`을 설정해야 합니다). 색인을 새로 만들면 MCP 서버(Claude Code)를 다시 시작해야 반영됩니다.
 - 검색 순서: 사건번호·조문 정확 검색, FTS5 trigram BM25, 2글자 질의어 보완. 벡터 검색은 하지 않습니다. `stance=counter`는 같은 질의 결과 중 청구 배척·면책 표지가 있는 자료를 앞에 둡니다.
-- **원문 인용 상한(상수 `DISPLAY_QUOTE_MAX_CP` = 300자)**: 재배포 허락(`redistribute_raw`·`redistribute_derivatives`)이 `allowed`가 아닌 소스는 사용자 화면에 보이는 인용(`display_text`)을 300자 이내로 자릅니다. 내부 판단용 `text`는 전문입니다.
+- **원문 인용 상한(상수 `DISPLAY_QUOTE_MAX_CP` = 300자)**: 재배포 허락(`redistribute_raw`·`redistribute_derivatives`)이 `allowed`가 아닌 소스는 사용자 화면에 보이는 인용(`display_text`)을 300자 이내로 자릅니다. 내부 판단용 `text`는 전문입니다. `display_text`가 `text`와 같으면 `search_cases` 응답에서 생략하고, `limit`이 6 이상이면 1,200자를 넘는 긴 passage는 `text` 대신 원문 부분문자열 조각(`excerpts`)을 줍니다.
 - 색인 기준일(구축일·최신 결정일)과 분석 기준일(`legal_as_of` = 기사 발행 예정일)은 따로 표시합니다.
 
 ## 별(★)의 의미

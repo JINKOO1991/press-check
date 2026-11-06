@@ -108,6 +108,7 @@ SKILL.md의 보조 문서다. 필드 계약은 플러그인의 `engine/press_rev
 | `opinion_kinds`, `opinion_kind`, `includes_dissent` | 이 passage에 인용된 다수(`majority`)·별개(`concurring`)·반대(`dissenting`)의견. 둘 이상이면 `opinion_kind`는 `mixed` |
 | `verification_status` | `verified`(사람·독립 검수 완료), `unverified`(모델 구조화 결과, 검수 전), `not_applicable`(사건 구조화 없는 연구 chunk) |
 | `source_family` | 수집 소스 묶음(예: `lawgo_prec_supreme`, `pac_adjustment_casebooks`) |
-| `redistributable`, `display_text`, `display_truncated`, `display_limit_chars` | 재배포 허락이 없는 소스는 사용자 화면 인용을 300자 이내(`display_text`)로 한다. `text`는 내부 판단용 전문 |
+| `redistributable`, `display_text`, `display_truncated`, `display_limit_chars` | 재배포 허락이 없는 소스는 사용자 화면 인용을 300자 이내(`display_text`)로 한다. `text`는 내부 판단용 전문. `display_text`가 `text`와 같으면 응답에서 생략된다(재배포 허락 소스, 또는 `text`가 300자 이내): 그때는 `text`를 인용할 수 있다. `display_truncated` false·`display_limit_chars` null 같은 기본값도 생략된다 |
+| `excerpts`, `text_len`, `text_truncated` | `limit` 6 이상에서 1,200자를 넘는 passage 에만 온다(반대의견이 든 passage 제외). `text` 대신 원문 부분문자열 조각 `{start, end, text}`(앞 300자와 질의어 주변, 합계 1,200자 이하)와 전문 길이다. `start`·`end`는 원문 글자 위치. 조각을 이어 붙이지 않는다 |
 
 `locator.kind`가 `text_range`인 판례의 `value`는 여러 구간(`문서#쪽:시작-끝;…`)이다. 사용자에게는 `url`을 주고 사건번호·선고일과 함께 설명한다.
