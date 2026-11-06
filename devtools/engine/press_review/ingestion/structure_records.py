@@ -37,6 +37,7 @@ from datetime import date
 from typing import Any, Optional
 
 from .. import contracts
+from ..corpus_sqlite import LIST_CHUNK_AUTHORITY  # noqa: F401
 
 COURT_SPEAKERS = frozenset({"court_majority", "court_concurring", "court_dissenting"})
 COURT_INSTITUTIONS = ("supreme_court", "high_court", "district_court", "constitutional_court", "other_court")
@@ -115,10 +116,7 @@ CHUNK_ONLY_SOURCES: dict[str, str] = {
 # G-D32: 사례집의 '전체 목록'·'색인' 장은 사건 행만 나열해 인용 근거가 없는 사건을 대량으로 만든다(전량 1차 실행 격리의 대부분).
 # 이 장은 DeepSeek 구조화 대신 쪽 원문 chunk 로만 색인한다. source_id -> chunk 의 authority_type.
 LIST_LABEL_RE = re.compile(r"전체\s*목록|색인")
-LIST_CHUNK_AUTHORITY: dict[str, str] = {
-    "pac_correction_casebooks": "pac_decision",
-    "pac_adjustment_casebooks": "pac_decision",
-}
+# LIST_CHUNK_AUTHORITY: 표 정본은 색인 쪽 corpus_sqlite 이고 여기서는 같은 이름으로 쓴다(위 import).
 
 
 def allowed_speakers(field_name: str, authority: str) -> frozenset:

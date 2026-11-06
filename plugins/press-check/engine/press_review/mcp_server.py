@@ -98,7 +98,7 @@ def _tool_defs() -> list[dict]:
             "name": "search_cases",
             "title": "근거 검색",
             "description": (
-                "로컬 검색 색인(수집한 판결·심의·조정 자료)에서 관련 passage를 검색한다. 외부 검색은 하지 않는다. 색인에 있는 레코드만 돌려주며 0건이면 그대로 0건이다. "
+                "로컬 검색 색인(설치한 번들의 판결·결정 자료)에서 관련 passage를 검색한다. 외부 검색은 하지 않는다. 색인에 있는 레코드만 돌려주며 0건이면 그대로 0건이다. "
                 "없는 근거를 만들지 않는다. 사건번호(예: 2022다251650)나 조문(예: 언론중재법 제14조)을 질의에 넣으면 정확 검색을 먼저 한다. "
                 "stance='counter'는 같은 질의에서 청구 배척·면책 표지(outcome_type dismissal_merits, 면책 계열 태그, 기각 문구)가 있는 passage를 앞에 둔다"
                 "(어휘 표지이며 의미 판단이 아니므로 passage를 직접 읽고 판단한다). 결과 passage에서 값이 기본값(null·빈 목록·false)인 부가 키는 생략된다(없으면 기본값). "
@@ -241,7 +241,10 @@ def _no_index_errors() -> list[str]:
     od = corpus_sqlite.index_dir()
     return [
         f"실자료 검색 색인이 없거나 열 수 없어 합성 근거를 쓰지 않습니다. 조회한 데이터 폴더: {od.parent}, 색인 경로: {od}.",
-        "색인이 있는 폴더를 PRESS_DISPUTE_DATA_DIR 환경변수로 지정하고 Claude Code를 다시 시작하세요(색인은 수집 CLI build_index 로 만듭니다).",
+        "번들 색인(판례·헌법재판소 결정·법고을 판결, 구조화 완료본)을 설치하세요: python3 -m press_review install-bundle",
+        f"위 명령은 PYTHONPATH={config.PACKAGE_DIR.parent} 로 실행합니다.",
+        "번들은 출시 전이라 릴리스 위치가 정해지기 전에는 설치되지 않습니다. 설치한 뒤 Claude Code를 다시 시작하세요.",
+        "이미 색인이 있는 폴더가 있으면 PRESS_DISPUTE_DATA_DIR 환경변수로 지정하고 Claude Code를 다시 시작하세요.",
         "기능 시험용 합성 자료로 돌리려면 PRESS_REVIEW_ALLOW_SYNTHETIC=1 을 설정하세요. 합성 근거는 실제 사례가 아닙니다. corpus_status 는 항상 동작합니다.",
     ]
 

@@ -11,6 +11,11 @@ DEFAULT_TTL_SECONDS = 1800  # 세션 메모리 보관 30분(D4)
 REASON_MAX_CHARS = 100
 MAX_STORE_ITEMS = 16        # 서버 메모리에 두는 원고·보고서 합계 상한(F2). 넘으면 가장 오래된 것부터 제거
 
+# 번들 색인(판례·헌재·법고을 판결, 구조화 완료본) 릴리스 위치. 자리표시자이며 실제 URL 은 미정이다(docs/DECISIONS.md UDEC-25·26).
+# 이 값이 자리표시자인 동안 ``install-bundle`` 은 내려받지 않고 중단한다. 확정되면 https URL 로 바꾼다(끝에 '/' 포함).
+BUNDLE_RELEASE_BASE_URL = "https://release-url-undecided.invalid/press-check-bundle/latest/"
+BUNDLE_INFO_NAME = "bundle-info.json"
+
 PACKAGE_DIR = Path(__file__).resolve().parent
 SCHEMAS_DIR = PACKAGE_DIR / "schemas"
 FIXTURES_DIR = PACKAGE_DIR / "fixtures"

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from fractions import Fraction
+import sqlite3
 from pathlib import Path
 from typing import Any, Optional
 
@@ -303,3 +304,28 @@ def migrate_manual(m: Manifest, source_id: str, *, min_quote_rate: float = MIN_Q
             m.record_failure(t, STAGE, CASE_ERROR_CLASS, _case_message(qo, qt, min_quote_rate) + f" ({MIGRATION_NOTE})", retry_count=0)
             m.resolve_failures(t, MANUAL_STAGE)
     return {"migrated": len(targets), "case_ids": targets, "undo_out": str(undo_out) if undo_out else None}
+
+
+class _ReadOnlyRows:
+    """``evaluate_cases`` 가 쓰는 ``select()`` 만 가진 읽기 전용 어댑터(이미 열린 ``mode=ro`` 연결 위에서 dict 행을 준다)."""
+
+    def __init__(self, conn: sqlite3.Connection):
+        self._conn = conn
+
+    def select(self, sql: str, params: tuple = ()) -> list[dict]:
+        cur = self._conn.execute(sql, params)
+        names = [d[0] for d in cur.description]
+        return [dict(zip(names, row)) for row in cur.fetchall()]
+
+
+def case_admission_pending(conn: sqlite3.Connection) -> int:
+    """CASE_ADMISSION_SOURCES 각각의 평가 계획(``pending_changes``: 새로 기록·해제될 행 수) 합계. 장부는 쓰지 않는다.
+    사건·실패 테이블이 없는 옛 장부는 0 이다. ``corpus_sqlite.build_index(pending_fn=...)`` 에 넘긴다(색인 쪽은 수집 코드를 import 하지 않는다)."""
+    m = _ReadOnlyRows(conn)
+    total = 0
+    for src in CASE_ADMISSION_SOURCES:
+        try:
+            total += evaluate_cases(m, src)["summary"]["pending_changes"]
+        except sqlite3.OperationalError:
+            return 0
+    return total

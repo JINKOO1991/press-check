@@ -239,7 +239,7 @@ def load_default() -> Corpus:
     else:
         if live is not None:
             return live
-        fx_notice = f"실자료 미적재: 검색 색인이 없어 합성 코퍼스를 씁니다. {where}. 수집 CLI의 build_index 로 색인을 만든 뒤 서버를 다시 시작하세요."
+        fx_notice = f"실자료 미적재: 검색 색인이 없어 합성 코퍼스를 씁니다. {where}. 번들 색인을 설치한 뒤 서버를 다시 시작하세요(PYTHONPATH=<플러그인 폴더>/engine python3 -m press_review install-bundle)."
         dflt = config.default_data_dir()
         if dflt != od.parent and _has_current_index(dflt / corpus_sqlite.INDEX_DIR_NAME):
             fx_notice += (f" 기본 위치 {dflt} 에는 색인이 있습니다(선택된 폴더와 다름, 자동 채택하지 않음)."

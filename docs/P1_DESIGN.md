@@ -8,7 +8,7 @@
 
 ## 배치
 
-- 코드: `plugins/press-check/engine/press_review/ingestion/`. 수집은 운영 CLI(`python -m press_review.ingestion ...`)로만 실행하고 MCP 도구로 노출하지 않는다.
+- 코드: `devtools/engine/press_review/ingestion/`(2026-11-07 UDEC-25에 따라 플러그인 폴더 밖 개발자 위치로 이동. 실행은 `PYTHONPATH=plugins/press-check/engine:devtools/engine`). 수집은 운영 CLI(`python -m press_review.ingestion ...`)로만 실행하고 MCP 도구로 노출하지 않는다.
 - 데이터: `config.py`의 데이터 디렉터리(기본 `~/.local/share/press-dispute-review`) 아래 `corpus/`. 저장소 안에는 쓰지 않는다.
   - `corpus/manifest.sqlite`: 수집 장부(아래 표)
   - `corpus/http_cache/<host>/<sha256(url)[:16]>.{body,meta.json}`: 응답 캐시

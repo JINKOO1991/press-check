@@ -87,6 +87,18 @@ def cmd_corpus_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_install_bundle(args: argparse.Namespace) -> int:
+    from . import bundle_install
+    try:
+        res = bundle_install.install_bundle(expected_sha256=args.sha256)
+    except bundle_install.BundleError as e:
+        _err(f"설치 실패: {e}")
+        return 1
+    _out(json.dumps(res, ensure_ascii=False, indent=2))
+    _out("Claude Code를 다시 시작하면 새 색인을 씁니다.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="press_review", description="언론분쟁 예방 검토 엔진(P0)")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -102,6 +114,9 @@ def build_parser() -> argparse.ArgumentParser:
     v.set_defaults(func=cmd_validate)
     c = sub.add_parser("corpus-status", help="코퍼스 상태")
     c.set_defaults(func=cmd_corpus_status)
+    b = sub.add_parser("install-bundle", help="구조화가 끝난 번들 색인을 내려받아 sha256 검증 뒤 CURRENT 로 지정")
+    b.add_argument("--sha256", help="릴리스 공지에 적힌 색인 파일 sha256(넣으면 판본 정보의 값과 대조)")
+    b.set_defaults(func=cmd_install_bundle)
     return ap
 
 

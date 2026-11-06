@@ -1,6 +1,6 @@
 ---
 name: corpus-status
-description: press-check가 근거 검색에 쓰는 코퍼스(판례·심의·조정 자료)의 스냅샷 ID, 자료군별 건수, 기준일, 누락·권리보류 현황, 합성(fixture) 여부를 보여 준다.
+description: press-check가 근거 검색에 쓰는 설치된 번들 색인(판례·헌법재판소 결정·법고을 판결)의 스냅샷 ID, 자료군별 건수, 기준일, 누락·권리보류 현황, 합성(fixture) 여부를 보여 준다.
 when_to_use: 사용자가 "어떤 자료로 검토하나", "판례 몇 건", "코퍼스 상태", "자료 기준일"을 묻거나, 검토 결과의 근거 범위를 확인하려 할 때.
 allowed-tools: mcp__plugin_press-check_press-review__corpus_status
 ---
@@ -34,3 +34,4 @@ allowed-tools: mcp__plugin_press-check_press-review__corpus_status
 - 코퍼스에 없는 자료를 "있다"고 말하지 않는다. 누락·권리보류 항목이 있으면 숨기지 않는다.
 - 건수가 많다는 이유로 "모델이 판례를 학습했다"고 표현하지 않는다. 이 플러그인은 검색만 한다.
 - 이 상태는 검토 결과의 법적 안전성을 보증하지 않는다.
+- 색인이 없다는 결과면 번들 설치(`install-bundle`, 플러그인 README '근거 자료 설치')를 안내하되, 번들은 출시 전이고 릴리스 위치가 정해지지 않았다고 함께 말한다. 언론중재위원회·인터넷선거보도심의위원회 자료는 번들에 없다.

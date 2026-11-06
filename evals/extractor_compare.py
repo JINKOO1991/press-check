@@ -24,6 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "plugins" / "press-check" / "engine"))
+sys.path.insert(0, str(ROOT / "devtools" / "engine"))      # 수집 코드(press_review.ingestion)는 플러그인 밖 개발자 경로
 
 from press_review import config  # noqa: E402
 from press_review.ingestion import stage  # noqa: E402

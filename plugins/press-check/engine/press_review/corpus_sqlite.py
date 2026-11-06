@@ -35,7 +35,6 @@ from .case_numbers import canon_prec_number, split_case_numbers
 from .contracts import core_coverage, is_date, is_uri
 from . import pubyear
 from .corpus import (AUTHORITY_TYPES, MAX_LIMIT, MAX_QUERY_CP, RISK_CHANNELS, Corpus, CorpusError, _check_search_args, reference_date)
-from .ingestion.structure_records import LIST_CHUNK_AUTHORITY
 
 INDEX_FORMAT = "pdr-index-5"       # 5: bigram_terms 의 ne 열(어절 첫머리·조사를 뗀 어절 끝 일치 횟수, 어절 경계 가중). 4: chunk_kind 열, 같은 본문 passage 중복 제거와 passage_alias 표(P3 재빌드). 3: counter_signals 계산 변경(파기·환송 문맥과 면책 부정 태그 제외, CX1-8). 2: reference_date·reference_date_basis 열(G-D23), stats 의 cases_by_authority_type(G-D22)
 READABLE_FORMATS = ("pdr-index-3", "pdr-index-4", INDEX_FORMAT)   # 3번 형식(chunk_kind 열·별칭 표 없음)과 4번 형식(ne 열 없음)도 연다: 재빌드 뒤에도 이전 snapshot 으로 되돌릴 수 있게 한다. ne 가 없는 색인은 이전 2글자 점수로 돈다
@@ -70,6 +69,11 @@ _INDEX_RE = re.compile(r"^corpus-idx-[0-9a-f]{16}\.sqlite$")
 # ---- 검색 순위 -------------------------------------------------------------------------------------------------------
 # G-D32 목록·색인 장 chunk: 사례집 소스의 case 없는 쪽 chunk(색인의 verification_status='not_applicable'). 사건 행을 나열해 분쟁 어휘의
 # 빈도가 높으므로 일반 질의(trigram BM25·2글자)에서는 다른 결과 뒤로 강등한다. 사건번호·조문 정확 검색과 본문 속 구문 일치(tier 0·1)는 강등하지 않는다.
+# 이 소스의 '전체 목록'·색인 장은 구조화 대신 쪽 chunk 로 색인한다(수집 쪽 structure.py 가 읽는다). source_id -> chunk 의 authority_type.
+LIST_CHUNK_AUTHORITY: dict[str, str] = {
+    "pac_correction_casebooks": "pac_decision",
+    "pac_adjustment_casebooks": "pac_decision",
+}
 LIST_CHUNK_FAMILIES = tuple(sorted(LIST_CHUNK_AUTHORITY))
 LIST_KIND = "list"             # passages.chunk_kind 값: list(목록·색인 장 쪽 chunk) | case(구조화 사건 chunk) | text(그 밖의 쪽 단위 본문 chunk)
 _LIST_SQL = "(p.chunk_kind='list')"
@@ -671,8 +675,12 @@ def _read_rights(conn: sqlite3.Connection) -> tuple[dict, dict]:
 
 def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.datetime | None = None,
                 check: Callable[[], None] | None = None, keep: int = KEEP_INDEXES, dry_run: bool = False,
-                force_disk: bool = False, on_force: Callable[[str], None] | None = None) -> dict:
+                force_disk: bool = False, on_force: Callable[[str], None] | None = None,
+                pending_fn: Callable[[sqlite3.Connection], int] | None = None) -> dict:
     """수집 장부에서 색인을 만든다. 돌려주는 dict 는 건수·경로·상태뿐이다(원문 없음).
+
+    ``pending_fn``: 열린 읽기 전용 장부 연결에서 '사건 단위 인입 평가가 아직 반영되지 않은 사건 수'를 세는 수집 쪽 함수(개발자 CLI 가 넘긴다).
+    없으면 ``case_admission_pending`` 을 None(미측정)으로 남기고 0 으로 쓰지 않는다.
 
     status: ``built`` | ``unchanged``(같은 snapshot 이 이미 있음) | ``dry_run`` | ``no_passages``(넣을 chunk 없음, 아무것도 발행하지 않음).
     """
@@ -729,7 +737,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                 "by_chunk_kind": dict(sorted(by_kind.items())), "aliases": len(aliases),
                 "cases_by_authority_type": {k: len(v) for k, v in sorted(cases_by_auth.items())}, "date_unknown_passages": date_unknown,
                 "latest_decision_date": max(dates) if dates else None, "index_dir": str(od)}
-        pending = _case_admission_pending(conn)               # G-D34: 사건 단위 인입 평가가 아직 반영되지 않은 사건 수(읽기 전용 계획, 건수만)
+        pending = pending_fn(conn) if pending_fn is not None else None     # G-D34: 사건 단위 인입 평가가 아직 반영되지 않은 사건 수(읽기 전용 계획, 건수만)
         base["case_admission_pending"] = pending
         if pending:
             base["warnings"] = [f"case_admission_pending: {pending} (run admission --apply)"]
@@ -764,7 +772,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                                       "cases_by_authority_type": base["cases_by_authority_type"], "date_unknown_passages": date_unknown,
                                       "by_source_family": dict(sorted(by_family.items())), "sources": sources,
                                       "excluded": base["excluded"],
-                                      "case_admission_pending": pending}, ensure_ascii=False, sort_keys=True),
+                                      **({"case_admission_pending": pending} if pending is not None else {})}, ensure_ascii=False, sort_keys=True),
         }
         _guard_index_build(od, force=force_disk, on_force=on_force)    # 임시 파일을 만들기 전에 C: 여유 확인(색인 폴더가 다른 드라이브여도 같은 기준)
         config.private_mkdir(od)
@@ -784,32 +792,6 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
         return {"status": "built", "path": str(target), "fts_trigram": use_fts, "pruned": pruned, **base}
     finally:
         conn.close()
-
-
-class _ReadOnlyRows:
-    """``admission.evaluate_cases`` 가 쓰는 ``select()`` 만 가진 읽기 전용 어댑터(이미 열린 ``mode=ro`` 연결 위에서 dict 행을 준다)."""
-
-    def __init__(self, conn: sqlite3.Connection):
-        self._conn = conn
-
-    def select(self, sql: str, params: tuple = ()) -> list[dict]:
-        cur = self._conn.execute(sql, params)
-        names = [d[0] for d in cur.description]
-        return [dict(zip(names, row)) for row in cur.fetchall()]
-
-
-def _case_admission_pending(conn: sqlite3.Connection) -> int:
-    """CASE_ADMISSION_SOURCES 각각의 평가 계획(``pending_changes``: 새로 기록·해제될 행 수) 합계. 장부는 쓰지 않는다.
-    사건·실패 테이블이 없는 옛 장부는 0 이다."""
-    from .ingestion import admission
-    m = _ReadOnlyRows(conn)
-    total = 0
-    for src in admission.CASE_ADMISSION_SOURCES:
-        try:
-            total += admission.evaluate_cases(m, src)["summary"]["pending_changes"]
-        except sqlite3.OperationalError:
-            return 0
-    return total
 
 
 def _guard_index_build(od: Path, *, force: bool = False, on_force: Callable[[str], None] | None = None) -> None:

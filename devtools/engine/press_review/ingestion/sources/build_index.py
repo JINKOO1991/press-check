@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from ... import corpus_sqlite
+from .. import admission
 
 
 def add_arguments(parser) -> None:
@@ -16,4 +17,5 @@ def run(ctx, args) -> dict:
     return corpus_sqlite.build_index(
         ctx.corpus_dir / "manifest.sqlite", ctx.corpus_dir.parent / corpus_sqlite.INDEX_DIR_NAME,
         now=ctx.now().astimezone(), check=ctx.check_time, keep=args.keep, dry_run=ctx.dry_run,
-        force_disk=bool(ctx.extras.get("force_disk")), on_force=ctx.extras.get("on_force_disk"))
+        force_disk=bool(ctx.extras.get("force_disk")), on_force=ctx.extras.get("on_force_disk"),
+        pending_fn=admission.case_admission_pending)

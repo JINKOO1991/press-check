@@ -34,6 +34,11 @@
 - 한계: 본문이 없는 문서 14건. 번호 해석 미해결 62건(법제처 헌재결정례에서 찾지 못한 번호; 실패 장부 `lawgo_detc_no:` 열린 행, deferred_local 61·page_overflow 1). 의견 표제와 주문 분류는 휴리스틱이며 무작위 10건 자동 감사만 했고 사람 검수는 하지 않았다. 구조화 사건은 unverified 상태다. 병합 사건번호 중 확인되지 않은 것은 공백으로 기록만 했다. 이 결과는 인용 일치 기준의 수치이며 법적 안전성이나 전체 헌재 결정 커버리지를 뜻하지 않는다.
 - 한계(미측정): `needs_review` 과잉 제거 가능성, `【주 문】` 쪽이 없는 문서에서 outcome이 폐기되는 빈도. `case_admission_pending` 수치는 색인 구축 시점 값이다.
 
+## 출시본 구조 분리 (2026-11-07, UDEC-25·26)
+
+- 구현됨(합성 색인 시험): 수집 어댑터·DeepSeek 구조화(`ingestion/`, `providers/deepseek.py`, `prompts/`, `prices/`)를 `plugins/press-check/` 밖 `devtools/engine/`으로 옮겼다. 플러그인 폴더에는 이 코드와 import가 없고(`tests/mcp/test_plugin_isolation.py`), 플러그인 폴더만 복사한 환경에서 MCP 서버가 뜨고 `search_cases`가 동작한다. 번들 만들기(`bundle_build.py`)와 설치 명령(`install-bundle`)을 만들었다.
+- 미실시: 번들을 실제로 만들지 않았다. 자연인 실명 문서의 전수 검수와 제외 목록은 없다. 릴리스 URL은 미정이라 `config.BUNDLE_RELEASE_BASE_URL`은 자리표시자이며 `install-bundle`은 지금 내려받지 않고 중단한다. 번들 사건 수(`cases_by_authority_type`)는 사건번호 기준 하한이다.
+
 ## 검증
 
 ## 검증

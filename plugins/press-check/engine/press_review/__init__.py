@@ -4,4 +4,9 @@
 이 패키지는 위치·해시·근거·수정안 검사와 렌더링만 한다.
 """
 
+from pkgutil import extend_path
+
+# 개발자는 PYTHONPATH 에 devtools/engine 을 더해 같은 이름의 press_review.ingestion 을 쓴다(플러그인 폴더에는 수집 코드가 없다).
+__path__ = extend_path(__path__, __name__)
+
 __version__ = "0.1.0"

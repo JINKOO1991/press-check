@@ -7,7 +7,15 @@
 import atexit
 import os
 import shutil
+import sys
 import tempfile
+from pathlib import Path
+
+# 수집·DeepSeek 구조화 코드는 플러그인 폴더 밖 devtools/engine 에 있다. 같은 이름(press_review.ingestion)으로 쓰려고 개발자 경로를 더한다.
+# 플러그인만 복사한 환경에서의 동작은 tests/mcp/test_plugin_only.py 가 별도 프로세스로 확인한다.
+_DEV_ENGINE = Path(__file__).resolve().parents[1] / "devtools" / "engine"
+if str(_DEV_ENGINE) not in sys.path:
+    sys.path.insert(0, str(_DEV_ENGINE))
 
 _TMP = tempfile.mkdtemp(prefix="pdr-tests-data-")
 atexit.register(shutil.rmtree, _TMP, True)

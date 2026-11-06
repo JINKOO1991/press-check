@@ -12,6 +12,7 @@ import synth_ledger as sl  # noqa: E402
 
 from press_review import corpus as corpus_mod, corpus_sqlite as cs, review  # noqa: E402
 from press_review.ingestion.__main__ import main as ingest_main  # noqa: E402
+from press_review.ingestion import admission  # noqa: E402
 from press_review.ingestion.manifest import Manifest  # noqa: E402
 
 NOW = dt.datetime(2026, 10, 19, 9, 0, tzinfo=dt.timezone(dt.timedelta(hours=9)))
@@ -58,7 +59,7 @@ def build(tmp_path, *, quote_ok=9, name="data"):
     d = tmp_path / name
     ledger = sl.build_ledger(d / "corpus")
     add_detc(ledger, quote_total=10, quote_ok=quote_ok)
-    res = cs.build_index(ledger, d / "index", now=NOW)
+    res = cs.build_index(ledger, d / "index", now=NOW, pending_fn=admission.case_admission_pending)
     return d, ledger, res
 
 
@@ -164,7 +165,7 @@ def test_build_index_pending_warns_and_keeps_snapshot_rules(tmp_path):
     d, ledger, res = build(tmp_path, quote_ok=2)
     assert res["case_admission_pending"] == 1
     assert res["warnings"] == ["case_admission_pending: 1 (run admission --apply)"]
-    dry = cs.build_index(ledger, d / "index2", now=NOW, dry_run=True)
+    dry = cs.build_index(ledger, d / "index2", now=NOW, dry_run=True, pending_fn=admission.case_admission_pending)
     assert dry["status"] == "dry_run" and dry["snapshot_id"] == res["snapshot_id"]                  # 경고는 snapshot 에 영향이 없다
     assert dry["case_admission_pending"] == 1 and dry["warnings"] == res["warnings"]
     assert {"status", "path", "passages", "excluded", "snapshot_id"} <= set(res)                      # 기존 키 유지
@@ -173,11 +174,11 @@ def test_build_index_pending_warns_and_keeps_snapshot_rules(tmp_path):
 def test_build_index_ledger_untouched_and_pending_clears_after_apply(tmp_path):
     d, ledger, res = build(tmp_path, quote_ok=2)
     before = ledger.read_bytes()
-    cs.build_index(ledger, d / "index3", now=NOW, dry_run=True)
+    cs.build_index(ledger, d / "index3", now=NOW, dry_run=True, pending_fn=admission.case_admission_pending)
     assert ledger.read_bytes() == before                                                            # 평가 계획 계산은 장부를 쓰지 않는다
     out = io.StringIO()
     assert ingest_main(["admission", "--source", "lawgo_detc", "--apply"], corpus=ledger.parent, stdout=out) == 0
     assert json.loads(out.getvalue())["summary"]["excluded"] == 1
-    after = cs.build_index(ledger, d / "index4", now=NOW)
+    after = cs.build_index(ledger, d / "index4", now=NOW, pending_fn=admission.case_admission_pending)
     assert after["case_admission_pending"] == 0 and "warnings" not in after
     assert after["excluded"].get("case_admission_excluded") == 1
