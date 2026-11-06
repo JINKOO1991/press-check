@@ -409,3 +409,21 @@ def test_revision_multiline_block_consistent(tmp_path):
     _assert_allow(_hook(tmp_path, e, DONE + "\n" + BODY.replace("\n둘째", "\r\n둘째")))
     d = _assert_block(_hook(tmp_path, e, DONE + "\n" + BODY.replace("첫 줄\n둘째 줄", "첫 줄 둘째 줄")))
     assert "p3" in d["reason"]
+
+
+def _summary():
+    """컨텍스트 압축 요약 항목: 사용자 입력이 아니며 본문에 draft 표지 문자열이 설명으로 들어 있다."""
+    return _u("This session is being continued from a previous conversation.\n"
+              "press-check:draft 를 실행했고 <command-name>/press-check:draft</command-name> 로 호출됐다.",
+              isCompactSummary=True, isVisibleInTranscriptOnly=True)
+
+
+def test_compact_summary_with_draft_marker_is_not_draft_turn(tmp_path):
+    e = [_u("이전 대화"), _a([{"type": "text", "text": "x"}]), _summary(), _a([{"type": "text", "text": "정리 끝"}])]
+    _assert_allow(_hook(tmp_path, e, "서브에이전트 결과를 정리했습니다."))
+
+
+def test_compact_summary_after_draft_turn_is_boundary(tmp_path):
+    e = [_slash(), *_review_calls(), _a([{"type": "text", "text": DONE}]), _summary(),
+         _a([{"type": "text", "text": "정리 끝"}])]
+    _assert_allow(_hook(tmp_path, e, "서브에이전트 결과를 정리했습니다."))

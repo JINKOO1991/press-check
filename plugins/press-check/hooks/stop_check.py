@@ -71,9 +71,13 @@ def _has_tool_result(entry):
     return isinstance(c, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in c)
 
 
+def _is_compact_summary(entry):
+    return entry.get("isCompactSummary") is True or entry.get("isVisibleInTranscriptOnly") is True
+
+
 def _is_user_input(entry):
     return (entry.get("type") == "user" and not entry.get("isMeta") and not entry.get("isSidechain")
-            and not _has_tool_result(entry))
+            and not _is_compact_summary(entry) and not _has_tool_result(entry))
 
 
 def _text_of(entry):
@@ -88,6 +92,8 @@ def _text_of(entry):
 
 def _current_turn(entries):
     for i in range(len(entries) - 1, -1, -1):
+        if _is_compact_summary(entries[i]):
+            return None  # 압축 요약은 턴 경계다: 그 앞 턴의 표지를 현재 턴으로 읽지 않는다
         if _is_user_input(entries[i]):
             return entries[i:]
     return None
