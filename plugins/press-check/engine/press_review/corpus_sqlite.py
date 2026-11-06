@@ -46,12 +46,17 @@ KEEP_INDEXES = 3
 DISPLAY_QUOTE_MAX_CP = 300     # 재배포 허락이 없는 소스의 사용자 화면 인용 상한(P3_DESIGN §1). README 에도 적는다.
 # 출처 표시 요건(UDEC-11, 설계 D5): 이 소스의 passage 를 쓰는 검색 응답·설명·상태 출력에 문구를 출처로 적는다.
 # passage 단위 공개 키(corpus.PUBLIC_KEYS)에는 넣지 않고 응답·상태 단위로 알린다.
-SOURCE_ATTRIBUTION = {"lawgo_detc": "헌법재판소 결정, 법제처 국가법령정보센터 제공"}
+_ATTR_DETC = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
+_ATTR_PREC = "법원 판결, 법제처 국가법령정보센터 제공"
+SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC}
+# 판례 문서 id 는 소스 id 가 아니라 ``lawgo_prec:<일련번호>`` 접두를 쓴다(passage source_id 조회 전용).
+_DOC_PREFIX_ATTRIBUTION = {"lawgo_prec": _ATTR_PREC}
 
 
 def attribution_for(source_id: Any) -> str | None:
-    """passage 의 source_id 는 문서 id(``lawgo_detc:<일련번호>``)이므로 ``:`` 앞의 장부 소스 id 로 출처 문구를 찾는다."""
-    return SOURCE_ATTRIBUTION.get(str(source_id).split(":", 1)[0])
+    """passage 의 source_id 는 문서 id(``lawgo_detc:<일련번호>``·``lawgo_prec:<일련번호>``)이므로 ``:`` 앞의 접두로 출처 문구를 찾는다."""
+    head = str(source_id).split(":", 1)[0]
+    return SOURCE_ATTRIBUTION.get(head) or _DOC_PREFIX_ATTRIBUTION.get(head)
 
 EVAL_MAX_LIMIT = 50            # 평가 하네스 전용 limit 상한(search_eval). MCP·엔진 경로는 search() 를 쓰므로 MAX_LIMIT 그대로다.
 CANDIDATE_CAP = 200            # 단계별 후보 상한

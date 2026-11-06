@@ -29,8 +29,8 @@
 
 ## 헌재 결정례 소스(`lawgo_detc`) 단위 상태 (2026-10-19)
 
-- 구현됨(합성 장부·합성 응답 시험): U1 사건 단위 인입 평가(`admission`, G-D34), U2 어댑터 `lawapi_detc`·`lawapi_detc_body`와 본문 파서, U3 구조화 프로필 `constitutional_decision`(의견 가드·처분 가드), U4 출처 표시(`search_cases`의 `source_attribution`, `explain`·`review`·`corpus-status` 스킬 규칙, `corpus_status` 소스 줄)와 평가 미반영 경고(`build_index` 결과의 `case_admission_pending`·`warnings`, `corpus_status` 경고). 상세 docs/P2_DESIGN.md G-D34.
-- 실시(2026-10-19): 파일럿 S1(5건)·S2(45건)·S3(350건) 완료. 소스 권리 기록 완료(내부 처리 허용, 재배포는 허락 필요, 출처 표시 요건). 문서 400건 중 본문이 있는 386건을 구조화했고 사건 386·격리 0이다. 인용 일치 8,546/8,582(99.58%). 비다수 의견 쪽 인용 1,050건 중 court_majority 0건. 사건 단위 제외 1건(2003헌바81). DeepSeek 비용 누적 약 $3.70, 법제처 요청 약 900건. 병합 번호의 색인 검색을 확인했다. 색인은 위 P3 행의 snapshot으로 재빌드했다.
+- 구현됨(합성 장부·합성 응답 시험): U1 사건 단위 인입 평가(`admission`, G-D34), U2 어댑터 `lawapi_detc`·`lawapi_detc_body`와 본문 파서, U3 구조화 프로필 `constitutional_decision`(의견 가드·처분 가드), U4 출처 표시(헌재 `lawgo_detc`와 판례 `lawgo_prec` passage에 대한 `search_cases`의 `source_attribution`, `explain`·`review`·`corpus-status` 스킬 규칙, `corpus_status` 소스 줄)와 평가 미반영 경고(`build_index` 결과의 `case_admission_pending`·`warnings`, `corpus_status` 경고). 상세 docs/P2_DESIGN.md G-D34.
+- 실시(2026-10-19): 파일럿 S1(5건)·S2(45건)·S3(350건) 완료. 소스 권리 기록 완료(내부 처리 허용, 출처 표시 요건. 재배포는 2026-11-06 UDEC-18로 허용 기록, 조건은 법제처 출처 표기, 미세조정은 허락 필요 유지). 문서 400건 중 본문이 있는 386건을 구조화했고 사건 386·격리 0이다. 인용 일치 8,546/8,582(99.58%). 비다수 의견 쪽 인용 1,050건 중 court_majority 0건. 사건 단위 제외 1건(2003헌바81). DeepSeek 비용 누적 약 $3.70, 법제처 요청 약 900건. 병합 번호의 색인 검색을 확인했다. 색인은 위 P3 행의 snapshot으로 재빌드했다. 판례(`lawgo_prec_supreme`·`lawgo_prec_refs`)에도 같은 출처 표시를 구현했다(문구 "법원 판결, 법제처 국가법령정보센터 제공"). 한계: 활성 색인의 소스별 `redistributable` 값은 UDEC-18 이전 권리 기록을 반영하고 있어 다음 재빌드에서 바뀐다.
 - 한계: 본문이 없는 문서 14건. 번호 해석 미해결 62건(법제처 헌재결정례에서 찾지 못한 번호; 실패 장부 `lawgo_detc_no:` 열린 행, deferred_local 61·page_overflow 1). 의견 표제와 주문 분류는 휴리스틱이며 무작위 10건 자동 감사만 했고 사람 검수는 하지 않았다. 구조화 사건은 unverified 상태다. 병합 사건번호 중 확인되지 않은 것은 공백으로 기록만 했다. 이 결과는 인용 일치 기준의 수치이며 법적 안전성이나 전체 헌재 결정 커버리지를 뜻하지 않는다.
 - 한계(미측정): `needs_review` 과잉 제거 가능성, `【주 문】` 쪽이 없는 문서에서 outcome이 폐기되는 빈도. `case_admission_pending` 수치는 색인 구축 시점 값이다.
 
