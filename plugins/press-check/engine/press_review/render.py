@@ -7,6 +7,7 @@ from . import config
 
 STAR_NOTE = "별(★)은 실제 분쟁 발생 확률이 아니라 검토 우선순위입니다."
 STAR_MEANING = {1: "★☆☆ 확인 권고", 2: "★★☆ 수정·보강 검토", 3: "★★★ 발행 전 집중 검토"}
+NOTICE_LINE = "이 결과는 법률 자문이 아닙니다. 검토 보조 자료이며 별(★)은 분쟁·패소 확률이 아닙니다."
 HEADER = "| 문제 요소 | 검토 필요도 | 사유 | 추천 수정안 |"
 MAX_QUOTE_CELL = 60
 
@@ -48,7 +49,7 @@ def render_table(report: dict, top_n: int = config.DISPLAY_TOP_N) -> str:
     findings = sorted(report["findings"], key=lambda f: -f["priority_stars"])  # 안정 정렬: 같은 별은 입력 순서(원문 위치순)
     shown = findings[: max(0, top_n)]
     hidden = len(findings) - len(shown)
-    lines = [STAR_NOTE]
+    lines = [STAR_NOTE, NOTICE_LINE]
     if report.get("execution_mode") == "synthetic_example":
         lines.append("합성(예제) 실행입니다. 근거 passage는 실제 판결·결정이 아니며 법적 판단에 쓸 수 없습니다.")
     lines.append("")
@@ -95,6 +96,8 @@ def render_detail(report: dict, finding_id: str, explanation: dict | None) -> st
         "",
         "### 추천 수정안",
         _edit_cell(f),
+        "",
+        NOTICE_LINE,
     ]
     for r in se.get("related_edits", []):
         rs = r["span"]

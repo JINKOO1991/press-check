@@ -16,7 +16,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from . import config, contracts, corpus_sqlite, edit_checks, hashing, logsafe, render, revision
+from . import config, contact_mask, contracts, corpus_sqlite, edit_checks, hashing, logsafe, render, revision
 from .article_io import parse_plaintext_ex
 from .store import EphemeralStore
 
@@ -186,6 +186,7 @@ def _quote_warnings(explanations: dict, findings: list[dict], blocks: dict, corp
             p = corpus.get_passage(ev["source_id"], ev["passage_id"])
             if p and isinstance(p.get("text"), str):
                 pool.append(_norm_quote_text(p["text"]))
+                pool.append(_norm_quote_text(contact_mask.mask_text(p["text"])[0]))      # search_cases 응답은 연락처를 가려 보내므로 호스트가 옮긴 가림 표시 인용도 맞춘다
     for fid, fields in explanations.items():
         for name in QUOTE_FIELDS:
             v = fields.get(name)
@@ -521,6 +522,24 @@ def _excerpt_passage(p: dict, words: list[str]) -> dict:
     return out
 
 
+def _mask_passage(p: dict) -> tuple[dict, int]:
+    """응답 passage 의 text·display_text·excerpts[].text 에서 이메일·전화번호를 가린다. 발췌의 start·end 와 text_len 은 원문 기준 값 그대로 둔다."""
+    out, n = dict(p), 0
+    for k in ("text", "display_text"):
+        if isinstance(out.get(k), str):
+            out[k], c = contact_mask.mask_text(out[k])
+            n += c
+    if isinstance(out.get("excerpts"), list):
+        ex = []
+        for e in out["excerpts"]:
+            if isinstance(e, dict) and isinstance(e.get("text"), str):
+                t, c = contact_mask.mask_text(e["text"])
+                e, n = {**e, "text": t}, n + c
+            ex.append(e)
+        out["excerpts"] = ex
+    return out, n
+
+
 def search_cases(
     corpus: Any,
     *,
@@ -540,7 +559,13 @@ def search_cases(
     full = passages                      # 안내문 조건은 줄이기 전 passage 로 판단한다
     words = _query_words(query) if limit > EXCERPT_FROM_LIMIT else []
     passages = [_trim_passage(_excerpt_passage(p, words) if limit > EXCERPT_FROM_LIMIT else p) for p in full]
+    masked = [_mask_passage(p) for p in passages]
+    passages, contact_masked = [m[0] for m in masked], sum(m[1] for m in masked)
     out = {"ok": True, "count": len(passages), "snapshot_id": corpus.snapshot_id, "is_fixture": corpus.is_fixture, "stance": stance, "passages": passages}
+    if contact_masked:
+        out["contact_masked"] = contact_masked
+        out["contact_mask_rule"] = (f"이메일·전화번호 {contact_masked}건을 '{contact_mask.EMAIL_MASK}'·'{contact_mask.PHONE_MASK}'로 가렸다. 형식으로만 찾으므로 모든 연락처를 가린다는 뜻은 아니다. "
+                                    "인용할 때 가림 표시는 그대로 두고 연락처를 짐작해 채우지 않는다.")
     if not passages:
         out["message"] = "코퍼스에서 해당 조건에 맞는 자료를 찾지 못했습니다. 없는 근거를 만들지 마세요."
     if any(p.get("date_unknown") for p in passages) and not corpus.is_fixture:

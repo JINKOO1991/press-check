@@ -13,7 +13,7 @@ import copy
 from collections import Counter
 from typing import Any
 
-from . import edit_checks, hashing, logsafe
+from . import edit_checks, hashing, logsafe, render
 
 REV_SUFFIX = "~rev"        # 변경본 마스킹 색인 키: 원고 handle + 접미사(원고당 1개). 원고가 만료되면 함께 지운다(review._forget_expired).
 MIN_STARS = 2
@@ -261,6 +261,7 @@ def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_i
             if i.level == "warning":
                 flow_warnings.append({"code": i.code, "detail": f"제목·부제와 본문의 절차 단계 어휘 비교, 수정된 블록: {edited}"})
     notes = [
+        render.NOTICE_LINE,
         "변경본은 서버가 받은 원고 사본(cjson-1)의 블록 재조립본이며 원본 파일의 바이트 패치가 아닙니다. 원본은 바뀌지 않았습니다.",
         "적용은 서버의 어휘 수준 검사(숫자·인용·부정어·고유명사 후보)를 통과한 수정안에 한합니다. 의미 보존과 법적 안전은 보장하지 않으며 적용 확정은 기자가 합니다.",
     ]

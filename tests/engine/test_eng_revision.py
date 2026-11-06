@@ -519,17 +519,17 @@ def test_many_revisions_use_one_masking_slot(monkeypatch):
 from conftest import make_article as _mk
 from press_review import edit_checks as _ec
 
-B_NEG = [("title", "title", "회의 소식"), ("p1", "body", "잘간다.")]
+B_NEG = [("title", "title", "회의 소식"), ("p1", "body", "갑을.")]
 B_NAME = [("title", "title", "회의 소식"), ("p1", "body", "담당자는 갑을 병이라고 했다.")]
 
 
 def test_assembled_negation_created_by_adjacent_edits_is_dropped():
-    env = Env([fnd("F-1", 2, "p1", "잘", "못", arts=B_NEG), fnd("F-2", 2, "p1", "간다", "했다", arts=B_NEG)], blocks=B_NEG)
+    env = Env([fnd("F-1", 2, "p1", "갑", "아", arts=B_NEG), fnd("F-2", 2, "p1", "을", "니다", arts=B_NEG)], blocks=B_NEG)
     r = env.build()
     assert ids(r["applied"]) == ["F-1"]                                   # 앞선 F-1 이 먼저 수락되고 F-2 가 탈락한다
     assert [(s["finding_id"], s["reason_code"]) for s in r["skipped"]] == [("F-2", "NEGATION_ASSEMBLED")]
     rb = {b["block_id"]: b["text"] for b in r["revised_blocks"]}
-    assert "못했다" not in rb["p1"]
+    assert "아니다" not in rb["p1"]
     for bid, _, t in B_NEG:
         assert _ec.count_negations(rb[bid]) == _ec.count_negations(t)
 
