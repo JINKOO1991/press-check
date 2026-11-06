@@ -27,6 +27,7 @@ import urllib.parse
 from datetime import date
 from typing import Any, Optional
 
+from ...case_numbers import canon_year
 from ..http import FetchFailed, IngestionError
 from ..rights import RightsNotRecorded, require_source_rights
 from . import lawapi as L
@@ -87,16 +88,6 @@ class DetailParseError(ValueError):
 
 
 # ---------------------------------------------------------------- 사건번호
-def canon_year(y: str) -> Optional[str]:
-    """연도 표기 → 4자리. 2자리는 1945~1999 만 인정하고(2000년 이후 사건번호는 4자리로 인쇄된다) 4자리는 1900~2099 만 인정한다. 그 밖은 None(단기 연호 등)."""
-    n = int(y)
-    if len(y) == 2:
-        return str(1900 + n) if n >= 45 else None
-    if len(y) == 4 and 1900 <= n <= 2099:
-        return y
-    return None
-
-
 def canon_number(raw: str) -> Optional[str]:
     """'97도158'·'1997도158' → '1997도158'. 형식 밖이면 None."""
     m = NUMBER_RE.fullmatch(raw)
@@ -143,7 +134,8 @@ def public_url(key: str) -> str:
     return detail_url(key)
 
 
-_LI = re.compile(r'<li\s+class="search_result_item"\s+id="([^"]*)"')
+_ROW = re.compile(r'<li\s+class="search_result_item"')          # 행 경계. id·제목을 읽을 수 있는지와 무관하게 모든 행을 센다
+_LI_ID = re.compile(r'\bid="([^"]*)"')
 _CTG = re.compile(r'<span\s+class="ctg[^"]*"[^>]*>\s*([^<]*?)\s*</span>')
 _POP = re.compile(r"showViewerPopup\(\s*'([A-Za-z]\d{2})'\s*,\s*'([^']*)'\s*,\s*'([^']*)'")
 _TITLE = re.compile(r'class="summary_title"[^>]*>(.*?)</div>', re.S)
@@ -163,14 +155,15 @@ def _iso(y: str, m: str, d: str) -> Optional[str]:
 
 
 def parse_list(text: str) -> dict:
-    """목록 HTML → {'total': 총건수|None, 'items': [{key, court, ptype, title, numbers, date, form, case_name}], 'malformed': 키·제목을 읽지 못한 항목 수}.
+    """목록 HTML → {'total': 총건수|None, 'items': [{key, court, ptype, title, numbers, date, form, case_name}], 'malformed': 키·제목을 읽지 못한 항목 수, 'rows': 목록의 원래 항목 수(파싱 실패 포함)}.
     항목은 li.search_result_item 블록 단위다. 법원은 ctg 칸, 유형은 블록의 첫 showViewerPopup(뒤따르는 주석 사본은 쓰지 않는다), 번호·선고일은 요약 제목이다."""
     total = _TOTAL.search(text)
-    marks = list(_LI.finditer(text))
+    marks = list(_ROW.finditer(text))
     items, malformed = [], 0
     for n, m in enumerate(marks):
         blk = text[m.start(): marks[n + 1].start() if n + 1 < len(marks) else len(text)]
-        key = m.group(1).strip()
+        idm = _LI_ID.search(blk[:blk.find(">") + 1 if ">" in blk else len(blk)])
+        key = idm.group(1).strip() if idm else ""
         pop, ctg, tit = _POP.search(blk), _CTG.search(blk), _TITLE.search(blk)
         if not re.fullmatch(r"\d{1,20}", key) or not pop or pop.group(3) != key or not tit:
             malformed += 1
@@ -183,7 +176,13 @@ def parse_list(text: str) -> dict:
                       "case_name": _plain(t.group("name")) if t and t.group("name") else None})
         if not t:
             malformed += 1
-    return {"total": int(total.group(1).replace(",", "")) if total else None, "items": items, "malformed": malformed}
+    return {"total": int(total.group(1).replace(",", "")) if total else None, "items": items, "malformed": malformed, "rows": len(marks)}
+
+
+def norm_court(name: Any) -> str:
+    """법원 표기 정규화: 서울고법=서울고등법원, 서울중앙지법=서울중앙지방법원, 서울행법=서울행정법원(공백 무시). 목록은 정식 명칭, 상세 제목은 약칭을 쓰는 경우가 있다."""
+    s = re.sub(r"\s+", "", unicodedata.normalize("NFKC", str(name or "")))
+    return s.replace("지법", "지방법원").replace("고법", "고등법원").replace("가법", "가정법원").replace("행법", "행정법원")
 
 
 def exact_items(number: str, items: list) -> list:
@@ -229,13 +228,40 @@ def _detail_numbers(text: str) -> set:
     return out
 
 
-def accept_detail(body: bytes, headers: dict, expected: list) -> Optional[str]:
-    """상세는 article 과 사건번호 칸이 있고 요청한 번호가 사건번호·제목에 있어야 한다(다른 판결 응답은 serial_mismatch)."""
+_H1_HEAD = re.compile(r"^(?P<court>.+?)\s+(?P<y>\d{4})\.\s*(?P<m>\d{1,2})\.\s*(?P<d>\d{1,2})\.\s*(?:선고|자)(?:\s|$)")
+
+
+def detail_mismatches(text: str, number: str, item: Optional[dict]) -> list:
+    """상세 응답이 요청한 목록 항목의 판결인지 가린다. 불일치 목록(빈 목록이면 일치). 요청 번호 자체와 목록 번호가 모두 상세의 번호 집합에 있어야 하고
+    (겹치는 번호가 하나 있다는 것으로는 부족), 목록과 상세 제목의 선고일·법원(약칭 정규화)이 같아야 한다. 상세 제목을 읽지 못하면 선고일·법원은 비교하지 않는다."""
+    nums = _detail_numbers(text)
+    out = []
+    want = {canon_number(number) or number}
+    if item:
+        want |= {canon_number(t) or t for t in item.get("numbers") or []}
+    missing = sorted(want - nums)
+    if missing:
+        out.append({"field": "case_no", "missing": missing, "body": sorted(nums)})
+    h1 = _H1.search(text)
+    parts = _H1_HEAD.match(_plain(h1.group(1))) if h1 else None     # 제목 끝(판결·결정, ': 항소' 같은 꼬리, 잘린 '결')은 따지지 않고 법원·선고일만 읽는다
+    iso = _iso(parts.group("y"), parts.group("m"), parts.group("d")) if parts else None
+    if item and (item.get("date") or item.get("court")):
+        if not parts or (item.get("date") and not iso):         # 목록에 법원·선고일이 있으면 상세 제목과 유효한 날짜가 필요하다(목록값으로 보충하지 않는다)
+            out.append({"field": "detail_title", "list": [item.get("court"), item.get("date")], "body": _plain(h1.group(1)) if h1 else None})
+        else:
+            if item.get("date") and item["date"] != iso:
+                out.append({"field": "decision_date", "list": item["date"], "body": iso})
+            if item.get("court") and norm_court(item["court"]) != norm_court(parts.group("court")):
+                out.append({"field": "court", "list": item["court"], "body": parts.group("court")})
+    return out
+
+
+def accept_detail(body: bytes, headers: dict, number: str, item: Optional[dict] = None) -> Optional[str]:
+    """상세는 article 과 사건번호 칸이 있고 ``detail_mismatches`` 가 비어야 한다(다른 판결 응답은 serial_mismatch). 캐시에 쓰기 전 검사."""
     text = body.decode("utf-8", "replace")
     if not (_ARTICLE.search(text) and _CASE_NUM.search(text)):
         return _bad_response(text, "detail")
-    want = {canon_number(t) or t for t in expected}
-    return None if want & _detail_numbers(text) else "serial_mismatch"
+    return "serial_mismatch" if detail_mismatches(text, number, item) else None
 
 
 # ---------------------------------------------------------------- 추출(순수 함수: 입출력 없음)
@@ -381,7 +407,7 @@ def build_extraction(text: str, it: dict) -> dict:
         mism.append({"field": "case_no", "list": it.get("numbers"), "body": printed})
     if it.get("date") and iso and it["date"] != iso:
         mism.append({"field": "decision_date", "list": it["date"], "body": iso})
-    if it.get("court") and head.get("court") and it["court"] != head["court"]:
+    if it.get("court") and head.get("court") and norm_court(it["court"]) != norm_court(head["court"]):
         mism.append({"field": "court", "list": it["court"], "body": head["court"]})
     return {"pages": pages, "body_case_no": printed or None, "case_nos": case_nos, "decision_date": iso, "court": court, "opinion_status": op["status"],
             "opinion_split": {"status": op["status"], "marker_count": op["marker_count"], "markers": op["markers"]}, "headnote_split": hinfo,
@@ -478,13 +504,13 @@ class _Run:
         if self.consecutive_failures >= L.MAX_CONSECUTIVE_FAILURES:
             raise IngestionError(f"{L.MAX_CONSECUTIVE_FAILURES} consecutive request failures; stopping (unverified)")
 
-    def get(self, url: str, accept) -> tuple:
+    def get(self, url: str, accept, refresh: Optional[bool] = None) -> tuple:
         """('ok', Response) | ('fail', error_class). 403·429·로그인·CAPTCHA·비정상 접근 안내는 AccessStop(즉시 전체 중단). 실패 횟수는 호출한 쪽이 장부에 남긴 뒤 bump 한다."""
         ctx = self.ctx
         ctx.check_time()
         self.c["requests"] += 1
         try:
-            r = ctx.http.get(url, accept=accept)
+            r = ctx.http.get(url, accept=accept, refresh=refresh)
         except FetchFailed:
             return "fail", "http_fetch_failed"
         if r.status in (403, 429):
@@ -515,12 +541,35 @@ class _Run:
                          "(SELECT 1 FROM json_each(d.extra_json,'$.body.case_nos') j WHERE j.value=?)) LIMIT 1", (number, number))
         return bool(rows)
 
+    def stored_mismatches(self, doc, number: str, it: dict) -> list:
+        """이미 받은 문서에 새 번호를 잇기 전의 검증. 검증된 raw(sha 가 장부와 같음)가 있으면 ``detail_mismatches`` 를 원문에 적용하고, 없으면
+        장부에 저장된 body.case_nos·법원·선고일로 같은 규칙을 적용한다(목록값으로 보충하지 않는다)."""
+        extra = L._doc_extra(doc)
+        body = extra.get("body") or {}
+        rp = self.ctx.corpus_dir / body["raw_path"] if body.get("raw_path") else None
+        if rp is not None and rp.is_file():
+            data = rp.read_bytes()
+            if hashlib.sha256(data).hexdigest() == body.get("raw_sha256"):
+                return detail_mismatches(data.decode("utf-8", "replace"), number, it)
+        nums = {canon_number(t) or t for t in body.get("case_nos") or []}
+        want = {canon_number(number) or number} | {canon_number(t) or t for t in it.get("numbers") or []}
+        out = []
+        if want - nums:
+            out.append({"field": "case_no", "missing": sorted(want - nums), "body": sorted(nums)})
+        if it.get("date") and doc["decision_date"] != it["date"]:
+            out.append({"field": "decision_date", "list": it["date"], "body": doc["decision_date"]})
+        if it.get("court") and norm_court(it["court"]) != norm_court(extra.get("court")):
+            out.append({"field": "court", "list": it["court"], "body": extra.get("court")})
+        return out
+
     # -- 목록
-    def list_exact(self, number: str) -> tuple:
-        """('ok', 정확 일치 항목, 전체 항목 수) | ('fail', error_class) | ('overflow', None). 총건수가 한 쪽(100건)을 넘으면 MAX_LIST_PAGES 까지 쪽을 넘긴다."""
-        items, total = [], None
+    def list_exact(self, number: str, refresh: bool = False) -> tuple:
+        """('ok', 정확 일치 항목, 전체 항목 수) | ('incomplete', [], 항목 수) | ('fail', error_class) | ('overflow', None). 총건수가 한 쪽(100건)을 넘으면 MAX_LIST_PAGES 까지 쪽을 넘긴다.
+        쪽 종료는 파싱에 성공한 건수가 아니라 원래 항목 수(rows)와 총건수로 판단한다. 파싱하지 못한 항목이 있거나 총건수만큼 읽지 못했는데 정확 일치가 없으면
+        'incomplete'(없다고 확정하지 않는다)."""
+        items, total, rows, malformed = [], None, 0, 0
         for page in range(1, MAX_LIST_PAGES + 1):
-            kind, val = self.get(list_url(number, page), accept_list)
+            kind, val = self.get(list_url(number, page), accept_list, True if refresh else None)
             if kind == "fail":
                 return "fail", val
             parsed = parse_list(val.text())
@@ -529,10 +578,14 @@ class _Run:
             if total is not None and total > MAX_LIST_PAGES * LIST_ROWS:
                 return "overflow", None
             items += parsed["items"]
-            if len(parsed["items"]) < LIST_ROWS or total is None or len(items) >= total:
-                break
+            rows += parsed["rows"]
+            malformed += parsed["malformed"]
+            if parsed["rows"] == 0 or (total is None and parsed["rows"] < LIST_ROWS) or (total is not None and rows >= total):
+                break                                  # 총건수가 알려져 있으면 짧은 쪽이라는 이유만으로 멈추지 않는다(빈 쪽·총건수 도달·쪽 상한에서 끝)
         exact = exact_items(number, items)
         self.c["list_items_not_exact"] += len(items) - len(exact)
+        if not exact and (malformed or (total is not None and rows < total)):
+            return "incomplete", [], rows
         return "ok", exact, len(items)
 
     def event(self, number: str, it: dict, multi: bool) -> bool:
@@ -543,6 +596,9 @@ class _Run:
         merge = {"resolved_numbers": [number], "resolved_via": {number: "lx_list"}, **({"multi": True} if multi else {})}
         doc = m.get_document(doc_id)
         if doc is not None and doc["status"] in L.DONE_STATUSES and not ctx.refresh:
+            if self.stored_mismatches(doc, number, it):          # 다른 사건번호·법원·선고일의 목록 항목이 같은 키로 오면 번호를 병합하지 않는다
+                self.fail(number, "serial_mismatch", "stored detail does not match the requested list item (resolved_numbers unchanged)")
+                return False
             m.update_document_fields(doc_id, extra_merge=merge)
             self.c["docs_seen"] += 1
             return True
@@ -553,7 +609,7 @@ class _Run:
             raw, fetched_at = raw_path.read_bytes(), prior.get("fetched_at") or ""
             self.c["resumed_from_raw"] += 1
         else:
-            kind, val = self.get(detail_url(key), lambda b, h: accept_detail(b, h, it["numbers"]))
+            kind, val = self.get(detail_url(key), lambda b, h: accept_detail(b, h, number, it))
             if kind == "fail":
                 self.fail(number, val, "detail not usable", remote=True)
                 return False
@@ -562,6 +618,10 @@ class _Run:
             built = build_extraction(raw.decode("utf-8", "replace"), it)
         except DetailParseError as e:
             self.fail(number, "detail_format", str(e), remote=True)
+            return False
+        want = canon_number(number) or number            # 저장된 raw 로 이어 받는 경로도 같은 검증을 거친다(수신 검사는 새로 받을 때만 돈다)
+        if want not in {canon_number(t) or t for t in built["case_nos"]} or built["mismatches"] or detail_mismatches(raw.decode("utf-8", "replace"), number, it):
+            self.fail(number, "serial_mismatch", "detail does not match the requested list item (nothing registered)")
             return False
         sha = hashlib.sha256(raw).hexdigest()
         raw_rel = f"{RAW_DIR}/lx-{key}.html"
@@ -637,7 +697,7 @@ class _Run:
                 self.c["skipped_done"] += 1
             elif f and f["error_class"] in SKIP_CLASSES and not self.retry_nf:
                 self.c["skipped_known"] += 1
-            elif f and f["error_class"] not in NO_RETRY_CLASSES + SKIP_CLASSES and f["retry_count"] + 1 >= MAX_RETRIES:
+            elif f and f["error_class"] not in NO_RETRY_CLASSES + SKIP_CLASSES and f["retry_count"] + 1 >= MAX_RETRIES and not self.ctx.refresh:     # 명시적 --refresh 는 소진을 우회한다
                 self.c["skipped_exhausted"] += 1
             else:
                 todo.append(n)
@@ -650,9 +710,12 @@ class _Run:
                 self.c["skipped_limit"] += 1
                 continue
             requested += 1
-            res = self.list_exact(n)
+            # 불완전 목록(list_format)은 HTTP 로는 정상 응답이라 캐시에 남는다. 열린 list_format 실패의 다음 실행은 목록 요청만 캐시를 무시하고 다시 받는다
+            res = self.list_exact(n, refresh=(fails.get(FAIL_PREFIX + n) or {}).get("error_class") == "list_format")
             if res[0] == "fail":
                 self.fail(n, res[1], "list not usable", remote=True)
+            elif res[0] == "incomplete":              # 읽지 못한 항목이 있으면 없다고 확정하지 않는다(재시도 가능한 실패, 원격 실패 횟수에는 세지 않는다)
+                self.fail(n, "list_format", f"list incomplete: {res[2]} rows read, some items unparsed or fewer than the total (not recorded as not_found)")
             elif res[0] == "overflow":
                 self.fail(n, "page_overflow", f"totalCount exceeds {MAX_LIST_PAGES * LIST_ROWS} rows (nothing registered)")
             else:

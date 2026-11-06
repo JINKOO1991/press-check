@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator
 
 from . import config
+from .case_numbers import canon_prec_number, split_case_numbers
 from .contracts import core_coverage, is_date, is_uri
 from . import pubyear
 from .corpus import (AUTHORITY_TYPES, MAX_LIMIT, MAX_QUERY_CP, RISK_CHANNELS, Corpus, CorpusError, _check_search_args, reference_date)
@@ -206,6 +207,29 @@ def case_numbers(raw: str | None) -> list[str]:
         if m2:
             prefix = m2.group(1)
             out.append(tok)
+    return list(dict.fromkeys(out))
+
+
+CASE_NUMBER_RULES_VERSION = 1       # 색인 case_numbers 표에 원 표기와 정규화 표기(2자리·4자리 연도 통일)를 함께 넣는 규칙의 버전
+
+
+def case_number_rules() -> str:
+    """사건번호 색인 규칙의 버전. snapshot 입력과 meta 에 넣어 규칙이 바뀌면 재빌드가 ``unchanged`` 로 건너뛰지 않게 한다(ne_stem_rules 와 같은 방식, INDEX_FORMAT 은 올리지 않는다)."""
+    return f"casenum-v{CASE_NUMBER_RULES_VERSION}-canon_prec_number"
+
+
+def case_number_keys(raw: str | None) -> list[str]:
+    """색인 키: ``case_numbers`` 의 원 표기와 정규화 표기(97도158 -> 1997도158). 원 표기를 남겨 이전 질의 형태도 계속 찾는다."""
+    base = case_numbers(raw)
+    return list(dict.fromkeys(base + [canon_prec_number(c) for c in base]))
+
+
+def case_query_variants(cn: str) -> list[str]:
+    """질의 사건번호가 색인에서 찾아질 수 있는 표기들: 입력, 정규화(4자리), 1900년대의 2자리 표기. 이전 색인(원 표기만 있음)도 어느 한 형태로 닿는다."""
+    canon = canon_prec_number(cn)
+    out = [cn, canon]
+    if len(canon) > 4 and canon[:2] == "19" and canon[:4].isdigit():
+        out.append(canon[2:])
     return list(dict.fromkeys(out))
 
 
@@ -461,22 +485,10 @@ def _detc_numbers(case_number: Any) -> set[str]:
     return set(_DETC_NO.findall(re.sub(r"\s+", "", case_number))) if isinstance(case_number, str) else set()
 
 
-_PREC_NO = re.compile(r"(\d{2,4}[가-힣]{1,4})(\d+)")
-
-
 def _prec_numbers(case_number: Any) -> set[str]:
-    """법원 사건번호 문자열('2022다284711, 284728')에서 번호를 뽑는다. 뒤 번호는 앞 번호의 연도·부호를 잇는다."""
-    out: set[str] = set()
-    prefix = None
-    for part in re.split(r"[,·ㆍ、]", case_number if isinstance(case_number, str) else ""):
-        c = re.sub(r"\s+", "", re.sub(r"\([^)]*\)", "", part))
-        m = _PREC_NO.fullmatch(c)
-        if m:
-            prefix = m.group(1)
-            out.add(c)
-        elif c.isdigit() and prefix:
-            out.add(prefix + c)
-    return out
+    """법원 사건번호 문자열('2022다284711, 284728'·'A 및 B')에서 번호를 뽑는다. 뒤 번호는 앞 번호의 연도·부호를 잇고, 2자리 연도(97도158)는 4자리(1997도158)로 맞춘다.
+    분리·정규화 규칙은 수집기(lx_prec)와 같은 공용 모듈 case_numbers 를 쓴다."""
+    return {canon_prec_number(n) for n in split_case_numbers(case_number if isinstance(case_number, str) else "")}
 
 
 def _prec_keys(p: dict) -> set[str]:
@@ -630,7 +642,7 @@ def _write_index(path: Path, passages: Iterator[dict], meta: dict[str, str], use
                      p["verification_status"], json.dumps(p["opinion_kinds"]), json.dumps(p["counter_signals"], ensure_ascii=False), red, p["chunk_kind"]))
                 conn.executemany("INSERT INTO passage_risk(rid, channel) VALUES (?,?)", [(rid, c) for c in p["risk_channels"]])
                 cns = case_numbers(p["case_number"])
-                conn.executemany("INSERT OR IGNORE INTO case_numbers(norm, rid) VALUES (?,?)", [(c, rid) for c in cns])
+                conn.executemany("INSERT OR IGNORE INTO case_numbers(norm, rid) VALUES (?,?)", [(c, rid) for c in case_number_keys(p["case_number"])])
                 cites = list(dict.fromkeys(cites_in(p["text"]) + [c for t in p["issue_tags"] for c in cites_in(t)] + p["provisions"]))
                 conn.executemany("INSERT OR IGNORE INTO cites(cite, rid) VALUES (?,?)", [(c, rid) for c in cites])
                 tags_blob = " ".join(p["issue_tags"] + [p["title"]] + cns)
@@ -685,6 +697,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
         h = hashlib.sha256()
         h.update(INDEX_FORMAT.encode("utf-8") + b"\n")
         h.update(ne_stem_rules().encode("utf-8") + b"\n")        # ne 열이 조사 규칙에 좌우되므로 규칙이 바뀌면 snapshot 도 바뀐다
+        h.update(case_number_rules().encode("utf-8") + b"\n")    # case_numbers 표의 키 규칙도 같다
         by_auth: dict[str, int] = {}
         cases_by_auth: dict[str, set] = {}
         date_unknown = 0
@@ -742,7 +755,7 @@ def build_index(manifest_path: str | Path, out_dir: str | Path, *, now: _dt.date
                             "redistribute_derivatives": rr.get("redistribute_derivatives", "unknown")}
         use_fts = fts_trigram_available()
         meta = {
-            "format": INDEX_FORMAT, "ne_stem_rules": ne_stem_rules(), "snapshot_id": snapshot, "built_at": now.isoformat(timespec="seconds"),
+            "format": INDEX_FORMAT, "ne_stem_rules": ne_stem_rules(), "case_number_rules": case_number_rules(), "snapshot_id": snapshot, "built_at": now.isoformat(timespec="seconds"),
             "passage_count": str(n), "fts_trigram": "1" if use_fts else "0",
             "latest_decision_date": max(dates) if dates else "", "earliest_decision_date": min(dates) if dates else "",
             "display_limit_chars": str(DISPLAY_QUOTE_MAX_CP),
@@ -1021,10 +1034,11 @@ class SqliteCorpus(Corpus):
 
         # 1) 사건번호·조문 정확 검색
         for cn, _ in case_qs:
-            for (rid,) in self._db.execute(
-                    "SELECT p.rid FROM case_numbers c JOIN passages p ON p.rid=c.rid WHERE c.norm=?" + fsql + f" ORDER BY {cpre}p.passage_id LIMIT ?",
-                    [cn, *fparams, CANDIDATE_CAP]):
-                put(rid, 0, "case_number")
+            for variant in case_query_variants(cn):
+                for (rid,) in self._db.execute(
+                        "SELECT p.rid FROM case_numbers c JOIN passages p ON p.rid=c.rid WHERE c.norm=?" + fsql + f" ORDER BY {cpre}p.passage_id LIMIT ?",
+                        [variant, *fparams, CANDIDATE_CAP]):
+                    put(rid, 0, "case_number")
         for ct, _ in cite_qs:
             tier = 0 if " " in ct else 1
             for (rid,) in self._db.execute(

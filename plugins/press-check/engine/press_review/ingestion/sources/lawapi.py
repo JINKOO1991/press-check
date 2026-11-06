@@ -28,6 +28,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
+from ...case_numbers import split_case_numbers   # noqa: F401  (공용 규칙: 색인 corpus_sqlite 와 같은 함수. 이 모듈의 공개 이름으로도 남긴다)
 from ...config import private_mkdir
 from ..context import TimeBudgetExceeded
 from ..http import FetchFailed, IngestionError, strip_oc
@@ -777,33 +778,11 @@ def split_sections(text: str) -> tuple[list[dict], dict]:
 
 
 # ---------------------------------------------------------------- 사건번호·참조판례
-_CASE_FULL = re.compile(r"^(\d{2,4})([가-힣]{1,4})(\d+)$")
 _REF_RE = re.compile(
     r"(?P<court>대법원|헌법재판소|[가-힣]{1,8}(?:고등법원|지방법원|가정법원|행정법원|특허법원|회생법원|고법|지법|법원))\s*"
     r"(?P<y>\d{4})\.\s*(?P<m>\d{1,2})\.\s*(?P<d>\d{1,2})\.?\s*(?P<kind>선고|자)\s*"
     r"(?P<nos>[^()/\n]{1,200}?)\s*(?P<form>(?:전원합의체|전원재판부|전합)?\s*(?:판결|결정|명령|판정))")
 _REF_DATE_RE = re.compile(r"\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*(?:선고|자)")
-
-
-def split_case_numbers(s: str) -> list[str]:
-    """'2000다37524, 37531' → ['2000다37524', '2000다37531'] (숫자만 있는 뒤 번호는 앞 번호의 연도·부호를 잇는다).
-    '2005헌마165, 314, 2006헌가3' 도 같다. 인식하지 못하는 조각은 버린다. 순서 유지·중복 제거."""
-    out: list[str] = []
-    prefix = None
-    for part in re.split(r"[,·ㆍ、]|\s+및\s+", s or ""):
-        p = re.sub(r"\([^)]*\)", "", part).strip().replace(" ", "")
-        p = re.sub(r"등$", "", p)   # '2005헌마165등' 의 끝 '등'(같은 번호 외 다수)은 번호가 아니다
-        m = _CASE_FULL.match(p)
-        if m:
-            prefix = m.group(1) + m.group(2)
-            cand = p
-        elif p.isdigit() and prefix:
-            cand = prefix + p
-        else:
-            continue
-        if cand not in out:
-            out.append(cand)
-    return out
 
 
 def parse_refs(text: str) -> tuple[list[dict], int]:

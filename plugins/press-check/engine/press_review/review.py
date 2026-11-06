@@ -171,7 +171,9 @@ _QUOTE_EDGE = " .,，、;:"
 
 
 def _norm_quote_text(s: str) -> str:
-    return " ".join(unicodedata.normalize("NFKC", s).split())      # NFKC 가 전각 공백을 바꾸고 split 이 줄바꿈·연속 공백을 접는다
+    """대조용 정규화. NFKC 가 전각 공백을 바꾸고 split 이 줄바꿈·연속 공백을 접으며, 따옴표는 경계 찾기와 같은 변환(_QUOTE_UNIFY)을 거쳐 ASCII 로 맞춘다.
+    설명문(구간 경계를 찾느라 변환됨)과 원문(대조 대상)에 같은 변환을 적용해야 원문의 중첩 따옴표(‘…’)를 그대로 옮긴 인용이 어긋나지 않는다."""
+    return " ".join(unicodedata.normalize("NFKC", s).translate(_QUOTE_UNIFY).split())
 
 
 def _quote_warnings(explanations: dict, findings: list[dict], blocks: dict, corpus: Any, warns: list[str]) -> None:
@@ -466,17 +468,29 @@ def _query_words(query: str) -> list[str]:
     return out
 
 
+def _fold_with_map(text: str) -> tuple[str, list[int]]:
+    """검색과 같은 기준(NFKC·소문자)으로 접은 문자열과, 접힌 문자열의 각 위치가 온 원문 offset 표. 문자별로 접어 한 글자가 여러 글자로 늘어나도(㈜ → (주)) 표가 원문 위치를 가리킨다."""
+    out: list[str] = []
+    mp: list[int] = []
+    for i, ch in enumerate(text):
+        f = unicodedata.normalize("NFKC", ch).lower()
+        out.append(f)
+        mp.extend([i] * len(f))
+    return "".join(out), mp
+
+
 def _excerpt_spans(text: str, words: list[str]) -> list[tuple[int, int]]:
     n = len(text)
-    hay = text.lower() if len(text.lower()) == n else text
+    hay, mp = _fold_with_map(text)
     spans = [(0, EXCERPT_HEAD_CP)]
     for w in words:
         if len(spans) >= EXCERPT_MAX_WINDOWS:
             break
         pos = hay.find(w)
-        while pos != -1 and any(s <= pos < e for s, e in spans):
+        while pos != -1 and any(s <= mp[pos] < e for s, e in spans):
             pos = hay.find(w, pos + 1)
         if pos != -1:
+            pos = mp[pos]                                  # 원문 offset 으로 되돌린다(발췌는 원문 부분문자열)
             start = max(0, pos - (EXCERPT_WINDOW_CP - len(w)) // 2)
             spans.append((start, min(n, start + EXCERPT_WINDOW_CP)))
     merged: list[tuple[int, int]] = []

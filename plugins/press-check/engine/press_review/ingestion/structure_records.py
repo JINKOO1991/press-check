@@ -591,6 +591,44 @@ def detc_majority_barred(row: Any, ledger: dict) -> Optional[str]:
     return None
 
 
+HN_MINORITY_MARK = re.compile(r"\[[^\[\]\n]{0,160}?(?:반대|별개|보충)의견\]")      # '[대법관 갑의 반대의견]'·'[다수의견에 대한 보충의견]'. '[다수의견]' 은 소수의견 표지가 아니다
+HN_MINORITY_HEADING = re.compile(r"^[ \t　]*(?:\[\d{1,2}\][ \t　]*)?(?:(?:대법관|대법원장)[^\n]{0,60}?의[ \t]*(?:반대|별개|보충)의견|(?:반대|별개)의견[ \t]*[:：])", re.M)      # 줄 머리의 의견 작성자 표제·'반대의견:'. 문장 속 언급은 아니다
+
+
+HN_MAJORITY_MARK = re.compile(r"\[(?:(?:대법관|대법원장)[^\[\]\n]{0,60}?의[ \t]*)?다수의견\]")
+HN_ITEM_HEAD = re.compile(r"^[ \t　]*\[\d{1,2}\]", re.M)       # lx_prec.split_headnote 의 복귀 규칙과 같다(줄 머리 [n])
+
+
+def headnote_minority_spans(text: str) -> list:
+    """판결요지 텍스트의 소수의견 구간 [(start, end)]. 소수의견 표지(``[대법관 갑의 반대의견]``·줄 머리 작성자 표제·``반대의견:``)에서 시작해
+    그 뒤 줄 머리 ``[n]`` 또는 ``[다수의견]`` 표지(법정 요지 복귀 지점) 앞까지, 없으면 쪽 끝까지다."""
+    starts = [(m.start(), m.end()) for m in HN_MINORITY_MARK.finditer(text)] + [(m.start(), m.end()) for m in HN_MINORITY_HEADING.finditer(text)]
+    spans: list = []
+    for st, mend in sorted(starts):
+        if spans and st < spans[-1][1]:
+            continue                                   # 앞 구간 안에서 다시 시작하는 표지
+        ends = [m.start() for m in HN_ITEM_HEAD.finditer(text, mend)] + [m.start() for m in HN_MAJORITY_MARK.finditer(text, mend)]
+        spans.append((st, min(ends) if ends else len(text)))
+    return spans
+
+
+def headnote_minority_barred(row: Any, ctx: "WindowCtx", loc: Any) -> Optional[str]:
+    """판결요지(headnote_holding) 쪽의 인용이 소수의견 구간이면 사유 문자열. 법원 판결 프로필(opinion_guard)만 대상이고 헌재 프로필은 건드리지 않는다.
+    법제처 판결요지는 의견별로 쪽이 나뉘지 않아 '[다수의견] … [대법관 갑의 반대의견] …' 이 한 쪽에 온다. ``headnote_minority_spans`` 의 소수의견 구간과
+    인용의 [start, end) 가 겹치면(경계를 가로지르는 인용 포함) 막는다. 복귀한 정상 다수의견은 막지 않는다.
+    문장 속 서술적 언급('종전 판결의 반대의견이 제시한 기준을 …')은 구간을 만들지 않는다."""
+    if getattr(ctx.profile, "detc_guards", False) or not getattr(ctx.profile, "opinion_guard", False):
+        return None
+    if _page_quality(row).get("section_kind") != "headnote_holding" or not isinstance(loc, dict):
+        return None
+    page = ctx.pages.get(loc.get("page_id"))
+    if page is None:
+        return None
+    s = loc.get("start", 0)
+    e = loc.get("end", s + 1)
+    return "headnote_minority_span" if any(s < b and e > a for a, b in headnote_minority_spans(page.text)) else None
+
+
 # vote_opinion 재표기(사용자 결정 A안): 법정의견 표기 없는 '재판관 ○○의 위헌/합헌/각하 … 의견' 구간의 court_majority 항목은 지우지 않고
 # 의견의 입장 편이 최종 주문(장부 dispositions)의 편 집합 안에 있으면 court_concurring, 밖이면 court_dissenting 으로 다시 매긴다.
 # 한계: 다중 주문(예: 위헌+기각+각하)은 sides(D)가 여러 편이라 입장의 편이 그중 하나면 concurring 이다. 입장 불명·장부 분류 없음은 제거.
@@ -714,7 +752,7 @@ def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_
         if loc is None:
             continue
         if majority_guard(ctx.profile) and speaker == "court_majority":          # 의견 가드: 반대·보충·별개·vote_opinion 구간의 인용은 법정의견이 아니다
-            why = detc_majority_barred(ctx.page_meta.get(loc["page_id"]), ctx.ledger)
+            why = detc_majority_barred(ctx.page_meta.get(loc["page_id"]), ctx.ledger) or headnote_minority_barred(ctx.page_meta.get(loc["page_id"]), ctx, loc)
             relabel = vote_relabel_speaker(ctx.page_meta.get(loc["page_id"]), ctx.ledger) if why == "opinion_kind_vote_opinion" and fld != "outcome" else None
             if relabel:
                 speaker = relabel                                       # 항목은 남기고 화자만 다시 매긴다(인용 검증 대상 그대로)
@@ -769,7 +807,8 @@ def _fix_article_speaker_items(rec_items: dict, st: "_Stats", authority: str, ct
             if strip_ws(it["quote"]["quote"]).lstrip("\"'‘’“”「『").startswith(DESCRIPTION_PREFIXES):
                 st.note(where, "rerouted_institution_description")
                 # 재분류는 법정의견 화자를 주므로 _items 와 같은 의견 가드를 지나야 한다
-                why = detc_majority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx.ledger) if majority_guard(ctx.profile) and speaker == "court_majority" else None
+                why = (detc_majority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx.ledger)
+                       or headnote_minority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx, it["quote"])) if majority_guard(ctx.profile) and speaker == "court_majority" else None
                 if why:
                     st.note(where, f"opinion_guard:{why}")
                 elif span(it) not in {span(x) for x in facts}:
