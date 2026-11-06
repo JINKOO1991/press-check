@@ -244,10 +244,10 @@ def test_opinion_guard_by_section_and_opinion_kind(section, opinion, needs_revie
     assert co.record["verification_status"] == "unverified"                    # 항목만 버리고 사건은 격리하지 않는다
     assert any("opinion_guard" in f for f in co.record["quote_check"]["dropped_fields"]) is removed
     assert co.record["quote_check"]["total"] == co.record["quote_check"]["matched"]    # 인용 실패율에 넣지 않는다
-    # 판례 프로필은 같은 입력에서 아무것도 제거하지 않는다(출력 불변)
+    # 판례 프로필도 같은 의견 가드를 쓴다(전원합의체 반대·별개의견이 법정의견으로 표시되던 결함). 장부 기준 재표기는 헌재 전용이다.
     cj = assemble("court_judgment", rows, TXT, draft("p", "court_majority", institution="supreme_court"), {})
-    assert [x["speaker"] for x in cj.record["legal_reasoning"]] == ["court_majority", "court_dissenting"]
-    assert not any("opinion_guard" in f for f in cj.record["quote_check"]["dropped_fields"])
+    assert [x["speaker"] for x in cj.record["legal_reasoning"]] == (["court_dissenting"] if removed else ["court_majority", "court_dissenting"])
+    assert any("opinion_guard" in f for f in cj.record["quote_check"]["dropped_fields"]) is removed
 
 
 def test_headnote_unsplit_in_ledger_bars_court_majority_even_if_page_lacks_flag():

@@ -59,6 +59,11 @@ class Profile:
     guard_shared_quotes: bool = False      # G-D5: 같은 구간을 사건 2건 이상이 사실 인용으로 쓰면 버린다(병합 칸)
     links_ledger: bool = False             # G-D6: 소개된 판결의 사건번호를 법제처 장부와 결정적으로 연결한다(ingestion/links.py)
     detc_guards: bool = False              # U3: 헌재결정례 전용 결정적 가드(의견 가드·처분 가드·주문 없는 창 규칙)와 장부 값 고정
+    opinion_guard: bool = False            # 법원 판결: 의견 가드만 켠다(반대·별개·보충 구간·분할 실패 쪽의 court_majority 인용을 막음). 처분·주문·장부 가드는 헌재 전용이라 켜지 않는다
+
+def majority_guard(profile: Any) -> bool:
+    """법정의견 가드(detc_majority_barred)를 쓰는 프로필: 헌재 가드 전체(detc_guards) 또는 의견 가드만(opinion_guard). 시험의 간이 프로필(속성이 없을 수 있음)도 받는다."""
+    return bool(getattr(profile, "detc_guards", False) or getattr(profile, "opinion_guard", False))
 
 
 PROFILES: dict[str, Profile] = {
@@ -69,7 +74,8 @@ PROFILES: dict[str, Profile] = {
     "pac_board_status": Profile("pac_board_status", "pac_board_status.md", ("pac",), ("pac_decision",)),
     "iendc_table": Profile("iendc_table", "iendc_table.md", ("iendc",), ("iendc_review",), guard_shared_quotes=True),
     "pac_judgment_cases": Profile("pac_judgment_cases", "pac_judgment_cases.md", ("pac", "other_body"), ("research",), links_ledger=True),
-    "court_judgment": Profile("court_judgment", "court_judgment.md", COURT_INSTITUTIONS, ("judgment",)),
+    # 의견 가드: 전원합의체의 반대·별개·보충의견 구간 인용이 법정의견으로 표시되지 않게 한다. 프로필 이름이 프롬프트 버전 문자열에 들어가므로 이름을 유지해 재호출 없이 다시 조립한다.
+    "court_judgment": Profile("court_judgment", "court_judgment.md", COURT_INSTITUTIONS, ("judgment",), opinion_guard=True),
     # U3(2026-10-19): 헌법재판소 결정례(lawgo_detc). court_judgment 의 프롬프트·프로필은 해시가 바뀌면 판례 재구조화 대상이 되므로 건드리지 않고 따로 둔다.
     "constitutional_decision": Profile("constitutional_decision", "constitutional_decision.md", ("constitutional_court",), ("judgment",),
                                       detc_guards=True),
@@ -82,6 +88,7 @@ SOURCE_PROFILE: dict[str, str] = {
     "pac_board_correction_status": "pac_board_status",
     "iendc_review_results": "iendc_table",
     "lawgo_prec_supreme": "court_judgment",
+    "lx_prec": "court_judgment",
     "lawgo_detc": "constitutional_decision",
     "ccourt_detc": "constitutional_decision",
     "pac_research_judgment_analysis": "pac_judgment_cases",
@@ -706,7 +713,7 @@ def _items(raw: Any, fld: str, ctx: WindowCtx, st: _Stats, authority: str, hint_
         loc = _ground(it.get("quote"), ctx, st, where, hint_page)
         if loc is None:
             continue
-        if ctx.profile.detc_guards and speaker == "court_majority":          # 의견 가드: 반대·보충·별개·vote_opinion 구간의 인용은 법정의견이 아니다
+        if majority_guard(ctx.profile) and speaker == "court_majority":          # 의견 가드: 반대·보충·별개·vote_opinion 구간의 인용은 법정의견이 아니다
             why = detc_majority_barred(ctx.page_meta.get(loc["page_id"]), ctx.ledger)
             relabel = vote_relabel_speaker(ctx.page_meta.get(loc["page_id"]), ctx.ledger) if why == "opinion_kind_vote_opinion" and fld != "outcome" else None
             if relabel:
@@ -762,7 +769,7 @@ def _fix_article_speaker_items(rec_items: dict, st: "_Stats", authority: str, ct
             if strip_ws(it["quote"]["quote"]).lstrip("\"'‘’“”「『").startswith(DESCRIPTION_PREFIXES):
                 st.note(where, "rerouted_institution_description")
                 # 재분류는 법정의견 화자를 주므로 _items 와 같은 의견 가드를 지나야 한다
-                why = detc_majority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx.ledger) if ctx.profile.detc_guards and speaker == "court_majority" else None
+                why = detc_majority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx.ledger) if majority_guard(ctx.profile) and speaker == "court_majority" else None
                 if why:
                     st.note(where, f"opinion_guard:{why}")
                 elif span(it) not in {span(x) for x in facts}:

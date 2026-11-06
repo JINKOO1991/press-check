@@ -60,10 +60,11 @@ def test_vote_opinion_in_needs_review_page_is_still_removed():
     assert [x["speaker"] for x in co.record["legal_reasoning"]] == ["court_dissenting"]
 
 
-def test_court_judgment_profile_output_unchanged_for_vote_pages():
+def test_court_judgment_profile_drops_vote_page_quote_without_relabel():
     co = run("court_judgment", "위헌", ["위헌"])
-    assert [x["speaker"] for x in co.record["legal_reasoning"]] == ["court_majority", "court_dissenting"]
-    assert not any(f.startswith("vote_relabel") or "opinion_guard" in f for f in co.record["quote_check"]["dropped_fields"])
+    assert [x["speaker"] for x in co.record["legal_reasoning"]] == ["court_dissenting"]
+    fields = co.record["quote_check"]["dropped_fields"]
+    assert any("opinion_guard" in f for f in fields) and not any(f.startswith("vote_relabel") for f in fields)
 
 
 @pytest.mark.parametrize("order,speaker,kind", [("1. A법 제1조는 헌법에 위반된다.\n2. 나머지 청구를 각하한다.", "court_concurring", "concurring"),

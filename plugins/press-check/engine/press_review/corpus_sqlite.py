@@ -49,7 +49,8 @@ DISPLAY_QUOTE_MAX_CP = 300     # 재배포 허락이 없는 소스의 사용자 
 _ATTR_DETC = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
 _ATTR_PREC = "법원 판결, 법제처 국가법령정보센터 제공"
 _ATTR_CCOURT = "헌법재판소 결정, 헌법재판소 제공"      # 헌법재판소 판례정보 API(공공데이터포털, 공공누리 제1유형 출처표시)
-SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "ccourt_detc": _ATTR_CCOURT, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC}
+_ATTR_LX = "법원 판결, 법원도서관 법고을 제공"            # 법원도서관 법고을(lx.scourt.go.kr) 비회원 범위 판례(UDEC-24)
+SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "ccourt_detc": _ATTR_CCOURT, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC, "lx_prec": _ATTR_LX}
 # 판례 문서 id 는 소스 id 가 아니라 ``lawgo_prec:<일련번호>`` 접두를 쓴다(passage source_id 조회 전용).
 _DOC_PREFIX_ATTRIBUTION = {"lawgo_prec": _ATTR_PREC}
 
@@ -415,25 +416,29 @@ def _iter_passages(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict,
     (min(created_at, chunk_id))만 남긴다. created_at 은 chunk 를 다시 쓸 때 갱신되므로 최초 수집 시각이 아니라 마지막 기록 시각이다. 제거된 chunk 는
     ``aliases`` 에 자기 값(출처·url·위치·권위·기준일)과 남긴 passage_id 로 모으고 ``excluded['duplicate_text']`` 에 센다. 나머지 메타데이터는 키가 같으므로
     남긴 passage 의 값이 곧 자기 값이다. 사전 훑기 1회가 더 든다.
-    헌재 API 보강본(ccourt_detc)은 법제처 경로(lawgo_detc)의 passage 가 실제로 색인되는 사건과 번호가 겹치면 뺀다. 제외 필터를 통과한 passage 끼리만
-    비교하므로 격리·보류된 법제처 사건은 보강본을 막지 않고, 빠질 보강본은 중복 제거의 대표가 되지 못한다."""
+    보강 소스(``_SUPPLEMENT``: 헌재 API 보강본 ccourt_detc, 법고을 판례 lx_prec)는 우선 소스(lawgo_detc, lawgo_prec_supreme)의 passage 가 실제로 색인되는
+    사건과 사건 키가 겹치면 뺀다. 제외 필터를 통과한 passage 끼리만 비교하므로 격리·보류된 우선 소스 사건은 보강본을 막지 않고, 빠질 보강본은 중복 제거의
+    대표가 되지 못한다."""
     winner: dict[str, tuple[str, str]] = {}
-    held: set[str] = set()
-    ccourt: list[tuple[str, tuple[str, str], set[str]]] = []
+    held: dict[str, set[str]] = {}                       # 우선 소스 -> 색인되는 사건 키
+    supp: list[tuple[str, tuple[str, str], set[str], str]] = []
+    primaries = {v[0] for v in _SUPPLEMENT.values()}
     for p in _iter_eligible(conn, rights_doc, rights_src, {}, check):
         k, o = _dedup_key(p), (p.pop("_created"), p["passage_id"])
-        if p["source_family"] == "ccourt_detc":
-            ccourt.append((k, o, _detc_numbers(p["case_number"])))
+        fam = p["source_family"]
+        if fam in _SUPPLEMENT:
+            supp.append((k, o, _SUPPLEMENT[fam][1](p), _SUPPLEMENT[fam][0]))
             continue
-        if p["source_family"] == "lawgo_detc":
-            held |= _detc_numbers(p["case_number"])
+        if fam in primaries:
+            held.setdefault(fam, set()).update(_SUPPLEMENT_KEYS[fam](p))
         if k not in winner or o < winner[k]:
             winner[k] = o
-    for k, o, numbers in ccourt:
-        if not numbers & held and (k not in winner or o < winner[k]):
+    for k, o, keys, primary in supp:
+        if not keys & held.get(primary, set()) and (k not in winner or o < winner[k]):
             winner[k] = o
     for p in _iter_eligible(conn, rights_doc, rights_src, excluded, check):
-        if p["source_family"] == "ccourt_detc" and _detc_numbers(p["case_number"]) & held:
+        sup = _SUPPLEMENT.get(p["source_family"])
+        if sup is not None and sup[1](p) & held.get(sup[0], set()):
             excluded["case_superseded_by_lawgo"] = excluded.get("case_superseded_by_lawgo", 0) + 1
             continue
         k, o = _dedup_key(p), (p.pop("_created"), p["passage_id"])
@@ -454,6 +459,37 @@ _DETC_NO = re.compile(r"\d{2,4}헌[가-힣]{1,2}\d+")
 def _detc_numbers(case_number: Any) -> set[str]:
     """병합 표기를 포함한 사건번호 문자열에서 헌재 사건번호를 뽑는다."""
     return set(_DETC_NO.findall(re.sub(r"\s+", "", case_number))) if isinstance(case_number, str) else set()
+
+
+_PREC_NO = re.compile(r"(\d{2,4}[가-힣]{1,4})(\d+)")
+
+
+def _prec_numbers(case_number: Any) -> set[str]:
+    """법원 사건번호 문자열('2022다284711, 284728')에서 번호를 뽑는다. 뒤 번호는 앞 번호의 연도·부호를 잇는다."""
+    out: set[str] = set()
+    prefix = None
+    for part in re.split(r"[,·ㆍ、]", case_number if isinstance(case_number, str) else ""):
+        c = re.sub(r"\s+", "", re.sub(r"\([^)]*\)", "", part))
+        m = _PREC_NO.fullmatch(c)
+        if m:
+            prefix = m.group(1)
+            out.add(c)
+        elif c.isdigit() and prefix:
+            out.add(prefix + c)
+    return out
+
+
+def _prec_keys(p: dict) -> set[str]:
+    """법고을 판결과 법제처 판결이 같은 판결인지 가르는 사건 키: 사건번호×선고일(같은 번호가 다른 법원·다른 날짜의 다른 판결일 수 있다)."""
+    return {f"{n}@{p.get('decision_date')}" for n in _prec_numbers(p["case_number"])}
+
+
+# 보강 소스 -> (우선 소스, 사건 키 함수). 우선 소스의 passage 도 같은 함수로 키를 만든다.
+_SUPPLEMENT: dict[str, tuple[str, Callable[[dict], set[str]]]] = {
+    "ccourt_detc": ("lawgo_detc", lambda p: _detc_numbers(p["case_number"])),
+    "lx_prec": ("lawgo_prec_supreme", _prec_keys),
+}
+_SUPPLEMENT_KEYS: dict[str, Callable[[dict], set[str]]] = {v[0]: v[1] for v in _SUPPLEMENT.values()}
 
 
 def _iter_eligible(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict, excluded: dict[str, int],

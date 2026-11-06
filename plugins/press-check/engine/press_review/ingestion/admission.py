@@ -161,10 +161,10 @@ def apply(m: Manifest, report: dict) -> dict:
 
 
 # ---- 사건 단위 인입 평가(G-D34, 판례·헌재 결정; 설계 caselaw_design_20261017 D6·D8, 반증 6) ----
-CASE_ADMISSION_SOURCES = ("lawgo_prec_supreme", "lawgo_detc", "ccourt_detc")
+CASE_ADMISSION_SOURCES = ("lawgo_prec_supreme", "lawgo_detc", "ccourt_detc", "lx_prec")
 # failures 에는 소스 열이 없고 target 이 case_id 뿐이라 orphan 해제는 case_id 접두로 소스를 가른다(한 소스의 apply 가 다른 소스의 행을 풀면 안 된다).
 # lawgo_prec 접두는 실제 코퍼스에서 확인했다. lawgo_detc 접두는 어댑터가 아직 없어 같은 규칙(<source_family 접두>:)을 가정한 것이다.
-CASE_ID_PREFIX = {"lawgo_prec_supreme": "lawgo_prec:", "lawgo_detc": "lawgo_detc:", "ccourt_detc": "ccourt_detc:"}
+CASE_ID_PREFIX = {"lawgo_prec_supreme": "lawgo_prec:", "lawgo_detc": "lawgo_detc:", "ccourt_detc": "ccourt_detc:", "lx_prec": "lx_prec:"}
 CASE_ERROR_CLASS = "case_excluded"
 MANUAL_STAGE = "manual_exclusion"
 MIGRATION_NOTE = "migrated from manual_exclusion 2026-10-17"

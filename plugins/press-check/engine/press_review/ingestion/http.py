@@ -43,7 +43,7 @@ try:  # POSIX 전용. 없으면 프로세스 간 호스트 잠금은 건너뛴�
 except ImportError:  # pragma: no cover
     fcntl = None  # type: ignore
 
-ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr", "apis.data.go.kr"})
+ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr", "apis.data.go.kr", "lx.scourt.go.kr"})
 DRF_HOST = "www.law.go.kr"
 DRF_PATH_PREFIX = "/DRF/"
 USER_AGENT = "press-check/0.1 (+research; non-commercial index)"
@@ -62,7 +62,10 @@ OC_PARAM = "OC"
 KEY_PARAM = "serviceKey"
 KEY_HOST = "apis.data.go.kr"
 KEY_PATH_PREFIX = "/9750000/PrecedentInfomationService/"
-HOST_MIN_INTERVAL = {KEY_HOST: 3.0}                     # 호스트별 최소 간격 하한(MIN_INTERVAL_SECONDS·min_interval 보다 길면 이쪽이 이긴다)
+LX_HOST = "lx.scourt.go.kr"                             # 법원도서관 법고을(공개 판례 열람, 키 없음)
+HOST_MIN_INTERVAL = {KEY_HOST: 3.0, LX_HOST: 5.0}       # 호스트별 최소 간격 하한(MIN_INTERVAL_SECONDS·min_interval 보다 길면 이쪽이 이긴다)
+# 재시도하지 않는 호스트: 상태 코드와 상관없이 첫 응답을 그대로 돌려준다(429·5xx 포함). 접근 거부·과다 요청 신호를 어댑터가 직접 보고 멈추기 위해서다.
+NO_RETRY_HOSTS = frozenset({LX_HOST})
 # POST는 허용 호스트의 이 경로에서만 보낼 수 있다(P2 §8: IENDC 첨부 다운로드)
 POST_PATHS = frozenset({"/fileDownload.do"})
 MAX_POST_BYTES = 64 * 1024
@@ -703,7 +706,8 @@ class HttpClient:
         headers.update(extra_headers or {})
         kw = {"body": body} if body is not None else {}
         last = "unknown"
-        for attempt in range(self.max_retries + 1):
+        retries = 0 if host in NO_RETRY_HOSTS else self.max_retries
+        for attempt in range(retries + 1):
             self._acquire_host(host)
             self._throttle(host)
             if self.budget:
@@ -714,7 +718,7 @@ class HttpClient:
             try:
                 raw = self._transport.request(method, request_url, headers, self.timeout, max_bytes, **kw)
                 self._mark_end(host)
-                if raw.status not in RETRY_STATUSES:
+                if raw.status not in RETRY_STATUSES or host in NO_RETRY_HOSTS:
                     return raw
                 last = f"http {raw.status}"
                 retry_after = _retry_after(raw.headers.get("retry-after"))
@@ -728,13 +732,13 @@ class HttpClient:
                 self._mark_end(host)
                 self._fail(display, "http", e.error_class, str(e), attempt)
                 raise
-            if attempt == self.max_retries:
+            if attempt == retries:
                 break
             self.stats["retries"] += 1
             delay = min(BACKOFF_CAP_SECONDS, BACKOFF_BASE_SECONDS * (2 ** attempt))
             self._sleep_checked(max(delay, min(retry_after, RETRY_AFTER_CAP_SECONDS)))
-        self._fail(display, "http", "retries_exhausted", f"{last} after {self.max_retries + 1} attempts", self.max_retries)
-        raise FetchFailed(f"{last} after {self.max_retries + 1} attempts: {display}")
+        self._fail(display, "http", "retries_exhausted", f"{last} after {retries + 1} attempts", retries)
+        raise FetchFailed(f"{last} after {retries + 1} attempts: {display}")
 
     def _throttle(self, host: str) -> None:
         interval = max(self.min_interval, HOST_MIN_INTERVAL.get(host, 0.0))

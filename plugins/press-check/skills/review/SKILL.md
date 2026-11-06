@@ -94,7 +94,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 - 결과 passage에서 값이 기본값(null·빈 목록·false)인 부가 키(`case_number`, `risk_channels`, `display_truncated` 등)는 응답에서 생략된다. 없으면 기본값으로 읽는다. 공개 키(`source_id`, `passage_id`, `url`, `locator`, `authority_type`, `decision_date`, `text`, `is_fixture`)는 그대로 온다(limit 6 이상의 발췌 응답은 아래).
 - `display_text`가 있는 passage의 `text`는 내부 판단용 전문이다. 사용자 화면에 원문을 인용할 때는 `display_text`만 쓴다(재배포 허락이 없는 소스는 300자 이내로 잘려 있다. `display_truncated`가 true). `display_text`가 없는 passage는 재배포 허락 소스이거나 `text`가 300자 이내라서 `text`와 같으므로, `text`(발췌 응답이면 `excerpts[].text`)를 인용할 수 있다. 직접 인용부호로 옮길 때는 passage의 글자를 바꾸지 않는다. 서버는 `explanations`의 `support`·`differences`·`counter_arguments` 안 인용부호 구간(8자 이상)이 기사나 근거 passage 원문에 없으면 `[인용대조]` 경고를 낸다. 요약·의역에는 인용부호를 쓰지 않는다.
 - `limit`이 6 이상이면 1,200자를 넘는 긴 passage는 `text` 대신 `excerpts`(원문 부분문자열 조각 `{start, end, text}`, 앞 300자와 질의어 주변)와 `text_len`, `text_truncated`를 준다(반대의견이 든 passage는 전문). 조각을 이어 붙이거나 조각 밖 내용을 짐작해 인용하지 않는다. 사실 전제나 반대의견 구분에 전문이 필요하면 사건번호를 질의에 넣거나 `limit`을 5 이하로 줄여 다시 검색한다.
-- 응답에 `source_attribution`이 있으면(`source_id`가 `lawgo_detc:`·`ccourt_detc:`로 시작하는 헌법재판소 결정 또는 `lawgo_prec:`로 시작하는 판례 passage 포함) 보고서·표의 근거 인용에 그 `text`("헌법재판소 결정, 법제처 국가법령정보센터 제공"·"헌법재판소 결정, 헌법재판소 제공"·"법원 판결, 법제처 국가법령정보센터 제공")를 출처로 함께 적는다.
+- 응답에 `source_attribution`이 있으면(`source_id`가 `lawgo_detc:`·`ccourt_detc:`로 시작하는 헌법재판소 결정 또는 `lawgo_prec:`·`lx_prec:`로 시작하는 판례 passage 포함) 보고서·표의 근거 인용에 그 `text`("헌법재판소 결정, 법제처 국가법령정보센터 제공"·"헌법재판소 결정, 헌법재판소 제공"·"법원 판결, 법제처 국가법령정보센터 제공"·"법원 판결, 법원도서관 법고을 제공")를 출처로 함께 적는다.
 - 결과에 `is_fixture: true`가 있으면 합성 자료다(색인이 없는 상태). 표 아래에 "근거가 합성 예제 코퍼스에서 나옴"을 적고, `corpus_status`의 경고(실자료 미적재)를 그대로 알린다.
 - 검색 질의에 취재원 실명, 연락처, 원고의 미공개 내용을 그대로 넣지 않는다. 쟁점을 일반화한 문구로 검색한다.
 

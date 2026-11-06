@@ -21,7 +21,7 @@ allowed-tools: mcp__plugin_press-check_press-review__corpus_status
 
 ## 출처 표시·평가 미반영
 
-`sources`의 소스에 `attribution`이 있으면(예: `lawgo_detc`·`ccourt_detc`·`lawgo_prec_supreme`) 그 소스 줄에 문구("헌법재판소 결정, 법제처 국가법령정보센터 제공", "헌법재판소 결정, 헌법재판소 제공" 또는 "법원 판결, 법제처 국가법령정보센터 제공")를 그대로 적는다. `case_admission_pending`이 0이 아니거나 `warnings`에 같은 취지의 항목이 있으면 사건 단위 인입 평가가 반영되지 않은 사건이 색인 대상에 있다는 뜻이므로 숨기지 않는다(색인 구축 시점 수치다).
+`sources`의 소스에 `attribution`이 있으면(예: `lawgo_detc`·`ccourt_detc`·`lawgo_prec_supreme`·`lx_prec`) 그 소스 줄에 문구("헌법재판소 결정, 법제처 국가법령정보센터 제공", "헌법재판소 결정, 헌법재판소 제공" "법원 판결, 법제처 국가법령정보센터 제공" 또는 "법원 판결, 법원도서관 법고을 제공")를 그대로 적는다. `case_admission_pending`이 0이 아니거나 `warnings`에 같은 취지의 항목이 있으면 사건 단위 인입 평가가 반영되지 않은 사건이 색인 대상에 있다는 뜻이므로 숨기지 않는다(색인 구축 시점 수치다).
 
 ## fixture 코퍼스일 때 경고
 

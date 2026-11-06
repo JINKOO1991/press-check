@@ -31,7 +31,8 @@ DISK_GUARDED = {"fetch": ("pdf", "PDF 수신"), "extract": ("struct", "본문 �
                 "lawapi": ("case_json", "판례 수집"), "lawapi_body": ("case_json", "판례 본문 수집"),
                 "pac": ("case_json", "PAC 수집"), "iendc": ("case_json", "IENDC 수집"),
                 "lawapi_detc": ("case_json", "헌재결정례 번호 해석"), "lawapi_detc_body": ("case_json", "헌재결정례 본문 수집"),
-                "ccourt_detc": ("case_json", "헌재 판례정보 API 보강")}
+                "ccourt_detc": ("case_json", "헌재 판례정보 API 보강"),
+                "lx_prec": ("case_json", "법고을 판례 수집")}
 
 
 def available_sources() -> list[str]:

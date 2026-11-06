@@ -13,7 +13,7 @@ RIGHT_KEYS = ("read", "store_raw", "create_derivatives", "external_api",
 VALUES = ("allowed", "forbidden", "permission_required", "unknown")
 
 # 설치자가 `rights set` 으로 결정을 기록할 수 있는 수집 대상 계열. naver 는 robots 금지(forbidden)라 대상이 아니다.
-COLLECTED_FAMILIES = ("pac_cases", "pac_election", "pac_other", "iendc", "law_go_kr", "data_go_kr")
+COLLECTED_FAMILIES = ("pac_cases", "pac_election", "pac_other", "iendc", "law_go_kr", "data_go_kr", "lx_scourt")
 
 
 def default_rights(source_family: str) -> dict:
@@ -44,7 +44,7 @@ def validate_rights(rights: dict[str, Any]) -> None:
 # manifest 는 이 모듈을 import 하므로 여기서는 Manifest 를 import 하지 않고 메서드만 부른다(덕 타이핑).
 
 FAMILY_HOST = {"pac_cases": "www.pac.or.kr", "pac_election": "www.pac.or.kr", "pac_other": "www.pac.or.kr",
-               "iendc": "www.iendc.go.kr", "law_go_kr": "www.law.go.kr", "data_go_kr": "apis.data.go.kr"}
+               "iendc": "www.iendc.go.kr", "law_go_kr": "www.law.go.kr", "data_go_kr": "apis.data.go.kr", "lx_scourt": "lx.scourt.go.kr"}
 # robots 테이블의 purpose_status(ingestion/robots.py) -> source-record 스키마 enum(allowed/disallowed/unknown).
 # no_rules(robots 4xx)는 규칙 없음=제한 없음이라 allowed 로 옮기고 notes 에 원값을 남긴다.
 # unparseable(2xx인데 HTML)은 수집을 막는 상태라 disallowed(보류·차단)로 옮기고 notes 에 원값을 남긴다.
