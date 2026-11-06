@@ -30,7 +30,8 @@ _NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 DISK_GUARDED = {"fetch": ("pdf", "PDF 수신"), "extract": ("struct", "본문 추출"), "build_index": ("struct", "색인 빌드"),
                 "lawapi": ("case_json", "판례 수집"), "lawapi_body": ("case_json", "판례 본문 수집"),
                 "pac": ("case_json", "PAC 수집"), "iendc": ("case_json", "IENDC 수집"),
-                "lawapi_detc": ("case_json", "헌재결정례 번호 해석"), "lawapi_detc_body": ("case_json", "헌재결정례 본문 수집")}
+                "lawapi_detc": ("case_json", "헌재결정례 번호 해석"), "lawapi_detc_body": ("case_json", "헌재결정례 본문 수집"),
+                "ccourt_detc": ("case_json", "헌재 판례정보 API 보강")}
 
 
 def available_sources() -> list[str]:
@@ -135,7 +136,7 @@ def _disk_stop(out: Any, target: str, e: "diskguard.DiskGuardError") -> int:
 
 def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[[], float] = time.monotonic,
          sleep: Callable[[float], None] = time.sleep, resolver: Optional[Callable] = None,
-         oc_provider: Optional[Callable[[], str]] = None, stdout: Any = None, corpus: Optional[Path] = None,
+         oc_provider: Optional[Callable[[], str]] = None, key_provider: Optional[Callable[[], str]] = None, stdout: Any = None, corpus: Optional[Path] = None,
          log_stream: Any = None) -> int:
     out = stdout or sys.stdout
     parser = build_parser()
@@ -248,7 +249,7 @@ def main(argv: Optional[list] = None, *, transport: Any = None, clock: Callable[
     budget = Budget(ns.max_seconds, clock)
     manifest = Manifest(root / "manifest.sqlite", in_memory_copy=ns.dry_run)
     client = HttpClient(root / "http_cache", manifest=manifest, transport=transport, clock=clock, sleep=sleep,
-                        budget=budget, oc_provider=oc_provider, resolver=resolver, refresh=ns.refresh,
+                        budget=budget, oc_provider=oc_provider, key_provider=key_provider, resolver=resolver, refresh=ns.refresh,
                         network=not ns.dry_run, lock_dir=root / "locks", logger=logger.getChild("http"))
     ctx = RunContext(http=client, manifest=manifest, budget=budget, logger=logger, corpus_dir=root, now=utcnow,
                      refresh=ns.refresh, limit_pages=ns.limit_pages, dry_run=ns.dry_run)

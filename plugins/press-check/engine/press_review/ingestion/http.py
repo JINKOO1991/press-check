@@ -6,6 +6,8 @@
 - 호스트별 최소 간격 2초, 동시성 1(프로세스 안은 직렬, 프로세스 사이는 호스트별 flock). 429·5xx·timeout·연결 오류만
   지수 백오프(재시도 최대 4회 = 최대 5번 시도). 404 같은 4xx는 재시도하지 않는다.
 - 캐시 적중이면 네트워크도 robots 조회도 하지 않는다(--refresh 로 무시).
+- 공공데이터포털 서비스키는 ``with_key=True`` 일 때 클라이언트가 secrets 모듈로 읽어 ``serviceKey`` 쿼리로 주입한다(이미 URL 인코딩된 Encoding 키라 다시 인코딩하지 않는다).
+  ``apis.data.go.kr`` 의 ``/9750000/PrecedentInfomationService/`` 경로에만 보내며 캐시 키·메타·로그·예외·장부에는 ``serviceKey=[MASKED]`` 만 남는다. 응답 본문에 키가 되울리면 본문을 버리고 캐시하지 않는다.
 - 법제처 OC는 ``with_oc=True`` 일 때 클라이언트가 secrets 모듈로 읽어 주입한다. 캐시 키·메타·로그·예외·장부에는 ``OC=[MASKED]`` 만 남고,
   DRF 응답 본문에 OC가 되울려 나오면(상세링크 필드 등) 캐시에 쓰기 전에 ``OC=`` 값과 되울림 문맥(``<OC>값</OC>``, ``"OC":"값"``)의 값만 마스킹한다.
   문맥 밖에 값이 남은 경우: 값이 평범한 단어가 아니면 fail-closed(본문 폐기·미캐시), 평범한 단어이면 정상 본문으로 보고 그대로 둔다(P2 §8).
@@ -41,7 +43,7 @@ try:  # POSIX 전용. 없으면 프로세스 간 호스트 잠금은 건너뛴�
 except ImportError:  # pragma: no cover
     fcntl = None  # type: ignore
 
-ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr"})
+ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr", "apis.data.go.kr"})
 DRF_HOST = "www.law.go.kr"
 DRF_PATH_PREFIX = "/DRF/"
 USER_AGENT = "press-check/0.1 (+research; non-commercial index)"
@@ -57,6 +59,10 @@ RETRY_STATUSES = frozenset({429, 500, 502, 503, 504, 520, 521, 522, 523, 524})
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 CACHED_HEADERS = ("content-type", "content-length", "last-modified", "etag", "content-disposition", "content-language")
 OC_PARAM = "OC"
+KEY_PARAM = "serviceKey"
+KEY_HOST = "apis.data.go.kr"
+KEY_PATH_PREFIX = "/9750000/PrecedentInfomationService/"
+HOST_MIN_INTERVAL = {KEY_HOST: 3.0}                     # 호스트별 최소 간격 하한(MIN_INTERVAL_SECONDS·min_interval 보다 길면 이쪽이 이긴다)
 # POST는 허용 호스트의 이 경로에서만 보낼 수 있다(P2 §8: IENDC 첨부 다운로드)
 POST_PATHS = frozenset({"/fileDownload.do"})
 MAX_POST_BYTES = 64 * 1024
@@ -65,6 +71,9 @@ ALLOWED_EXTRA_HEADERS = frozenset({"range", "referer", "accept", "accept-languag
 _OC_QUERY_RE = re.compile(r"(?i)((?:^|[?&;])OC=)[^&#\s]*")
 _OC_TEXT_RE = re.compile(r"(?i)(?<![A-Za-z0-9_])(OC=)[^&\s\"'<>\\]*")
 _OC_BYTES_RE = re.compile(rb"(?i)(?<![A-Za-z0-9_])(OC=)[^&\s\"'<>\\]*")
+_KEY_QUERY_RE = re.compile(r"(?i)((?:^|[?&;])serviceKey=)[^&#\s]*")
+_KEY_TEXT_RE = re.compile(r"(?i)(?<![A-Za-z0-9_])(serviceKey=)[^&\s\"'<>\\]*")
+_KEY_BYTES_RE = re.compile(rb"(?i)(?<![A-Za-z0-9_])(serviceKey=)[^&\s\"'<>\\]*")
 
 
 # ---------------------------------------------------------------- 예외
@@ -110,11 +119,11 @@ class TransportError(IngestionError):
 # ---------------------------------------------------------------- 마스킹
 def mask_url(url: str) -> str:
     """URL의 OC 쿼리 파라미터 값만 [MASKED] 로 바꾼다(본문 문자열 전체 치환이 아님: 기존 구현의 결함 회피)."""
-    return _OC_QUERY_RE.sub(r"\1[MASKED]", url)
+    return _KEY_QUERY_RE.sub(r"\1[MASKED]", _OC_QUERY_RE.sub(r"\1[MASKED]", url))
 
 
 def scrub_text(text: str) -> str:
-    return _OC_TEXT_RE.sub(r"\1[MASKED]", text)
+    return _KEY_TEXT_RE.sub(r"\1[MASKED]", _OC_TEXT_RE.sub(r"\1[MASKED]", text))
 
 
 def scrub_body(body: bytes, oc: Optional[str] = None) -> bytes:
@@ -139,6 +148,27 @@ def strip_oc(url: str) -> str:
 
 def has_oc(url: str) -> bool:
     return any(seg.split("=", 1)[0].upper() == OC_PARAM for seg in urllib.parse.urlsplit(url).query.split("&") if seg)
+
+
+def strip_key(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    raw = [seg for seg in parts.query.split("&") if seg and seg.split("=", 1)[0].lower() != KEY_PARAM.lower()]
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, "&".join(raw), ""))
+
+
+def has_key(url: str) -> bool:
+    return any(seg.split("=", 1)[0].lower() == KEY_PARAM.lower() for seg in urllib.parse.urlsplit(url).query.split("&") if seg)
+
+
+def _key_path_allowed(path: str) -> bool:
+    """서비스키를 보낼 수 있는 경로. 점 구간과 percent 표기는 접두 검사를 벗어날 수 있고 실제 endpoint 에 필요 없으므로 거부한다."""
+    return path.startswith(KEY_PATH_PREFIX) and "%" not in path and "\\" not in path and not {".", ".."} & set(path.split("/"))
+
+
+def _base_of(url: str) -> str:
+    """요청 기준 URL: 프래그먼트와 호출자가 쓴 OC·serviceKey 쌍을 뗀다(주입은 클라이언트만 한다)."""
+    base = strip_oc(url) if has_oc(url) else url.split("#", 1)[0]
+    return strip_key(base) if has_key(base) else base
 
 
 # ---------------------------------------------------------------- URL 검증
@@ -431,7 +461,7 @@ class HttpClient:
     def __init__(self, cache_root: Path | str, *, manifest: Any = None, transport: Any = None,
                  clock: Callable[[], float] = time.monotonic, sleep: Callable[[float], None] = time.sleep,
                  now: Callable[[], datetime] = utcnow, budget: Optional[Budget] = None,
-                 oc_provider: Optional[Callable[[], str]] = None, resolver: Optional[Callable[[str], list]] = None,
+                 oc_provider: Optional[Callable[[], str]] = None, key_provider: Optional[Callable[[], str]] = None, resolver: Optional[Callable[[str], list]] = None,
                  robots: Any = "default", refresh: bool = False, network: bool = True,
                  min_interval: float = MIN_INTERVAL_SECONDS, max_retries: int = MAX_RETRIES,
                  timeout: float = DEFAULT_TIMEOUT_SECONDS, lock_dir: Optional[Path | str] = None,
@@ -442,6 +472,7 @@ class HttpClient:
         self._clock, self._sleep, self._now = clock, sleep, now
         self.budget = budget
         self._oc_provider = oc_provider
+        self._key_provider = key_provider
         self._resolver = resolver if resolver is not None else (default_resolver if transport is None else None)
         self.refresh = refresh
         self.network = network
@@ -460,11 +491,11 @@ class HttpClient:
         self.robots = robots
 
     # ---- 공개 API ----
-    def get(self, url: str, *, with_oc: bool = False, accept: Optional[Callable[[bytes, dict], Optional[str]]] = None,
+    def get(self, url: str, *, with_oc: bool = False, with_key: bool = False, accept: Optional[Callable[[bytes, dict], Optional[str]]] = None,
             refresh: Optional[bool] = None, max_bytes: Optional[int] = None,
             headers: Optional[dict] = None) -> Response:
         """headers: 추가 요청 헤더(허용 목록: Range, Referer, Accept, Accept-Language). Range 요청은 캐시를 읽지도 쓰지도 않는다."""
-        return self._fetch("GET", url, with_oc, accept, refresh, max_bytes, headers=headers)
+        return self._fetch("GET", url, with_oc, accept, refresh, max_bytes, headers=headers, with_key=with_key)
 
     def head(self, url: str, *, with_oc: bool = False, refresh: Optional[bool] = None,
              headers: Optional[dict] = None) -> Response:
@@ -494,13 +525,21 @@ class HttpClient:
         self._locks.clear()
 
     # ---- 내부 ----
-    def _prepare(self, url: str, with_oc: bool) -> tuple[str, str]:
+    def _prepare(self, url: str, with_oc: bool, with_key: bool = False) -> tuple[str, str]:
         if has_oc(url) and not with_oc:
             raise BlockedURL("OC must be injected via with_oc=True, not written in the url")
-        base = strip_oc(url) if has_oc(url) else url.split("#", 1)[0]
+        if has_key(url) and not with_key:
+            raise BlockedURL("service key must be injected via with_key=True, not written in the url")
+        if with_oc and with_key:
+            raise BlockedURL("OC and service key may not be combined")
+        base = _base_of(url)
         parts = validate_url(base)
         host = (parts.hostname or "").lower()
         display = base
+        if with_key:
+            if not (host == KEY_HOST and _key_path_allowed(parts.path)):
+                raise BlockedURL("service key may only be sent to the data.go.kr court-precedent API path")
+            display = self._append_key(base, "[MASKED]")
         if with_oc:
             if not (host == DRF_HOST and parts.path.startswith(DRF_PATH_PREFIX)):
                 raise BlockedURL("OC may only be sent to law.go.kr DRF paths")
@@ -513,15 +552,21 @@ class HttpClient:
         v = value if raw else urllib.parse.quote(value, safe="")
         return f"{url}{sep}{OC_PARAM}={v}"
 
+    @staticmethod
+    def _append_key(url: str, value: str) -> str:
+        """서비스키는 이미 URL 인코딩된 값이라 quote 하지 않고 그대로 붙인다(다시 인코딩하면 인증 오류)."""
+        return f"{url}{'&' if '?' in url else '?'}{KEY_PARAM}={value}"
+
     def _fetch(self, method: str, url: str, with_oc: bool, accept: Optional[Callable], refresh: Optional[bool],
-               max_bytes: Optional[int], headers: Optional[dict] = None, body: Optional[bytes] = None) -> Response:
+               max_bytes: Optional[int], headers: Optional[dict] = None, body: Optional[bytes] = None,
+               with_key: bool = False) -> Response:
         extra = _check_extra_headers(headers, method)
-        host, display = self._prepare(url, with_oc)
+        host, display = self._prepare(url, with_oc, with_key)
         if method == "POST":
             if with_oc:
                 raise BlockedURL("OC may not be sent with POST")
             _check_post_target(display)
-        base = strip_oc(url) if has_oc(url) else url.split("#", 1)[0]
+        base = _base_of(url)
         body_sha = hashlib.sha256(body).hexdigest() if body is not None else None
         use_cache = "Range" not in extra                      # 부분 응답(206)을 전체 응답 키로 캐시하지 않는다
         use_refresh = self.refresh if refresh is None else refresh
@@ -536,7 +581,14 @@ class HttpClient:
             raise DryRunMiss(f"{method} {display}")
         if self.budget:
             self.budget.check()
-        resp = self._request(method, base, display, with_oc, max_bytes or DEFAULT_MAX_BYTES, extra_headers=extra, body=body)
+        resp = self._request(method, base, display, with_oc, max_bytes or DEFAULT_MAX_BYTES, extra_headers=extra, body=body, with_key=with_key)
+        if with_key:
+            self._drop_key_headers(resp)
+            resp.body = _KEY_BYTES_RE.sub(rb"\1[MASKED]", resp.body)
+            if self._key_echoed(resp.body):
+                resp.body = b""                                  # 키가 본문에 되울렸다: 본문을 버리고 캐시하지 않는다
+                resp.content_error = "key_echo_unmasked"
+                self._fail(display, "http", "key_echo_unmasked", "response body contains the service key; body dropped and not cached")
         if with_oc:
             oc = self._oc()
             resp.body = scrub_body(resp.body, oc)
@@ -554,7 +606,8 @@ class HttpClient:
         return resp
 
     def _request(self, method: str, base_url: str, display: str, with_oc: bool, max_bytes: int,
-                 check_robots: bool = True, extra_headers: Optional[dict] = None, body: Optional[bytes] = None) -> Response:
+                 check_robots: bool = True, extra_headers: Optional[dict] = None, body: Optional[bytes] = None,
+                 with_key: bool = False) -> Response:
         current = base_url
         for hop in range(MAX_REDIRECTS + 1):
             parts = validate_url(current)
@@ -564,6 +617,10 @@ class HttpClient:
                 if not (host == DRF_HOST and parts.path.startswith(DRF_PATH_PREFIX)):
                     raise BlockedURL("OC may only be sent to law.go.kr DRF paths (redirect left DRF)")
                 request_url = self._append_oc(current, self._oc())
+            if with_key:
+                if not (host == KEY_HOST and _key_path_allowed(parts.path)):
+                    raise BlockedURL("service key may only be sent to the data.go.kr court-precedent API path (redirect left it)")
+                request_url = self._append_key(current, self._key_forms()[0])
             if self._resolver is not None:
                 _check_resolved(host, self._resolver)
             if check_robots and self.robots is not None:
@@ -578,9 +635,9 @@ class HttpClient:
                     self._fail(display, "redirect", "too_many_redirects", f"more than {MAX_REDIRECTS} redirects")
                     raise FetchFailed(f"too many redirects for {display}")
                 nxt = urllib.parse.urljoin(current, raw.headers["location"])
-                current = strip_oc(nxt) if has_oc(nxt) else nxt.split("#", 1)[0]
+                current = _base_of(nxt)
                 continue
-            final = mask_url(current) if not with_oc else self._append_oc(current, "[MASKED]", raw=True)
+            final = self._append_oc(current, "[MASKED]", raw=True) if with_oc else (self._append_key(current, "[MASKED]") if with_key else mask_url(current))
             return Response(url=display, final_url=final, status=raw.status, headers=raw.headers,
                             body=b"" if method == "HEAD" else raw.body,
                             from_cache=False, fetched_at=iso(self._now()))
@@ -593,6 +650,40 @@ class HttpClient:
             if re.search(rb"(?<![A-Za-z0-9])" + re.escape(f.encode("utf-8")) + rb"(?![A-Za-z0-9])", body):
                 return True
         return False
+
+    def _key_forms(self) -> list:
+        """[Encoding 키(요청에 그대로 붙는 값), 디코딩한 값]. 둘 다 logsafe 에 등록해 로그에서 메시지째 지운다."""
+        if self._key_provider is None:
+            from .. import secrets
+            value = secrets.load_secret("DATA_GO_KR_KEY")
+        else:
+            value = self._key_provider()
+        if not value:
+            raise IngestionError("service key is empty")
+        forms = [value] + ([urllib.parse.unquote(value)] if urllib.parse.unquote(value) != value else [])
+        for f in forms:
+            logsafe.register_secret(f)
+        return forms
+
+    def _has_key(self, data: bytes) -> bool:
+        """값 기준 검사. percent 표기는 16진수 대소문자와 상관없이 같은 값이므로 풀어서도 본다."""
+        forms = [f.encode("utf-8") for f in self._key_forms()]
+        plain = urllib.parse.unquote_to_bytes(data)
+        return any(f in data or f in plain for f in forms)
+
+    def _key_echoed(self, body: bytes) -> bool:
+        if self._has_key(body):
+            return True
+        try:                       # JSON 은 같은 문자를 \\/ 나 \\uXXXX 로 쓸 수 있으니 디코딩한 값에서도 찾는다
+            decoded = json.dumps(json.loads(body), ensure_ascii=False)
+        except (ValueError, RecursionError):
+            return False
+        return self._has_key(decoded.encode("utf-8"))
+
+    def _drop_key_headers(self, resp: "Response") -> None:
+        """키가 든 응답 헤더는 메타에 저장하지 않는다."""
+        for k in [k for k, v in resp.headers.items() if self._has_key(str(v).encode("utf-8", "replace"))]:
+            del resp.headers[k]
 
     def _oc(self) -> str:
         if self._oc_provider is None:
@@ -646,9 +737,10 @@ class HttpClient:
         raise FetchFailed(f"{last} after {self.max_retries + 1} attempts: {display}")
 
     def _throttle(self, host: str) -> None:
+        interval = max(self.min_interval, HOST_MIN_INTERVAL.get(host, 0.0))
         last = self._last_end.get(host)
         if last is not None:
-            wait = self.min_interval - (self._clock() - last)
+            wait = interval - (self._clock() - last)
             if wait > 0:
                 self._sleep_checked(wait)
         elif host not in self._cross_run_checked:
@@ -656,7 +748,7 @@ class HttpClient:
             self._cross_run_checked.add(host)
             prev = self._read_last_end(host)
             if prev is not None:
-                wait = min(self.min_interval, self.min_interval - (self._now().timestamp() - prev))
+                wait = min(interval, interval - (self._now().timestamp() - prev))
                 if wait > 0:
                     self._sleep_checked(wait)
 

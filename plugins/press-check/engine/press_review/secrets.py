@@ -17,6 +17,7 @@ from . import logsafe
 _SECRETS = {
     "DEEPSEEK_API_KEY": ("DEEPSEEK_API_KEY", Path(".config") / "deepseek" / "api_key"),
     "LAW_OPEN_DATA_OC": ("LAW_OPEN_DATA_OC", Path(".config") / "press-dispute-review" / "law_oc"),
+    "DATA_GO_KR_KEY": ("DATA_GO_KR_KEY", Path(".config") / "press-dispute-review" / "data_go_kr_key"),      # 이미 URL 인코딩된 Encoding 키(다시 인코딩하지 않는다)
 }
 
 

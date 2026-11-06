@@ -83,6 +83,7 @@ SOURCE_PROFILE: dict[str, str] = {
     "iendc_review_results": "iendc_table",
     "lawgo_prec_supreme": "court_judgment",
     "lawgo_detc": "constitutional_decision",
+    "ccourt_detc": "constitutional_decision",
     "pac_research_judgment_analysis": "pac_judgment_cases",
 }
 # 사건 구조화를 하지 않고 기준·규정 chunk 만 만드는 소스(G-D6): source_id -> chunk 의 authority_type.
@@ -545,6 +546,7 @@ DETC_MAJORITY_KINDS = frozenset({"majority", "main"})            # court_majorit
 DETC_FLAG_STATUSES = ("unsplit", "needs_review")                 # detc_parse.STATUS_UNSPLIT / STATUS_REVIEW
 DETC_HEADNOTE_KINDS = ("headnote_holding", "headnote_opinion")
 DETC_OPINION_SECTIONS = ("reasons", "opinion", "heading") + DETC_HEADNOTE_KINDS
+DETC_UNCLASSIFIED_SECTIONS = ("opinion", "headnote_opinion")    # 의견 구간인데 opinion_kind 가 비면 어느 쪽 의견인지 모른다
 DETC_DISPOSITIONS = ("위헌불선언", "헌법불합치", "한정위헌", "한정합헌", "심판절차종료", "합헌", "위헌", "인용", "각하", "기각")      # detc_parse.classify_orders 어휘(unknown 제외)
 DETC_EQUIVALENT = frozenset({"위헌", "인용"})     # 동치군: classify_orders 가 '위헌임을 확인한다' 주문(헌법소원 인용)을 인용으로 분류하므로 모델은 같은 주문을 위헌으로도 적을 수 있다
 _DECISION_SEP = re.compile(r"[,，、/·ㆍ;；]+|\s+및\s+|\s+그리고\s+")        # 공백으로는 나누지 않는다(인쇄된 문장이 공백을 포함한다)
@@ -575,6 +577,8 @@ def detc_majority_barred(row: Any, ledger: dict) -> Optional[str]:
         return f"opinion_kind_{kind}"
     if isinstance(row, dict) and row.get("needs_review") and section in DETC_OPINION_SECTIONS:
         return "needs_review"
+    if kind is None and section in DETC_UNCLASSIFIED_SECTIONS:      # 입장어 없는 '재판관 ○○의 의견' 표제는 분류기가 값을 비운다
+        return "opinion_kind_unclassified"
     if section in DETC_HEADNOTE_KINDS and ledger.get("headnote_status") in DETC_FLAG_STATUSES:
         return f"headnote_{ledger['headnote_status']}"
     return None
@@ -757,7 +761,11 @@ def _fix_article_speaker_items(rec_items: dict, st: "_Stats", authority: str, ct
                 continue
             if strip_ws(it["quote"]["quote"]).lstrip("\"'‘’“”「『").startswith(DESCRIPTION_PREFIXES):
                 st.note(where, "rerouted_institution_description")
-                if span(it) not in {span(x) for x in facts}:
+                # 재분류는 법정의견 화자를 주므로 _items 와 같은 의견 가드를 지나야 한다
+                why = detc_majority_barred(ctx.page_meta.get(it["quote"]["page_id"]), ctx.ledger) if ctx.profile.detc_guards and speaker == "court_majority" else None
+                if why:
+                    st.note(where, f"opinion_guard:{why}")
+                elif span(it) not in {span(x) for x in facts}:
                     facts.append({"text": it["text"], "speaker": speaker, "quote": it["quote"]})
                 continue
             keep.append(it)

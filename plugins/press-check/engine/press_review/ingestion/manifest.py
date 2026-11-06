@@ -43,6 +43,7 @@ _DOC_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:\S+$")
 _ATT_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:\S+#\d+$")
 _DOC_FIELDS = ("canonical_url", "title", "publication_date", "decision_date", "year", "doc_type", "detail_url")
 _OC_RE = re.compile(r"(?i)(?<![A-Za-z0-9_])(OC=)[^&\s\"'<>\\]*")
+_KEY_RE = re.compile(r"(?i)(?<![A-Za-z0-9_])(serviceKey=)[^&\s\"'<>\\]*")      # 공공데이터포털 서비스키(http.py 와 같은 형태)
 MAX_MESSAGE = 500
 
 SCHEMA = """
@@ -283,7 +284,7 @@ def sanitize_message(msg: Any) -> str:
 
     평범한 단어인 OC 값이 메시지의 다른 부분(경로·법령 문구)에 있어도 메시지를 지우지 않는다.
     """
-    s = logsafe.mask_param_secrets(_OC_RE.sub(r"\1[MASKED]", str(msg)))
+    s = logsafe.mask_param_secrets(_KEY_RE.sub(r"\1[MASKED]", _OC_RE.sub(r"\1[MASKED]", str(msg))))
     if logsafe.contains_sensitive(s):
         return logsafe.REDACTED
     return s[:MAX_MESSAGE]

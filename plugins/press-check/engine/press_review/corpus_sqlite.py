@@ -48,7 +48,8 @@ DISPLAY_QUOTE_MAX_CP = 300     # 재배포 허락이 없는 소스의 사용자 
 # passage 단위 공개 키(corpus.PUBLIC_KEYS)에는 넣지 않고 응답·상태 단위로 알린다.
 _ATTR_DETC = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
 _ATTR_PREC = "법원 판결, 법제처 국가법령정보센터 제공"
-SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC}
+_ATTR_CCOURT = "헌법재판소 결정, 헌법재판소 제공"      # 헌법재판소 판례정보 API(공공데이터포털, 공공누리 제1유형 출처표시)
+SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "ccourt_detc": _ATTR_CCOURT, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC}
 # 판례 문서 id 는 소스 id 가 아니라 ``lawgo_prec:<일련번호>`` 접두를 쓴다(passage source_id 조회 전용).
 _DOC_PREFIX_ATTRIBUTION = {"lawgo_prec": _ATTR_PREC}
 
@@ -386,13 +387,28 @@ def _iter_passages(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict,
     """색인에 넣을 passage. 본문과 검색·공개 메타데이터가 모두 같은 chunk(``_dedup_key``)는 제외 필터를 통과한 것 중 가장 먼저 들어온 하나
     (min(created_at, chunk_id))만 남긴다. created_at 은 chunk 를 다시 쓸 때 갱신되므로 최초 수집 시각이 아니라 마지막 기록 시각이다. 제거된 chunk 는
     ``aliases`` 에 자기 값(출처·url·위치·권위·기준일)과 남긴 passage_id 로 모으고 ``excluded['duplicate_text']`` 에 센다. 나머지 메타데이터는 키가 같으므로
-    남긴 passage 의 값이 곧 자기 값이다. 사전 훑기 1회가 더 든다."""
+    남긴 passage 의 값이 곧 자기 값이다. 사전 훑기 1회가 더 든다.
+    헌재 API 보강본(ccourt_detc)은 법제처 경로(lawgo_detc)의 passage 가 실제로 색인되는 사건과 번호가 겹치면 뺀다. 제외 필터를 통과한 passage 끼리만
+    비교하므로 격리·보류된 법제처 사건은 보강본을 막지 않고, 빠질 보강본은 중복 제거의 대표가 되지 못한다."""
     winner: dict[str, tuple[str, str]] = {}
+    held: set[str] = set()
+    ccourt: list[tuple[str, tuple[str, str], set[str]]] = []
     for p in _iter_eligible(conn, rights_doc, rights_src, {}, check):
         k, o = _dedup_key(p), (p.pop("_created"), p["passage_id"])
+        if p["source_family"] == "ccourt_detc":
+            ccourt.append((k, o, _detc_numbers(p["case_number"])))
+            continue
+        if p["source_family"] == "lawgo_detc":
+            held |= _detc_numbers(p["case_number"])
         if k not in winner or o < winner[k]:
             winner[k] = o
+    for k, o, numbers in ccourt:
+        if not numbers & held and (k not in winner or o < winner[k]):
+            winner[k] = o
     for p in _iter_eligible(conn, rights_doc, rights_src, excluded, check):
+        if p["source_family"] == "ccourt_detc" and _detc_numbers(p["case_number"]) & held:
+            excluded["case_superseded_by_lawgo"] = excluded.get("case_superseded_by_lawgo", 0) + 1
+            continue
         k, o = _dedup_key(p), (p.pop("_created"), p["passage_id"])
         if o != winner[k]:
             excluded["duplicate_text"] = excluded.get("duplicate_text", 0) + 1
@@ -403,6 +419,14 @@ def _iter_passages(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict,
                                 "reference_date_basis": p["reference_date_basis"], "case_number": p["case_number"], "institution": p["institution"]})
             continue
         yield p
+
+
+_DETC_NO = re.compile(r"\d{2,4}헌[가-힣]{1,2}\d+")
+
+
+def _detc_numbers(case_number: Any) -> set[str]:
+    """병합 표기를 포함한 사건번호 문자열에서 헌재 사건번호를 뽑는다."""
+    return set(_DETC_NO.findall(re.sub(r"\s+", "", case_number))) if isinstance(case_number, str) else set()
 
 
 def _iter_eligible(conn: sqlite3.Connection, rights_doc: dict, rights_src: dict, excluded: dict[str, int],

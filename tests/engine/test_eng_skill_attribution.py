@@ -13,7 +13,8 @@ def _text(name):
 
 
 def test_phrase_constant_is_exact():
-    assert corpus_sqlite.SOURCE_ATTRIBUTION == {"lawgo_detc": PHRASE, "lawgo_prec_supreme": PREC_PHRASE, "lawgo_prec_refs": PREC_PHRASE}
+    assert corpus_sqlite.SOURCE_ATTRIBUTION == {"lawgo_detc": PHRASE, "ccourt_detc": "헌법재판소 결정, 헌법재판소 제공", "lawgo_prec_supreme": PREC_PHRASE,
+                                                "lawgo_prec_refs": PREC_PHRASE}
 
 
 def test_explain_skill_requires_attribution_for_detc():

@@ -58,7 +58,7 @@ CODE_VERSION = "s3"                # 3: 인용 대조를 공백 제거본으로(
 ASSEMBLY_VERSION = "a5"
 DEFAULT_MODEL = "deepseek-flash"
 # 코드 상수: 이 source_family 만 DeepSeek 로 반출한다(권리 장부의 external_api 와 별개로 한 번 더 막는다).
-EXTERNAL_API_FAMILIES = ("pac_cases", "pac_election", "pac_other", "iendc", "law_go_kr")
+EXTERNAL_API_FAMILIES = ("pac_cases", "pac_election", "pac_other", "iendc", "law_go_kr", "data_go_kr")
 WINDOW_CHARS = 20000
 SNAP_CHARS = 600
 MAX_TOKENS = 16384
@@ -221,9 +221,9 @@ class Target:
 
 def _structure_candidate_doc(d: dict) -> bool:
     """판례 문서(lawgo_prec_supreme·lawgo_prec_refs 등 lawgo_*)는 lawapi.is_structure_candidate 를 통과해야 구조화한다. 다른 소스는 제한하지 않는다.
-    헌재결정례(lawgo_detc)는 사전 필터(판례 질의 규칙) 면제: 본문이 있으면(body.text_available) 후보다."""
+    헌재결정례(lawgo_detc·ccourt_detc)는 사전 필터(판례 질의 규칙) 면제: 본문이 있으면(body.text_available) 후보다."""
     sid = str(d.get("source_id") or "")
-    if not sid.startswith("lawgo_"):
+    if not sid.startswith("lawgo_") and sid != "ccourt_detc":
         return True
     from .sources.lawapi import is_structure_candidate
     extra = d.get("extra_json")
@@ -233,7 +233,7 @@ def _structure_candidate_doc(d: dict) -> bool:
         except ValueError:
             extra = {}
     extra = extra if isinstance(extra, dict) else (d.get("extra") or {})
-    if sid == "lawgo_detc":
+    if sid in ("lawgo_detc", "ccourt_detc"):                  # ccourt_detc: 헌법재판소 판례정보 API(공공데이터포털) 보강분, 같은 규칙
         return bool((extra.get("body") or {}).get("text_available"))
     return is_structure_candidate(extra)
 
