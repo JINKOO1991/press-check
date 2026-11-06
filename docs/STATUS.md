@@ -7,7 +7,7 @@
 | P0 플러그인·엔진·MCP | 구현 완료 | docs/P0_DESIGN.md, `claude plugin validate` 두 경로 통과 |
 | P1 자료 목록·권리 장부 | 완료 | docs/coverage/P1_inventory.md, rights_ledger.json |
 | P2 수집·추출·구조화 | 순위 A 통과 소스 4개 전량 완료, 미달 3개 보류 | docs/coverage/P2_minigate.md, P2_cost_estimate.md, 아래 표 |
-| P3 검색 색인 | 재빌드 완료·활성 전환(2026-10-17 갱신): 활성 snapshot idx-2caa00753b47d3a9, passage 90,326(판례 passage 1,680; 인용 기반 선별 수집 판례 570건 반영, 수동 제외 5건), 이전 idx-06c1c3649636e7a2는 롤백용으로 `index/`에 보존(롤백: CURRENT를 06c1 파일명으로 되쓴다). 2026-10-16 전환분 06c1: passage 89,756(같은 본문 3,834 제거·별칭 3,834 보존, chunk 종류 열, case_att_excluded 610), IENDC 사건 1,115·시정권고 현황 통과 181·제외 4·대상 아님 3·미평가 132 반영. 이전 idx-735c398068d7d35e(F1·F2 결함)·idx-34b8367d1dfe423d(76,066)는 롤백용으로 `~/.local/share/press-dispute-review/rollback_snapshots/`에 보존(롤백: 두 파일을 index/로 mv하고 CURRENT를 되돌린다). 형태소 분석·조사 토크나이저 이동은 미실시 | docs/coverage/P3_rebuild_result.md, docs/coverage/P3_citation_collection.md |
+| P3 검색 색인 | 재빌드 완료·활성 전환(2026-10-19 갱신): 활성 snapshot idx-33cd25a510e8272f, passage 90,709, judgment 2,063(판례 1,678 + 헌재 385), 사건 단위 제외 8건. 이전 idx-2caa00753b47d3a9(2026-10-17, passage 90,326, 판례 passage 1,680, 인용 기반 선별 수집 판례 570건 반영)와 idx-06c1c3649636e7a2는 롤백용으로 `index/`에 보존(롤백: CURRENT를 이전 파일명으로 되쓴다). 2026-10-16 전환분 06c1: passage 89,756(같은 본문 3,834 제거·별칭 3,834 보존, chunk 종류 열, case_att_excluded 610), IENDC 사건 1,115·시정권고 현황 통과 181·제외 4·대상 아님 3·미평가 132 반영. 이전 idx-735c398068d7d35e(F1·F2 결함)·idx-34b8367d1dfe423d(76,066)는 롤백용으로 `~/.local/share/press-dispute-review/rollback_snapshots/`에 보존(롤백: 두 파일을 index/로 mv하고 CURRENT를 되돌린다). 형태소 분석·조사 토크나이저 이동은 미실시 | docs/coverage/P3_rebuild_result.md, docs/coverage/P3_citation_collection.md |
 | P4 전문가 평가 | 설계·도구 구현, 첫 배치 10개로 설문 종료(사용자 결정) | 설계 문서, 검색 평가 하네스와 기준선 저장, 시나리오 스키마 v2·지표, 사건 그룹·분할 V1(T=2018-10-01), 시나리오 40개 구성안, 첫 배치 10개 기사·장부·신원 표기, 구글 폼 설문 스크립트. 설문은 10개 시나리오로 종료(사용자 결정)이고 40개 확장은 접었다. 전문가 라벨·평가 실행은 미착수 (docs/P4_DESIGN.md, P4_SCENARIO_PLAN.md) |
 | P5 공개 배포 | 미착수 | 코퍼스 재배포 정책 사용자 결정 필요(P3_DESIGN §5). 공개본 권리 기본값은 unknown이며 사용자가 `rights set`으로 직접 기록해야 외부 API 반출이 열린다(기관 이용 문의 회신 전). rights_ledger.json은 작성자 장부의 스냅샷이다 |
 
@@ -30,14 +30,15 @@
 ## 헌재 결정례 소스(`lawgo_detc`) 단위 상태 (2026-10-19)
 
 - 구현됨(합성 장부·합성 응답 시험): U1 사건 단위 인입 평가(`admission`, G-D34), U2 어댑터 `lawapi_detc`·`lawapi_detc_body`와 본문 파서, U3 구조화 프로필 `constitutional_decision`(의견 가드·처분 가드), U4 출처 표시(`search_cases`의 `source_attribution`, `explain`·`review`·`corpus-status` 스킬 규칙, `corpus_status` 소스 줄)와 평가 미반영 경고(`build_index` 결과의 `case_admission_pending`·`warnings`, `corpus_status` 경고). 상세 docs/P2_DESIGN.md G-D34.
-- 미구현·미실시: 실제 헌재 결정 수집(코퍼스에 헌재 결정 없음), 파일럿(S1) 미실시, 권리 기록 `rights set law_go_kr --source lawgo_detc` 미실행(소스 권리는 기본값 unknown이라 어댑터가 `rights_not_recorded`로 멈춘다), 색인 재빌드 미실시.
+- 실시(2026-10-19): 파일럿 S1(5건)·S2(45건)·S3(350건) 완료. 소스 권리 기록 완료(내부 처리 허용, 재배포는 허락 필요, 출처 표시 요건). 문서 400건 중 본문이 있는 386건을 구조화했고 사건 386·격리 0이다. 인용 일치 8,546/8,582(99.58%). 비다수 의견 쪽 인용 1,050건 중 court_majority 0건. 사건 단위 제외 1건(2003헌바81). DeepSeek 비용 누적 약 $3.70, 법제처 요청 약 900건. 병합 번호의 색인 검색을 확인했다. 색인은 위 P3 행의 snapshot으로 재빌드했다.
+- 한계: 본문이 없는 문서 14건. 번호 해석 미해결 62건(법제처 헌재결정례에서 찾지 못한 번호; 실패 장부 `lawgo_detc_no:` 열린 행, deferred_local 61·page_overflow 1). 의견 표제와 주문 분류는 휴리스틱이며 무작위 10건 자동 감사만 했고 사람 검수는 하지 않았다. 구조화 사건은 unverified 상태다. 병합 사건번호 중 확인되지 않은 것은 공백으로 기록만 했다. 이 결과는 인용 일치 기준의 수치이며 법적 안전성이나 전체 헌재 결정 커버리지를 뜻하지 않는다.
 - 한계(미측정): `needs_review` 과잉 제거 가능성, `【주 문】` 쪽이 없는 문서에서 outcome이 폐기되는 빈도. `case_admission_pending` 수치는 색인 구축 시점 값이다.
 
 ## 검증
 
 ## 검증
 
-- 테스트 1,291 passed, 1 xfailed(2026-10-17 마지막 실행 `python3 -m pytest tests -q`). 이전 기록 1,184 passed, 1 xfailed(2026-10-16, docs/coverage/P3_rebuild_result.md 기록. 이전 확인 1,173; 실행: `PYTHONPATH=plugins/press-check/engine python3 -m pytest tests -q`).
+- 테스트 1,670 passed, 1 xfailed(2026-10-19 마지막 실행 `python3 -m pytest tests -q`). 이전 기록 1,291 passed, 1 xfailed(2026-10-17, docs/coverage/P3_rebuild_result.md 기록. 이전 확인 1,173; 실행: `PYTHONPATH=plugins/press-check/engine python3 -m pytest tests -q`).
 - 내부 적대 검토 여러 회, Opus 4관점 대체 검토 15건(14건 수정).
 - Codex 상호검증 3회((개발 중 문서, 공개본에 미포함)). 1회차 9건 모두 수정, 2회차 8건 CLOSED·#4 수정, 3회차는 중간 메모만 남아 TLS 본문 읽기 경로를 직접 수정. 68f4911(판례 대상 필터)·5cec81a는 Codex 최종 판정 없음.
 
