@@ -37,7 +37,7 @@
 ## 출시본 구조 분리 (2026-11-07, UDEC-25·26)
 
 - 구현됨(합성 색인 시험): 수집 어댑터·DeepSeek 구조화(`ingestion/`, `providers/deepseek.py`, `prompts/`, `prices/`)를 `plugins/press-check/` 밖 `devtools/engine/`으로 옮겼다. 플러그인 폴더에는 이 코드와 import가 없고(`tests/mcp/test_plugin_isolation.py`), 플러그인 폴더만 복사한 환경에서 MCP 서버가 뜨고 `search_cases`가 동작한다. 번들 만들기(`bundle_build.py`)와 설치 명령(`install-bundle`)을 만들었다.
-- 미실시: 번들을 실제로 만들지 않았다. 자연인 실명 문서의 전수 검수와 제외 목록은 없다. 릴리스 URL은 미정이라 `config.BUNDLE_RELEASE_BASE_URL`은 자리표시자이며 `install-bundle`은 지금 내려받지 않고 중단한다. 번들 사건 수(`cases_by_authority_type`)는 사건번호 기준 하한이다.
+- 번들 색인 파일은 2026-11-07에 한 번 만들었다(건수는 플러그인 README '근거 자료 설치'). 미실시: 번들 배포. 기대 해시 고정 코드는 UDEC-34 로 들어가며 고정값은 릴리스 때 넣는다. 자연인 실명 문서는 전수 검수를 했고 180건을 뺐으며(제외 목록은 비공개 보관) 부분 가림 표기만 있는 58건은 유지했다(UDEC-29). 자동 탐지와 사람 판독의 한계로 놓친 실명이 남아 있을 수 있다. 릴리스 URL은 미정이라 `config.BUNDLE_RELEASE_BASE_URL`은 자리표시자이며 `install-bundle`은 지금 내려받지 않고 중단한다. 번들 사건 수(`cases_by_authority_type`)는 사건번호 기준 하한이다.
 
 ## 검증
 
