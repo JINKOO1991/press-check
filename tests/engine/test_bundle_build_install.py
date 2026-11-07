@@ -160,7 +160,10 @@ def test_install_failures_leave_existing_index_untouched(release, active, tmp_pa
     data = index_dir.parent
     info_url, file_url = BASE + "bundle-info.json", BASE + json.loads(release[BASE + "bundle-info.json"])["file"]
 
+    real_sha = json.loads(release[info_url])["sha256"]
+
     def run(files, **kw):
+        kw.setdefault("expected_sha256", real_sha)                # 고정값이 없는 빌드는 --sha256 없이 설치하지 않는다
         with pytest.raises(bundle_install.BundleError) as ei:
             bundle_install.install_bundle(data_dir=data, base_url=BASE, fetch=_fetcher(files), **kw)
         assert (index_dir / "CURRENT").read_bytes() == cur and sorted(p.name for p in index_dir.iterdir()) == snap_before
@@ -184,7 +187,7 @@ def test_install_failures_leave_existing_index_untouched(release, active, tmp_pa
     junk = b"not a sqlite file" * 10
     notindex[file_url] = junk
     notindex[info_url] = json.dumps({**json.loads(release[info_url]), "sha256": hashlib.sha256(junk).hexdigest(), "size_bytes": len(junk)}).encode()
-    assert "열 수 없다" in run(notindex)                                                  # 해시는 맞지만 색인이 아님
+    assert "열 수 없다" in run(notindex, expected_sha256=hashlib.sha256(junk).hexdigest())                                                 # 해시는 맞지만 색인이 아님
     assert target.exists()
 
 
@@ -218,5 +221,139 @@ def test_install_refuses_index_without_required_tables_and_keeps_current(release
     raw = hollow.read_bytes()
     files = {BASE + "bundle-info.json": json.dumps({**info, "sha256": hashlib.sha256(raw).hexdigest(), "size_bytes": len(raw)}).encode(), BASE + info["file"]: raw}
     with pytest.raises(bundle_install.BundleError, match="passages"):
-        bundle_install.install_bundle(data_dir=index_dir.parent, base_url=BASE, fetch=_fetcher(files))
+        bundle_install.install_bundle(data_dir=index_dir.parent, base_url=BASE, fetch=_fetcher(files), expected_sha256=hashlib.sha256(raw).hexdigest())
     assert (index_dir / "CURRENT").read_bytes() == cur and sorted(p.name for p in index_dir.iterdir()) == before
+
+
+# ---------------------------------------------------------------- 기대 해시 고정(UDEC-34)
+
+def _info(release):
+    return json.loads(release[BASE + "bundle-info.json"])
+
+
+def _pin(monkeypatch, release, **over):
+    info = _info(release)
+    vals = {"sha256": info["sha256"], "size": info["size_bytes"], "filename": info["file"], **over}
+    monkeypatch.setattr(config, "BUNDLE_PIN_SHA256", vals["sha256"], raising=False)
+    monkeypatch.setattr(config, "BUNDLE_PIN_SIZE", vals["size"], raising=False)
+    monkeypatch.setattr(config, "BUNDLE_PIN_FILENAME", vals["filename"], raising=False)
+
+
+def _with_info(release, **over):
+    files = dict(release)
+    files[BASE + "bundle-info.json"] = json.dumps({**_info(release), **over}).encode()
+    return files
+
+
+def _refused(tmp_path, files, calls, match, **kw):
+    with pytest.raises(bundle_install.BundleError, match=match):
+        bundle_install.install_bundle(data_dir=tmp_path / "d", base_url=kw.pop("base_url", BASE), fetch=_fetcher(files, calls), **kw)
+    assert not (tmp_path / "d" / "index" / "CURRENT").exists()
+
+
+def test_pin_rejects_info_mismatch_before_download(release, tmp_path, monkeypatch):
+    _pin(monkeypatch, release)
+    info = _info(release)
+    for over in ({"sha256": "0" * 64}, {"size_bytes": info["size_bytes"] + 1}, {"file": "corpus-idx-0123456789abcdef.sqlite"}):
+        calls: list[str] = []
+        _refused(tmp_path, _with_info(release, **over), calls, "고정", expected_sha256=None)
+        assert calls == [BASE + "bundle-info.json"]                                    # 색인 파일은 요청하지 않았다
+
+
+def test_pin_rejects_downloaded_file_mismatch_and_keeps_current(release, active, tmp_path, monkeypatch):
+    index_dir, _ = active
+    cur, before = (index_dir / "CURRENT").read_bytes(), sorted(p.name for p in index_dir.iterdir())
+    _pin(monkeypatch, release)
+    info = _info(release)
+    bad = dict(release)
+    raw = bytearray(release[BASE + info["file"]])
+    raw[len(raw) // 2] ^= 0xFF
+    bad[BASE + info["file"]] = bytes(raw)                                              # info 는 고정값과 같고 실제 파일만 다르다
+    with pytest.raises(bundle_install.BundleError, match="sha256"):
+        bundle_install.install_bundle(data_dir=index_dir.parent, base_url=BASE, fetch=_fetcher(bad))
+    assert (index_dir / "CURRENT").read_bytes() == cur and sorted(p.name for p in index_dir.iterdir()) == before
+
+
+def test_no_pin_without_sha256_refuses(release, tmp_path):
+    calls: list[str] = []
+    assert config.BUNDLE_PIN_SHA256 is None
+    _refused(tmp_path, release, calls, "고정돼 있지 않습니다")
+    assert calls == []                                                                 # 판본 정보도 요청하지 않는다
+
+
+def test_no_pin_with_matching_sha256_installs_and_mismatch_refuses(release, tmp_path):
+    info = _info(release)
+    res = bundle_install.install_bundle(data_dir=tmp_path / "u", base_url=BASE, expected_sha256=info["sha256"], fetch=_fetcher(release))
+    assert res["status"] == "installed" and (tmp_path / "u" / "index" / "CURRENT").read_text().strip() == info["file"]
+    _refused(tmp_path, release, [], "공지한 sha256", expected_sha256="0" * 64)
+
+
+def test_pin_with_sha256_option_must_equal_pin(release, tmp_path, monkeypatch):
+    _pin(monkeypatch, release)
+    calls: list[str] = []
+    _refused(tmp_path, release, calls, "고정", expected_sha256="0" * 64)
+    assert calls == []
+
+
+@pytest.mark.parametrize("over", [{"sha256": None}, {"size": None}, {"filename": None}])
+def test_partial_pin_is_config_error(release, tmp_path, monkeypatch, over):
+    _pin(monkeypatch, release, **over)
+    calls: list[str] = []
+    _refused(tmp_path, release, calls, "설정 오류", expected_sha256=_info(release)["sha256"])
+    assert calls == []
+
+
+@pytest.mark.parametrize("over", [{"sha256": "xyz"}, {"size": 0}, {"filename": "../x.sqlite"}])
+def test_malformed_pin_is_config_error(release, tmp_path, monkeypatch, over):
+    _pin(monkeypatch, release, **over)
+    _refused(tmp_path, release, [], "설정 오류", expected_sha256=_info(release)["sha256"])
+
+
+@pytest.mark.parametrize("name", ["../x.sqlite", "sub/corpus-idx-0123456789abcdef.sqlite", "corpus-idx-0123456789abcdef.sqlite\n",
+                                  "corpus-idx-0123456789ABCDEF.sqlite", "..", "corpus-idx-0123456789abcdef.sqlite/../x"])
+def test_bad_file_name_refused_before_download(release, tmp_path, name):
+    calls: list[str] = []
+    _refused(tmp_path, _with_info(release, file=name), calls, "이름 규칙", expected_sha256=_info(release)["sha256"])
+    assert calls == [BASE + "bundle-info.json"]
+
+
+@pytest.mark.parametrize("base", ["http://example.test/x/", "file:///tmp/x/", "ftp://example.test/x/"])
+def test_non_https_base_refused_without_request(tmp_path, base):
+    calls: list[str] = []
+    _refused(tmp_path, {}, calls, "https", base_url=base, expected_sha256="0" * 64)
+    assert calls == []
+
+
+def test_redirect_to_non_https_refused():
+    import urllib.error
+    import urllib.request
+    h = bundle_install._HttpsOnlyRedirect()
+    req = urllib.request.Request(BASE + "x")
+    with pytest.raises(urllib.error.URLError):
+        h.redirect_request(req, io.BytesIO(b""), 302, "Found", {}, "http://evil.test/x")
+
+
+def test_info_snapshot_id_must_match_meta_snapshot_id(release, active, tmp_path):
+    index_dir, _ = active
+    cur, before = (index_dir / "CURRENT").read_bytes(), sorted(p.name for p in index_dir.iterdir())
+    info = _info(release)
+    for over in ({"snapshot_id": "idx-0000000000000000"}, {"snapshot_id": None}, {"snapshot_id": 5}):
+        with pytest.raises(bundle_install.BundleError, match="snapshot"):
+            bundle_install.install_bundle(data_dir=index_dir.parent, base_url=BASE, expected_sha256=info["sha256"], fetch=_fetcher(_with_info(release, **over)))
+        assert (index_dir / "CURRENT").read_bytes() == cur and sorted(p.name for p in index_dir.iterdir()) == before
+
+
+def test_pinned_genuine_bundle_installs_without_sha256_option(release, tmp_path, monkeypatch):
+    _pin(monkeypatch, release)
+    info = _info(release)
+    res = bundle_install.install_bundle(data_dir=tmp_path / "u", base_url=BASE, fetch=_fetcher(release))
+    assert res["status"] == "installed" and res["sha256"] == info["sha256"] and res["snapshot_id"] == info["snapshot_id"]
+    assert (tmp_path / "u" / "index" / "CURRENT").read_text().strip() == info["file"]
+
+
+def test_cli_install_bundle_without_pin_and_sha256_is_refused(tmp_path, monkeypatch, capsys):
+    from press_review import cli
+    monkeypatch.setenv("PRESS_DISPUTE_DATA_DIR", str(tmp_path / "d"))
+    monkeypatch.setattr(config, "BUNDLE_RELEASE_BASE_URL", BASE)
+    assert cli.main(["install-bundle"]) == 1
+    assert "고정돼 있지 않습니다" in capsys.readouterr().err

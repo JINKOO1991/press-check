@@ -15,6 +15,11 @@ MAX_STORE_ITEMS = 16        # 서버 메모리에 두는 원고·보고서 합�
 # 이 값이 자리표시자인 동안 ``install-bundle`` 은 내려받지 않고 중단한다. 확정되면 https URL 로 바꾼다(끝에 '/' 포함).
 BUNDLE_RELEASE_BASE_URL = "https://release-url-undecided.invalid/press-check-bundle/latest/"
 BUNDLE_INFO_NAME = "bundle-info.json"
+# 번들 기대값 고정(UDEC-34). 릴리스에서 받은 bundle-info.json 의 해시는 전송 손상만 막고 릴리스 교체는 못 막으므로, 최종 번들 파일의 sha256·크기·파일 이름을
+# 이 코드에 고정한다. 세 값은 모두 None(고정 전: --sha256 을 직접 주어야 설치) 이거나 모두 설정이어야 하고, 일부만 설정이면 install-bundle 이 설정 오류로 중단한다.
+BUNDLE_PIN_SHA256: str | None = None      # 최종 번들 파일의 sha256(소문자 hex 64자리)
+BUNDLE_PIN_SIZE: int | None = None        # 최종 번들 파일의 바이트 수
+BUNDLE_PIN_FILENAME: str | None = None    # corpus-idx-<16자리 hex>.sqlite
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 SCHEMAS_DIR = PACKAGE_DIR / "schemas"

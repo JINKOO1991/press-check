@@ -601,6 +601,57 @@ def search_cases(
     return out
 
 
+SPAN_FIX_TAG = "[좌표보정]"
+
+
+def _repair_one_span(span: Any, blocks: dict) -> tuple[int, int] | None:
+    """quote 가 블록 text 에 정확히 한 번(겹침 포함) 나오고 좌표가 틀렸으면 새 (start, end) 를 돌려준다. 그 밖에는 None(손대지 않음)."""
+    if not isinstance(span, dict):
+        return None
+    bid, q, s, e = span.get("block_id"), span.get("quote"), span.get("start"), span.get("end")
+    if not isinstance(bid, str) or bid not in blocks or not isinstance(q, str) or not q:
+        return None
+    if type(s) is not int or type(e) is not int:
+        return None
+    text = blocks[bid]
+    if 0 <= s < e <= len(text) and text[s:e] == q:
+        return None
+    first = text.find(q)
+    if first < 0 or text.find(q, first + 1) >= 0:      # 0회·2회 이상(겹침 포함)은 기존 거절 경로
+        return None
+    return first, first + len(q)
+
+
+def _repair_spans(article: Any, findings: Any) -> tuple[Any, list[str]]:
+    """findings 의 span·related_edits[*].span 좌표를 깊은 복사본에서 보정한다. 알림은 좌표와 finding_id 만 담는다(원문 없음)."""
+    blocks = {b["block_id"]: b["text"] for b in (article or {}).get("blocks", [])
+              if isinstance(b, dict) and isinstance(b.get("block_id"), str) and isinstance(b.get("text"), str)}
+    if not isinstance(findings, list) or not blocks:
+        return findings, []
+    out = copy.deepcopy(findings)
+    notes: list[str] = []
+
+    def fix(span: Any, fid: str, label: str) -> None:
+        new = _repair_one_span(span, blocks)
+        if new is not None:
+            old = (span["start"], span["end"])
+            span["start"], span["end"] = new
+            notes.append(f"{SPAN_FIX_TAG} {fid} {label}: 좌표 [{old[0]},{old[1]}) -> [{new[0]},{new[1]}) 로 보정했습니다(quote 가 이 블록에 한 번만 있음).")
+
+    for i, f in enumerate(out):
+        if not isinstance(f, dict):
+            continue
+        fid = str(f.get("finding_id") or f"finding-{i + 1:03d}")
+        fix(f.get("span"), fid, "span")
+        se = f.get("suggested_edit")
+        rel = se.get("related_edits") if isinstance(se, dict) else None
+        if isinstance(rel, list):
+            for j, r in enumerate(rel):
+                if isinstance(r, dict):
+                    fix(r.get("span"), fid, f"related_edits[{j}]")
+    return out, notes
+
+
 def submit_report(
     store: Any,
     corpus: Any,
@@ -621,6 +672,9 @@ def submit_report(
     if left is None:             # 방금 만료: 보고서에 새 TTL 을 주지 않는다
         return {"ok": False, "errors": ["article_handle is unknown or expired; call prepare_article again with the manuscript"]}
     report_ttl = min(store.ttl_seconds, left)
+    # 좌표 보정은 build_report_ex 의 스키마·교차검증 앞에서 한다: 'span.end: minimum' 같은 스키마 오류도 그 안(contracts.validate_report)에서 나는데,
+    # mcp_server 의 인자 검증은 findings 항목을 {"type":"object"} 로만 보므로 이 지점이 가장 앞이다.
+    findings, span_notes = _repair_spans(entry["article"], findings)
     res = build_report_ex(
         entry["article"], findings, explanations, corpus, now=now, raw_bytes=entry.get("raw_bytes"),
         overall_status=overall_status, coverage_notes=coverage_notes, ttl_seconds=report_ttl,
@@ -637,7 +691,7 @@ def submit_report(
         "ok": True,
         "report_id": res.report["report_id"],
         "table": table,
-        "warnings": res.warnings,
+        "warnings": span_notes + res.warnings,
         "hidden_finding_count": res.report["hidden_finding_count"],
         "expires_at": res.report["retention"]["expires_at"],
     }

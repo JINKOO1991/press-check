@@ -4,7 +4,9 @@
 ``<data>/index/`` 에 놓고 ``CURRENT`` 를 바꾼다. 내려받기 실패·해시 불일치·형식 오류에서는 임시 파일만 지우고 기존 색인과 ``CURRENT`` 를 건드리지 않는다.
 
 - https 만 쓴다(리다이렉트도 https 만). 요청에는 원고·사용자 정보가 없다(고정 URL 두 개: 판본 정보 JSON, 색인 파일).
-- ``--sha256`` 은 릴리스 공지에 적힌 값을 사용자가 따로 넣는 검증이다. 넣지 않으면 판본 정보 JSON 의 해시로 전송 손상만 걸러낸다(같은 서버가 준 값이므로 변조는 못 막는다).
+- 기대값은 코드에 고정한다(``config.BUNDLE_PIN_*``, UDEC-34). 판본 정보의 파일 이름·크기·sha256 이 고정값과 다르면 내려받기 전에 거절하고, 받은 파일도 고정값과 대조한다.
+  고정값이 없는 빌드(None)는 ``--sha256`` 을 직접 주지 않으면 설치하지 않는다. 판본 정보 JSON 의 해시만으로는 전송 손상만 걸러지고 변조(릴리스 교체)는 못 막기 때문이다.
+  고정값이 있을 때 ``--sha256`` 을 주면 고정값과 같아야 한다.
 - 오래된 색인은 지우지 않는다(``_prune`` 을 부르지 않는다).
 """
 from __future__ import annotations
@@ -28,6 +30,7 @@ MAX_INFO_BYTES = 1 << 20
 MAX_BUNDLE_BYTES = 4 << 30
 TIMEOUT_SECONDS = 60
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
+_FILE_NAME = re.compile(r"corpus-idx-[0-9a-f]{16}\.sqlite")     # fullmatch 로만 쓴다('$' 는 끝 개행을 허용한다)
 
 
 class BundleError(Exception):
@@ -66,15 +69,28 @@ def _parse_info(raw: bytes) -> dict:
     if not isinstance(info, dict):
         raise BundleError("판본 정보 형식이 잘못됐다")
     name, sha, size = info.get("file"), info.get("sha256"), info.get("size_bytes")
-    if not isinstance(name, str) or not corpus_sqlite._INDEX_RE.match(name):
+    if not isinstance(name, str) or not _FILE_NAME.fullmatch(name):
         raise BundleError("판본 정보의 파일 이름이 색인 이름 규칙(corpus-idx-<16자리 16진수>.sqlite)에 맞지 않는다")
     if not isinstance(sha, str) or not _HEX64.match(sha):
         raise BundleError("판본 정보의 sha256 이 잘못됐다")
     if not isinstance(size, int) or isinstance(size, bool) or not 0 < size <= MAX_BUNDLE_BYTES:
         raise BundleError("판본 정보의 크기가 잘못됐다")
+    if not isinstance(info.get("snapshot_id"), str) or not info["snapshot_id"]:
+        raise BundleError("판본 정보에 snapshot_id 가 없다")
     if info.get("index_format") not in corpus_sqlite.READABLE_FORMATS:
         raise BundleError("이 플러그인이 열 수 없는 색인 형식이다(플러그인을 갱신하세요)")
     return info
+
+
+def _pin() -> tuple[str, int, str] | None:
+    """고정값 (sha256, 크기, 파일 이름). 모두 None 이면 None. 일부만 설정됐거나 형식이 틀리면 설정 오류."""
+    sha, size, name = config.BUNDLE_PIN_SHA256, config.BUNDLE_PIN_SIZE, config.BUNDLE_PIN_FILENAME
+    if sha is None and size is None and name is None:
+        return None
+    if (not isinstance(sha, str) or not _HEX64.match(sha) or not isinstance(size, int) or isinstance(size, bool) or not 0 < size <= MAX_BUNDLE_BYTES
+            or not isinstance(name, str) or not _FILE_NAME.fullmatch(name)):
+        raise BundleError("설정 오류: 번들 고정값(BUNDLE_PIN_SHA256·SIZE·FILENAME)은 세 값이 모두 올바르게 설정되거나 모두 비어 있어야 한다. 내려받지 않았다.")
+    return sha, size, name
 
 
 def _required_columns(fmt: str) -> dict[str, set[str]]:
@@ -133,6 +149,7 @@ def _verify_index(path: Path) -> None:
 def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None, expected_sha256: str | None = None,
                    fetch: Callable[[str], BinaryIO] | None = None) -> dict:
     """번들을 내려받아 검증하고 CURRENT 로 지정한다. 돌려주는 dict 는 건수·경로·해시뿐이다. 실패는 BundleError."""
+    pin = _pin()
     base = base_url or config.BUNDLE_RELEASE_BASE_URL
     if placeholder_url(base):
         raise BundleError("번들 릴리스 위치가 아직 정해지지 않았다(config.BUNDLE_RELEASE_BASE_URL 이 자리표시자). 내려받지 않았고 기존 색인은 그대로다.")
@@ -140,6 +157,10 @@ def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None,
         raise BundleError("번들 릴리스 위치는 https 여야 한다")
     if expected_sha256 is not None and not _HEX64.match(expected_sha256.lower()):
         raise BundleError("--sha256 은 64자리 16진수여야 한다")
+    if pin is None and expected_sha256 is None:
+        raise BundleError("이 빌드에는 번들 기대 해시가 고정돼 있지 않습니다. 검증된 sha256 을 --sha256 으로 직접 주어야 합니다. 내려받지 않았다.")
+    if pin is not None and expected_sha256 is not None and expected_sha256.lower() != pin[0]:
+        raise BundleError("--sha256 이 이 빌드에 고정된 sha256 과 다르다. 내려받지 않았다.")
     base = base if base.endswith("/") else base + "/"
     fetch = fetch or _open_https
     try:
@@ -147,6 +168,8 @@ def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None,
             info = _parse_info(_read_limited(s, MAX_INFO_BYTES))
     except (urllib.error.URLError, OSError) as e:
         raise BundleError(f"판본 정보를 내려받지 못했다({type(e).__name__}). 기존 색인은 그대로다.") from None
+    if pin is not None and (info["file"], info["size_bytes"], info["sha256"]) != (pin[2], pin[1], pin[0]):
+        raise BundleError("판본 정보의 파일 이름·크기·sha256 이 이 빌드에 고정된 값과 다르다. 내려받지 않았다.")
     if expected_sha256 is not None and expected_sha256.lower() != info["sha256"]:
         raise BundleError("공지한 sha256 과 판본 정보의 sha256 이 다르다. 설치하지 않았다.")
 
@@ -169,6 +192,10 @@ def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None,
             raise BundleError(f"색인을 내려받지 못했다({type(e).__name__}). 기존 색인은 그대로다.") from None
         if n != info["size_bytes"] or h.hexdigest() != info["sha256"]:
             raise BundleError("내려받은 파일의 크기 또는 sha256 이 판본 정보와 다르다. 설치하지 않았고 기존 색인은 그대로다.")
+        if pin is not None and (n, h.hexdigest()) != (pin[1], pin[0]):
+            raise BundleError("내려받은 파일의 크기 또는 sha256 이 이 빌드에 고정된 값과 다르다. 설치하지 않았고 기존 색인은 그대로다.")
+        if expected_sha256 is not None and h.hexdigest() != expected_sha256.lower():
+            raise BundleError("내려받은 파일의 sha256 이 공지한 값과 다르다. 설치하지 않았고 기존 색인은 그대로다.")
         try:
             c = corpus_sqlite.SqliteCorpus(tmp)
         except CorpusError as e:
@@ -177,6 +204,8 @@ def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None,
             snap = c.snapshot_id
         finally:
             c.close()
+        if info["snapshot_id"] != snap:
+            raise BundleError("판본 정보의 snapshot_id 와 색인 안의 snapshot 이 다르다. 설치하지 않았다.")
         if info["file"] != f"corpus-{snap}.sqlite":
             raise BundleError("색인 안의 snapshot 과 파일 이름이 다르다. 설치하지 않았다.")
         _verify_index(tmp)

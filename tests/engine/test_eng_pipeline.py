@@ -263,6 +263,7 @@ def test_submit_failure_lists_errors_and_stores_nothing(article, corpus):
     h = review.prepare_article(store, article=article)["article_handle"]
     findings, _ = MockProvider().analyze(article, corpus)
     findings[0]["span"]["end"] = 999
+    findings[0]["span"]["quote"] = "기사에 없는 구절"                         # quote 가 블록에 한 번 있으면 서버가 좌표를 보정하므로(UDEC-33) 없는 구절로 거절을 유지한다
     out = review.submit_report(store, corpus, article_handle=h, findings=findings, now=NOW)
     assert out["ok"] is False and any("findings[0]" in e for e in out["errors"])
     assert len(store) == 1                                                  # 기사만 있고 보고서는 저장되지 않음

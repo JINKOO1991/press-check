@@ -217,7 +217,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 
 ### 서버 오류가 오면
 
-서버는 finding별 오류 목록을 돌려준다(예: quote와 span 불일치, replace인데 replacement 없음, 코퍼스에 없는 passage_id, 직접 인용 내부 변경, 원문에 없는 숫자).
+서버는 quote 가 그 블록에 정확히 한 번 나오면 틀린 span 좌표를 스스로 고치고 응답 warnings 에 `[좌표보정]`으로 알린다(고쳐진 값이 보고서에 저장된다). 그래도 위치 계산은 코드로 하고, 두 번 이상 나오는 구절은 의도한 위치를 직접 정한다. 서버는 finding별 오류 목록을 돌려준다(예: quote와 span 불일치, replace인데 replacement 없음, 코퍼스에 없는 passage_id, 직접 인용 내부 변경, 원문에 없는 숫자).
 
 1. 오류를 하나씩 고친다. span은 blocks `text`에서 quote를 그대로 복사하고 code point 기준 `[start, end)`로 다시 잡는다. 같은 구절이 여러 번 나오면 의도한 위치를 고른다. 위치를 눈으로 세지 말고 코드로 계산한다(예: `text.index(quote)`가 시작값, `시작 + len(quote)`가 끝값). `related_edits`의 span도 제출 전에 같은 방식으로 계산한다. `reason_short`는 100자 안의 한 문장으로 쓰고 문장 중간에 마침표를 두지 않는다.
 2. 근거가 코퍼스에 없다는 오류면 그 evidence를 지운다. 남은 근거가 없으면 9단계의 `needs_information` 규칙을 적용한다.

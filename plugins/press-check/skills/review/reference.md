@@ -7,7 +7,7 @@ SKILL.md의 보조 문서다. 필드 계약은 플러그인의 `engine/press_rev
 | 필드 | 형식 | 규칙 |
 |---|---|---|
 | `finding_id` | 문자열 | `finding-001`부터 순서대로, 보고서 안에서 유일 |
-| `span` | `{block_id, start, end, quote}` | `block_id`는 prepare_article blocks의 값. `start`·`end`는 그 block `text`의 Unicode code point 기준 반개구간 `[start, end)`, `end > start`. `quote`는 그 구간 문자열과 정확히 같아야 한다 |
+| `span` | `{block_id, start, end, quote}` | `block_id`는 prepare_article blocks의 값. `start`·`end`는 그 block `text`의 Unicode code point 기준 반개구간 `[start, end)`, `end > start`. `quote`는 그 구간 문자열과 정확히 같아야 한다. 좌표가 틀려도 quote 가 그 block 에 정확히 한 번 나오면 서버가 좌표를 보정하고 응답 warnings 에 `[좌표보정]`으로 적는다. 두 번 이상이거나 없으면 거절한다 |
 | `priority_stars` | 1·2·3 | 검토 필요도. 확률 아님 |
 | `risk_channels` | 배열 | `correction`, `reply`, `follow_up`, `civil`, `criminal`, `pac_election`, `iendc_election`, `privacy`, `portrait`, `copyright` 중 해당하는 것만 |
 | `issue_category` | 문자열 | 아래 4절 예시 참고. 자유 문자열이지만 짧은 영문 snake_case 권장 |

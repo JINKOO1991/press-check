@@ -115,7 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
     c = sub.add_parser("corpus-status", help="코퍼스 상태")
     c.set_defaults(func=cmd_corpus_status)
     b = sub.add_parser("install-bundle", help="구조화가 끝난 번들 색인을 내려받아 sha256 검증 뒤 CURRENT 로 지정")
-    b.add_argument("--sha256", help="릴리스 공지에 적힌 색인 파일 sha256(넣으면 판본 정보의 값과 대조)")
+    b.add_argument("--sha256", help="검증된 색인 파일 sha256. 이 빌드에 기대 해시가 고정돼 있지 않으면 필수, 고정돼 있으면 고정값과 같아야 함")
     b.set_defaults(func=cmd_install_bundle)
     return ap
 

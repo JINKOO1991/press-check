@@ -65,7 +65,7 @@ def _review_finding_schema() -> dict:
     f["required"] = ["span", "priority_stars", "issue_category", "review_confidence", "reason_short", "suggested_edit", "evidence"]
     f["properties"]["finding_id"]["description"] = "생략하면 서버가 finding-001 형식으로 매긴다."
     f["properties"]["reason_short"]["description"] = "100자 이내 한 문장. 마침표로 문장을 나누면 서버가 거절한다."
-    f["properties"]["span"]["description"] = "block_id, start, end(Unicode code point 반개구간 [start,end)), quote(원문과 정확히 같은 문자열). start/end 는 이 블록 text 에서 quote 를 찾아 계산하며 직접 센 숫자를 쓰지 않는다."
+    f["properties"]["span"]["description"] = "block_id, start, end(Unicode code point 반개구간 [start,end)), quote(원문과 정확히 같은 문자열). start/end 는 이 블록 text 에서 quote 를 찾아 계산하며 직접 센 숫자를 쓰지 않는다. 좌표가 틀려도 quote 가 이 블록에 정확히 한 번 나오면 서버가 보정한다(두 번 이상이거나 없으면 거절)."
     return f
 
 
