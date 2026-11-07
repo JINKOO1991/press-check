@@ -454,6 +454,10 @@ def validate_report(report: Any, article: Any, corpus: Any = None, *, raw_bytes:
             errs.append(f"{where}: validation_status 'verified' requires evidence")
         if not is_single_sentence(f["reason_short"]):
             errs.append(f"{where}.reason_short: must be a single sentence")
+        chans = f["risk_channels"]
+        if chans and all(c == "correction" for c in chans) and f["priority_stars"] >= 2:
+            errs.append(f"{where}.priority_stars: risk_channels 가 correction 뿐이면 priority_stars 는 1 이어야 합니다. "
+                        "특정인·기관의 평판을 건드리는 경로(reply, civil, criminal 등)가 있으면 risk_channels 에 넣으세요")
         if f["detailed_explanation_ref"] != f"{report['report_id']}/{fid}":
             errs.append(f"{where}.detailed_explanation_ref: expected '{report['report_id']}/{fid}'")
 

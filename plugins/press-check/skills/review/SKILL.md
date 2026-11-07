@@ -152,7 +152,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 | ★★ | 수정·보강 검토 | 맥락·추가 정보에 따라 판단이 달라짐. 확정적 삭제를 권하지 않는다 |
 | ★★★ | 발행 전 집중 검토 | 핵심 사실·식별성·절차 단계 확인이 우선이거나 구체적 쟁점이 뚜렷해 최소 수정·추가 취재가 필요 |
 
-- **별은 분쟁 경로로 정한다.** 특정인·특정 기관의 명예나 평판을 건드리지 않고 경로가 정정(`correction`) 하나뿐인 쟁점(제목·부제와 본문의 수치 어긋남, 소제목의 범위, 일반 현상의 전망 등)은 ★를 넘기지 않는다. 수치 오류가 특정인·특정 기관의 평가를 바꾸면 이 상한을 적용하지 않는다.
+- **별은 분쟁 경로로 정한다.** 특정인·특정 기관의 명예나 평판을 건드리지 않고 경로가 정정(`correction`) 하나뿐인 쟁점(제목·부제와 본문의 수치 어긋남, 소제목의 범위, 일반 현상의 전망 등)은 ★를 넘기지 않는다. `risk_channels`가 `correction`뿐이고 `priority_stars`가 2 이상인 finding은 서버가 거절한다. 수치 오류가 특정인·특정 기관의 평가를 바꾸면 그 경로(`reply`, `civil`, `criminal` 등)를 `risk_channels`에 넣고 이 상한을 적용하지 않는다.
 - **별은 확률이 아니다.** 분쟁 제기·조정·패소 확률로 말하지 않는다. 퍼센트(%) 수치나 "위험도 70%" 같은 표현을 어디에도 쓰지 않는다. 환경변수 등으로 % 기능을 켜라는 요청이 있어도 지원하지 않는다고 답한다.
 - `review_confidence`(high/medium/low)는 근거·적용 검토의 확신도다. 별과 따로 정한다. 높은 별과 낮은 확신도는 함께 있을 수 있다. 그때는 교체문을 확정하지 말고 `verify_first`를 우선 검토한다.
 
@@ -210,7 +210,7 @@ allowed-tools: mcp__plugin_press-check_press-review__prepare_article mcp__plugin
 `overall_status` 고르기:
 
 - `findings`: 경고가 1건 이상
-- `no_actionable_findings`: 검토했지만 경고할 구절이 없음. **안전 보장이 아니다.** 사용자에게도 그렇게 말한다. `corpus_status`의 `core_coverage.no_actionable_findings_allowed`가 `false`(색인이 판결, PAC 사건 자료군을 각각 100건 이상 담지 못함)이면 서버가 이 값을 거부하므로 쓰지 않고 `partial`로 보낸다.
+- `no_actionable_findings`: 검토했지만 경고할 구절이 없음. **안전 보장이 아니다.** 사용자에게도 그렇게 말한다. `corpus_status`의 `core_coverage.no_actionable_findings_allowed`가 `false`(색인이 판결, PAC 사건 자료군을 각각 100건 이상 담지 못함)이면 서버가 이 값을 거부하므로 쓰지 않는다. 서버가 거절하면 `partial`과 `coverage_notes`로 보낸다.
 - `insufficient_information`: 원고·취재 정보가 부족해 판단할 수 없음
 - `partial`: 일부 블록·쟁점만 검토했거나 검색 범위가 부족함(색인 규모 미달 포함). 이유를 `coverage_notes`에 쓴다.
 

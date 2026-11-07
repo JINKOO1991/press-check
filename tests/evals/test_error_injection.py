@@ -147,7 +147,7 @@ def test_anonymity_means_safe_claim_fails(run_case, mk):
 
 
 def test_settlement_called_illegal_fails(run_case, mk):
-    f = mk("settlement_not_illegal", "p1", "당사자와 조정에 합의하고", mode="none", channels=("correction",),
+    f = mk("settlement_not_illegal", "p1", "당사자와 조정에 합의하고", mode="none", channels=("correction", "reply"),
            evidence=[("fixture-pac-settlement-001", "p1")], reason="조정 합의가 있었으므로 위법으로 확정됩니다.")
     assert "findings_citing_settlement_do_not_assert_illegality" in failed_names(run_case("settlement_not_illegal", [f]))
 

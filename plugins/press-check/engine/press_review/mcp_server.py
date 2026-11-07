@@ -65,7 +65,8 @@ def _review_finding_schema() -> dict:
     f["required"] = ["span", "priority_stars", "issue_category", "review_confidence", "reason_short", "suggested_edit", "evidence"]
     f["properties"]["finding_id"]["description"] = "생략하면 서버가 finding-001 형식으로 매긴다."
     f["properties"]["reason_short"]["description"] = "100자 이내 한 문장. 마침표로 문장을 나누면 서버가 거절한다."
-    f["properties"]["span"]["description"] = "block_id, start, end(Unicode code point 반개구간 [start,end)), quote(원문과 정확히 같은 문자열)."
+    f["properties"]["priority_stars"]["description"] = "1~3. risk_channels 가 correction 뿐이면 1 만 허용되고 2 이상은 서버가 거절한다. 특정인·기관의 평판을 건드리는 경로(reply, civil, criminal 등)가 있으면 risk_channels 에 넣는다."
+    f["properties"]["span"]["description"] = "block_id, start, end(Unicode code point 반개구간 [start,end)), quote(원문과 정확히 같은 문자열). start/end 는 이 블록 text 에서 quote 를 찾아 계산하며 직접 센 숫자를 쓰지 않는다."
     return f
 
 
@@ -141,7 +142,8 @@ def _tool_defs() -> list[dict]:
                         "description": "finding_id별 상세 설명. 값은 문자열 또는 문자열 목록의 객체(applicable_issue, article_context, support, differences, counter_arguments, required_checks, uncertainty).",
                         "additionalProperties": {"type": "object"},
                     },
-                    "overall_status": {"enum": list(contracts.load_schema("review")["properties"]["overall_status"]["enum"])},
+                    "overall_status": {"enum": list(contracts.load_schema("review")["properties"]["overall_status"]["enum"]),
+                                       "description": "'no_actionable_findings' 는 색인이 핵심 자료군마다 100건 이상이 아니면 서버가 거절한다. 거절되면 'partial' 과 coverage_notes 로 보낸다."},
                     "coverage_notes": {"type": "array", "items": {"type": "string"}},
                 },
                 "required": ["article_handle", "findings"],

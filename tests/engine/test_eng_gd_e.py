@@ -326,7 +326,7 @@ def test_gd23_as_of_uses_reference_date_and_exempts_date_unknown(tmp_path):
 
 def _finding(pid, sid):
     return {"finding_id": "finding-001", "span": {"block_id": "title", "start": 0, "end": 9, "quote": "공적 인물 비판 기사"[:9]},
-            "priority_stars": 2, "risk_channels": ["correction"], "issue_category": "unsupported_assertion", "review_confidence": "medium",
+            "priority_stars": 2, "risk_channels": ["correction", "reply"], "issue_category": "unsupported_assertion", "review_confidence": "medium",
             "reason_short": "표현의 확정성을 확인하세요.", "suggested_edit": {"mode": "verify_first", "replacement": None, "related_edits": [],
                                                                      "required_verification": ["근거 확인"]},
             "evidence": [{"source_id": sid, "passage_id": pid}], "counter_considerations": ["공익 보도"]}

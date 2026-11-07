@@ -190,6 +190,23 @@ def test_duplicate_finding_id(article, article_bytes, example_review, corpus):
     assert has(errs(example_review, article, corpus, article_bytes), "duplicate finding_id")
 
 
+# ---- 별 상한: correction 뿐인 경로 ---------------------------------------------------------------
+
+@pytest.mark.parametrize("channels,stars,status,rejected", [
+    (["correction"], 2, "needs_information", True),
+    (["correction"], 1, "needs_information", False),
+    (["correction", "reply"], 2, "needs_information", False),
+    (["correction"], 3, "verify_first", True),
+])
+def test_correction_only_channel_caps_stars_at_one(article, article_bytes, example_review, corpus, channels, stars, status, rejected):
+    f = example_review["findings"][0]
+    f.update(risk_channels=channels, priority_stars=stars)
+    if status == "verify_first":
+        f["suggested_edit"].update(mode="verify_first", replacement=None)
+    result = errs(example_review, article, corpus, article_bytes)
+    assert has(result, "risk_channels 가 correction 뿐이면 priority_stars 는 1") is rejected
+
+
 # ---- 4. 근거 ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("field,value,needle", [
