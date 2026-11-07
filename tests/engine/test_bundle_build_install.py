@@ -203,3 +203,20 @@ def test_cli_install_bundle_reports_placeholder(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("PRESS_DISPUTE_DATA_DIR", str(tmp_path / "d"))
     assert cli.main(["install-bundle"]) == 1
     assert "정해지지 않았다" in capsys.readouterr().err
+
+
+def test_install_refuses_index_without_required_tables_and_keeps_current(release, active, tmp_path):
+    index_dir, _ = active
+    cur, before = (index_dir / "CURRENT").read_bytes(), sorted(p.name for p in index_dir.iterdir())
+    info = json.loads(release[BASE + "bundle-info.json"])
+    hollow = tmp_path / "hollow.sqlite"                                  # meta 만 있고 해시·크기·형식·snapshot 은 맞는 파일
+    c = sqlite3.connect(hollow)
+    c.execute("CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    c.executemany("INSERT INTO meta VALUES(?,?)", [("format", cs.INDEX_FORMAT), ("snapshot_id", info["snapshot_id"]), ("fts_trigram", "0")])
+    c.commit()
+    c.close()
+    raw = hollow.read_bytes()
+    files = {BASE + "bundle-info.json": json.dumps({**info, "sha256": hashlib.sha256(raw).hexdigest(), "size_bytes": len(raw)}).encode(), BASE + info["file"]: raw}
+    with pytest.raises(bundle_install.BundleError, match="passages"):
+        bundle_install.install_bundle(data_dir=index_dir.parent, base_url=BASE, fetch=_fetcher(files))
+    assert (index_dir / "CURRENT").read_bytes() == cur and sorted(p.name for p in index_dir.iterdir()) == before

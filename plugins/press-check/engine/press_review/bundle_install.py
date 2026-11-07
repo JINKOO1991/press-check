@@ -1,6 +1,6 @@
 """번들 색인 설치(설치자용 최소 명령): ``python -m press_review install-bundle [--sha256 HEX]``.
 
-릴리스 위치(``config.BUNDLE_RELEASE_BASE_URL``)의 ``bundle-info.json`` 을 읽고 색인 파일을 내려받아 sha256·크기·형식을 검증한 뒤에만
+릴리스 위치(``config.BUNDLE_RELEASE_BASE_URL``)의 ``bundle-info.json`` 을 읽고 색인 파일을 내려받아 sha256·크기·형식·색인 구조(필수 표·열, quick_check, 조회 1회)를 검증한 뒤에만
 ``<data>/index/`` 에 놓고 ``CURRENT`` 를 바꾼다. 내려받기 실패·해시 불일치·형식 오류에서는 임시 파일만 지우고 기존 색인과 ``CURRENT`` 를 건드리지 않는다.
 
 - https 만 쓴다(리다이렉트도 https 만). 요청에는 원고·사용자 정보가 없다(고정 URL 두 개: 판본 정보 JSON, 색인 파일).
@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import sqlite3
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -76,6 +77,59 @@ def _parse_info(raw: bytes) -> dict:
     return info
 
 
+def _required_columns(fmt: str) -> dict[str, set[str]]:
+    """corpus_sqlite 의 색인 스키마(_INDEX_SCHEMA)에서 읽은 표별 필수 열. 형식별로 SqliteCorpus 가 열지 않는 열·표는 뺀다(3번: chunk_kind·passage_alias, 3·4번: ne)."""
+    mem = sqlite3.connect(":memory:")
+    try:
+        mem.executescript(corpus_sqlite._INDEX_SCHEMA)
+        need = {t: {r[1] for r in mem.execute(f"PRAGMA table_info({t})")}
+                for (t,) in mem.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    finally:
+        mem.close()
+    if fmt == "pdr-index-3":
+        need.pop("passage_alias", None)
+        need["passages"].discard("chunk_kind")
+    if fmt != corpus_sqlite.INDEX_FORMAT:
+        need["bigram_terms"].discard("ne")
+    return need
+
+
+def _verify_index(path: Path) -> None:
+    """전환 전 검증: 메타 키, 필수 표·열, PRAGMA quick_check, 검색이 쓰는 조회 1회(passages 건수, fts 색인이면 passages_fts 질의). 실패는 BundleError."""
+    try:
+        db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
+    except sqlite3.Error:
+        raise BundleError("내려받은 색인을 열 수 없다. 설치하지 않았다.") from None
+    try:
+        try:
+            meta = dict(db.execute("SELECT key, value FROM meta").fetchall())
+            for k in ("format", "snapshot_id", "fts_trigram"):
+                if not isinstance(meta.get(k), str) or not meta[k]:
+                    raise BundleError(f"색인 메타에 {k} 가 없다. 설치하지 않았다.")
+            if meta["fts_trigram"] not in ("0", "1"):
+                raise BundleError("색인 메타의 fts_trigram 값이 잘못됐다. 설치하지 않았다.")
+            for table, cols in _required_columns(meta["format"]).items():
+                have = {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
+                if not have:
+                    raise BundleError(f"색인에 {table} 표가 없다. 설치하지 않았다.")
+                if cols - have:
+                    raise BundleError(f"색인의 {table} 표에 열이 없다({', '.join(sorted(cols - have))}). 설치하지 않았다.")
+            qc = db.execute("PRAGMA quick_check").fetchall()
+            if [r[0] for r in qc] != ["ok"]:
+                raise BundleError("색인 파일의 무결성 검사(quick_check)에 실패했다. 설치하지 않았다.")
+            if db.execute("SELECT COUNT(*) FROM passages").fetchone()[0] <= 0:
+                raise BundleError("색인에 passage 가 없다. 설치하지 않았다.")
+            if meta["fts_trigram"] == "1":
+                if not db.execute("SELECT 1 FROM sqlite_master WHERE name='passages_fts'").fetchone():
+                    raise BundleError("색인에 passages_fts 표가 없다. 설치하지 않았다.")
+                if corpus_sqlite.fts_trigram_available():
+                    db.execute("SELECT rowid FROM passages_fts WHERE passages_fts MATCH ? LIMIT 1", (corpus_sqlite._fts_phrase("abc"),)).fetchall()
+        except sqlite3.Error as e:
+            raise BundleError(f"내려받은 색인이 검색 조회를 통과하지 못했다({type(e).__name__}). 설치하지 않았다.") from None
+    finally:
+        db.close()
+
+
 def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None, expected_sha256: str | None = None,
                    fetch: Callable[[str], BinaryIO] | None = None) -> dict:
     """번들을 내려받아 검증하고 CURRENT 로 지정한다. 돌려주는 dict 는 건수·경로·해시뿐이다. 실패는 BundleError."""
@@ -125,6 +179,7 @@ def install_bundle(*, data_dir: Path | None = None, base_url: str | None = None,
             c.close()
         if info["file"] != f"corpus-{snap}.sqlite":
             raise BundleError("색인 안의 snapshot 과 파일 이름이 다르다. 설치하지 않았다.")
+        _verify_index(tmp)
         os.chmod(tmp, 0o600)
         target = od / info["file"]
         os.replace(tmp, target)

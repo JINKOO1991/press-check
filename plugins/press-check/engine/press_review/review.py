@@ -522,18 +522,32 @@ def _excerpt_passage(p: dict, words: list[str]) -> dict:
     return out
 
 
-def _mask_passage(p: dict) -> tuple[dict, int]:
-    """응답 passage 의 text·display_text·excerpts[].text 에서 이메일·전화번호를 가린다. 발췌의 start·end 와 text_len 은 원문 기준 값 그대로 둔다."""
+def _mask_passage(p: dict, full_text: str | None = None) -> tuple[dict, int]:
+    """응답 passage 의 text·display_text·excerpts[].text 에서 이메일·전화번호를 가린다. 발췌의 start·end 와 text_len 은 원문 기준 값 그대로 둔다.
+
+    full_text 는 발췌·절단 전 원문이다. 연락처를 원문에서 먼저 찾아 display_text·발췌와 겹치는 부분(경계에서 잘린 조각 포함)을 가린다.
+    표시문·발췌가 원문의 그 위치와 일치하지 않으면 그 조각만 단독으로 가린다."""
     out, n = dict(p), 0
+    full = full_text if isinstance(full_text, str) else (p.get("text") if isinstance(p.get("text"), str) else None)
+
+    def mask(frag: str, start: int | None) -> tuple[str, int]:
+        if full is None:
+            return contact_mask.mask_text(frag)
+        if start is None:
+            start = full.find(frag)
+        if start < 0 or full[start:start + len(frag)] != frag:
+            return contact_mask.mask_text(frag)
+        return contact_mask.mask_fragment(full, start, start + len(frag))
+
     for k in ("text", "display_text"):
         if isinstance(out.get(k), str):
-            out[k], c = contact_mask.mask_text(out[k])
+            out[k], c = mask(out[k], 0 if k == "text" else None)
             n += c
     if isinstance(out.get("excerpts"), list):
         ex = []
         for e in out["excerpts"]:
             if isinstance(e, dict) and isinstance(e.get("text"), str):
-                t, c = contact_mask.mask_text(e["text"])
+                t, c = mask(e["text"], e["start"] if isinstance(e.get("start"), int) else None)
                 e, n = {**e, "text": t}, n + c
             ex.append(e)
         out["excerpts"] = ex
@@ -559,7 +573,7 @@ def search_cases(
     full = passages                      # 안내문 조건은 줄이기 전 passage 로 판단한다
     words = _query_words(query) if limit > EXCERPT_FROM_LIMIT else []
     passages = [_trim_passage(_excerpt_passage(p, words) if limit > EXCERPT_FROM_LIMIT else p) for p in full]
-    masked = [_mask_passage(p) for p in passages]
+    masked = [_mask_passage(p, f.get("text")) for p, f in zip(passages, full)]
     passages, contact_masked = [m[0] for m in masked], sum(m[1] for m in masked)
     out = {"ok": True, "count": len(passages), "snapshot_id": corpus.snapshot_id, "is_fixture": corpus.is_fixture, "stance": stance, "passages": passages}
     if contact_masked:

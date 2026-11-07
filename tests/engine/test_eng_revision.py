@@ -612,3 +612,18 @@ def test_submit_normal_path_report_ttl_follows_article():
     out = _raw_submit(store, h, [F_OK()])
     assert out["ok"] is True
     assert store.remaining_ttl(f"report:{out['report_id']}") <= store.remaining_ttl(f"article:{h}") + 1e-6
+
+
+def test_noun_an_in_replacement_does_not_hide_dropped_negation():
+    blocks = [("title", "title", "제목"), ("p1", "body", "그는 안방에 있었다. 방에서 못 나왔다.")]
+    env = Env([fnd("F-1", 2, "p1", "방에서 못 나왔다", "안방에서 나왔다", arts=blocks)], blocks=blocks)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "NEGATION_CHANGED"
+
+
+def test_related_body_edit_with_same_quote_but_other_replacement_stays_a_proposal():
+    blocks = [("title", "title", "횡령 의혹 제기"), ("p1", "body", "경찰이 횡령 의혹을 조사 중이다.")]
+    env = Env([fnd("F-1", 2, "title", "횡령 의혹", "횡령 혐의", arts=blocks, related=[("p1", "횡령 의혹", "횡령 사실")])], blocks=blocks)
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "RELATED_BODY_EDIT"
+    assert next(b["text"] for b in r["revised_blocks"] if b["block_id"] == "p1") == blocks[1][2]

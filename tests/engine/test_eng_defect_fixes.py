@@ -279,3 +279,10 @@ def test_load1_all_seven_cells_get_korean_titles_in_order():
     titles = ["적용 쟁점", "기사 맥락", "지지 근거", "사례와의 차이", "표현의 자유·공익 보도 측 근거", "필요한 취재 확인", "불확실성"]
     pos = [md.index(f"**{t}**") for t in titles]
     assert pos == sorted(pos)
+
+
+# ---- 안 + 한글 접두: 명사(안방·안경 등)는 부정으로 세지 않는다 ------------------------------------------------
+
+@pytest.mark.parametrize("s,n", [("안방에서 나왔다", 0), ("안경 안개 안색 안락 안부 안주 안위", 0), ("안했다 안한다 안먹었다 안봤다 안됐다", 5), ("못간다 못했다", 2)])
+def test_an_prefix_counts_only_before_verb_stems(s, n):
+    assert ec.count_negations(s) == n

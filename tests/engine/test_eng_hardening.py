@@ -168,3 +168,26 @@ def test_h6_takedown_doc_exists_and_is_linked():
 def test_h7_readme_states_no_affiliation():
     t = read("README.md")
     assert "제휴" in t and "승인" in t and "법제처" in t and "언론중재위원회" in t
+
+
+def test_h2_contact_cut_by_excerpt_and_display_limits_is_masked():
+    email = "reporter.kim@example.co.kr"
+    for pad in (288, 295):                                   # 발췌 앞 300자·display_text 300자 경계가 연락처 중간을 자른다
+        text = "가" * pad + email + " 나" * 700
+        for limit in (5, 10):
+            out = review.search_cases(StubCorpus(text), query="문의", limit=limit)
+            dump = json.dumps(out, ensure_ascii=False)
+            assert "reporter" not in dump and "example.co" not in dump and out.get("contact_masked")
+    ex = review.search_cases(StubCorpus("가" * 288 + email + " 나" * 700), query="문의", limit=10)["passages"][0]["excerpts"][0]
+    assert (ex["start"], ex["end"]) == (0, 300)                # 좌표는 원문 기준 그대로
+
+
+def test_h2_email_mask_is_near_linear_on_long_non_email_input():
+    import time
+    from press_review import contact_mask
+    n = 40000
+    for s in ("a" * n, "a." * (n // 2), "a@" * (n // 2), "@" * n, "a" * n + "@"):
+        t0 = time.perf_counter()
+        assert contact_mask.mask_text(s)[1] == 0
+        assert time.perf_counter() - t0 < 0.3
+    assert contact_mask.mask_text("a.b+c_d-e@sub.mail.example.com 와 reporter.kim@example.co.kr")[1] == 2
