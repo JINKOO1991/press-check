@@ -216,6 +216,21 @@ def test_warning_negation_changed_drops_finding():
     assert r["unresolved_count"] == 1                                                    # 별 3개 미적용
 
 
+def test_related_body_edit_with_other_text_stays_a_proposal():
+    env = Env([fnd("F-1", 2, "title", "횡령 의혹", "횡령 혐의", related=[("p1", "회삿돈을 빼돌린", "회삿돈을 쓴")])])
+    r = env.build()
+    assert r["applied"] == [] and r["skipped"][0]["reason_code"] == "RELATED_BODY_EDIT"
+    assert ids(r["proposals"]) == ["F-1"]
+    assert next(b["text"] for b in r["revised_blocks"] if b["block_id"] == "p1") == BLOCKS[2][2]
+
+
+def test_related_edit_repeating_the_same_text_still_applies():
+    blocks = [("title", "title", "대표 횡령 의혹 경찰 수사"), ("subtitle", "subtitle", "횡령 의혹 경찰 수사"), ("p1", "body", "횡령 의혹 사건을 경찰이 살핀다.")]
+    env = Env([fnd("F-1", 2, "title", "횡령 의혹", "횡령 혐의", arts=blocks, related=[("subtitle", "횡령 의혹", "횡령 혐의"), ("p1", "횡령 의혹", "횡령 혐의")])], blocks=blocks)
+    r = env.build()
+    assert ids(r["applied"]) == ["F-1"] and len(r["applied"][0]["edits"]) == 3
+
+
 def test_related_edit_issue_drops_whole_finding():
     env = Env([fnd("F-1", 3, "title", "횡령 의혹", "횡령 혐의", related=[("p2", "회사는 입장을 내지 않았다", "회사는 입장을 냈다")])])
     r = env.build()

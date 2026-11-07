@@ -2,6 +2,7 @@
 
 - 읽기 전용. 보관된 원고·보고서를 바꾸지 않고 디스크에 쓰지 않는다. 대체문은 입력으로 받지 않는다(보고서에 저장된 것만 쓴다).
 - 후보: priority_stars >= 2, mode 'replace', replacement 비어 있지 않음. finding 단위로 주 span 과 related_edits 를 묶어 모두 적용하거나 모두 적용하지 않는다.
+- 본문의 다른 문장을 고치는 연결 수정이 있으면 자동 적용하지 않는다(RELATED_BODY_EDIT). 서버는 그 수정의 근거가 원고에 있는지 볼 수 없다. 주 구간과 같은 문구의 반복은 허용한다.
 - 적용 전 재검사: quote 가 저장 블록 text[start:end] 와 같아야 하고(QUOTE_MISMATCH), edit_checks.check_replacement 가 오류든 경고든 이슈를 내면 탈락한다.
 - 겹침(OVERLAP)은 contracts 의 구간 규칙과 같다: 같은 블록에서 시작이 앞선 구간의 끝보다 작으면 겹침, 인접은 허용.
   적용 순서는 별 많은 순, 같으면 finding_id 순이고 나중 finding 이 통째로 탈락한다. ``_apply_edits`` 는 적용 결과·좌표를 돌려주지 않아 쓰지 않고 같은 규칙을 여기서 구현했다.
@@ -129,6 +130,7 @@ def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_i
 
     texts = {b["block_id"]: b["text"] for b in article["blocks"]}
     order = {b["block_id"]: i for i, b in enumerate(article["blocks"])}
+    sections = {b["block_id"]: b.get("section") for b in article["blocks"]}
     check_article = {"blocks": [dict(b) for b in article["blocks"]]}
     findings = {f["finding_id"]: f for f in report.get("findings", []) if isinstance(f, dict) and isinstance(f.get("finding_id"), str)}
 
@@ -199,6 +201,9 @@ def build_revision(store: Any, *, report_id: str, article_sha256: str, finding_i
             continue
         if any(Counter(_direct_inners(e["replacement"])) - Counter(_direct_inners(e["quote"])) for e in edits):
             skip(fid, "NEW_QUOTE_IN_EDIT", "수정 대체문에 원래 구간에 없던 직접 인용이 생김")
+            continue
+        if any(e["label"] != "span" and sections.get(e["block_id"]) == "body" and e["quote"] != edits[0]["quote"] for e in edits):
+            skip(fid, "RELATED_BODY_EDIT", "본문의 다른 문장을 고치는 연결 수정은 자동 적용하지 않음")
             continue
         for bid, spans in local.items():
             taken.setdefault(bid, []).extend(spans)

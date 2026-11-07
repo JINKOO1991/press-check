@@ -64,6 +64,7 @@ def _review_finding_schema() -> dict:
     se.pop("allOf", None)
     f["required"] = ["span", "priority_stars", "issue_category", "review_confidence", "reason_short", "suggested_edit", "evidence"]
     f["properties"]["finding_id"]["description"] = "생략하면 서버가 finding-001 형식으로 매긴다."
+    f["properties"]["reason_short"]["description"] = "100자 이내 한 문장. 마침표로 문장을 나누면 서버가 거절한다."
     f["properties"]["span"]["description"] = "block_id, start, end(Unicode code point 반개구간 [start,end)), quote(원문과 정확히 같은 문자열)."
     return f
 
