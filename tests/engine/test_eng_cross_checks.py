@@ -190,15 +190,15 @@ def test_duplicate_finding_id(article, article_bytes, example_review, corpus):
     assert has(errs(example_review, article, corpus, article_bytes), "duplicate finding_id")
 
 
-# ---- 별 상한: correction 뿐인 경로 ---------------------------------------------------------------
+# ---- 별 상한 없음(UDEC-32): correction 뿐인 경로 ---------------------------------------------------------------
 
 @pytest.mark.parametrize("channels,stars,status,rejected", [
-    (["correction"], 2, "needs_information", True),
+    (["correction"], 2, "needs_information", False),
     (["correction"], 1, "needs_information", False),
     (["correction", "reply"], 2, "needs_information", False),
-    (["correction"], 3, "verify_first", True),
+    (["correction"], 3, "verify_first", False),
 ])
-def test_correction_only_channel_caps_stars_at_one(article, article_bytes, example_review, corpus, channels, stars, status, rejected):
+def test_correction_only_channel_does_not_cap_stars(article, article_bytes, example_review, corpus, channels, stars, status, rejected):
     f = example_review["findings"][0]
     f.update(risk_channels=channels, priority_stars=stars)
     if status == "verify_first":

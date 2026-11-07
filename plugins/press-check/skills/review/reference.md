@@ -8,7 +8,7 @@ SKILL.md의 보조 문서다. 필드 계약은 플러그인의 `engine/press_rev
 |---|---|---|
 | `finding_id` | 문자열 | `finding-001`부터 순서대로, 보고서 안에서 유일 |
 | `span` | `{block_id, start, end, quote}` | `block_id`는 prepare_article blocks의 값. `start`·`end`는 그 block `text`의 Unicode code point 기준 반개구간 `[start, end)`, `end > start`. `quote`는 그 구간 문자열과 정확히 같아야 한다 |
-| `priority_stars` | 1·2·3 | 검토 필요도. 확률 아님. `risk_channels`가 `correction`뿐이면 1만 허용(서버 거절) |
+| `priority_stars` | 1·2·3 | 검토 필요도. 확률 아님 |
 | `risk_channels` | 배열 | `correction`, `reply`, `follow_up`, `civil`, `criminal`, `pac_election`, `iendc_election`, `privacy`, `portrait`, `copyright` 중 해당하는 것만 |
 | `issue_category` | 문자열 | 아래 4절 예시 참고. 자유 문자열이지만 짧은 영문 snake_case 권장 |
 | `review_confidence` | `high`·`medium`·`low` | 근거·적용 검토의 확신도. 별과 별개 |
