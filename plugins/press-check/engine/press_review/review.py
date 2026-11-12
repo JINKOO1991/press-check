@@ -602,6 +602,8 @@ def search_cases(
 
 
 SPAN_FIX_TAG = "[좌표보정]"
+# 알림에 그대로 보여 줄 수 있는 finding_id 형태(f1, finding-003, F_12 등). 호스트가 준 다른 값(원고 구절일 수 있다)은 알림에 넣지 않는다.
+_SAFE_FINDING_ID = re.compile(r"[A-Za-z][A-Za-z_-]{0,15}\d{1,4}")
 
 
 def _repair_one_span(span: Any, blocks: dict) -> tuple[int, int] | None:
@@ -623,7 +625,8 @@ def _repair_one_span(span: Any, blocks: dict) -> tuple[int, int] | None:
 
 
 def _repair_spans(article: Any, findings: Any) -> tuple[Any, list[str]]:
-    """findings 의 span·related_edits[*].span 좌표를 깊은 복사본에서 보정한다. 알림은 좌표와 finding_id 만 담는다(원문 없음)."""
+    """findings 의 span·related_edits[*].span 좌표를 깊은 복사본에서 보정한다. 알림은 서버가 만든 위치(findings[i])와 좌표만 담는다(원문 없음).
+    호스트가 준 finding_id 는 _SAFE_FINDING_ID 형태일 때만 괄호로 덧붙인다(원고 구절을 id 로 넣어도 알림에 새지 않게)."""
     blocks = {b["block_id"]: b["text"] for b in (article or {}).get("blocks", [])
               if isinstance(b, dict) and isinstance(b.get("block_id"), str) and isinstance(b.get("text"), str)}
     if not isinstance(findings, list) or not blocks:
@@ -641,7 +644,8 @@ def _repair_spans(article: Any, findings: Any) -> tuple[Any, list[str]]:
     for i, f in enumerate(out):
         if not isinstance(f, dict):
             continue
-        fid = str(f.get("finding_id") or f"finding-{i + 1:03d}")
+        raw_id = f.get("finding_id")
+        fid = f"findings[{i}]" + (f"({raw_id})" if isinstance(raw_id, str) and _SAFE_FINDING_ID.fullmatch(raw_id) else "")
         fix(f.get("span"), fid, "span")
         se = f.get("suggested_edit")
         rel = se.get("related_edits") if isinstance(se, dict) else None

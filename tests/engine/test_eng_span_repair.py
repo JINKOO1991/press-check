@@ -51,6 +51,20 @@ def test_wrong_coordinates_single_occurrence_is_repaired(article, corpus):
     assert f["span"]["start"] == 148             # 호출자 입력은 바뀌지 않는다
 
 
+def test_repair_warning_does_not_echo_manuscript_text_in_finding_id(article, corpus):
+    """호스트가 finding_id 에 원고 구절을 넣어도 보정 알림에는 원문이 나오지 않는다(서버가 만든 findings[i] 로 가리킨다)."""
+    q = _first_quote(article, corpus)
+    text = "앞 문장이다. " + q + " 뒤 문장이다."
+    store, h, f = _setup(article, corpus, text, q)
+    f["finding_id"] = q
+    f["span"].update(start=148, end=153)
+    out = _submit(store, corpus, h, f)
+    assert out["ok"] is True
+    fixes = [w for w in out["warnings"] if TAG in w]
+    assert fixes and all("findings[0]" in w for w in fixes)
+    assert not any(q in w for w in out["warnings"])
+
+
 def test_quote_twice_keeps_original_rejection(article, corpus):
     q = _first_quote(article, corpus)
     store, h, f = _setup(article, corpus, q + " / " + q, q)
