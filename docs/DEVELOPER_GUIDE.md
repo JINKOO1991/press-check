@@ -7,7 +7,7 @@
 | 위치 | 내용 | 마켓플레이스 설치에 포함 |
 |---|---|---|
 | `plugins/press-check/` | MCP 서버, 스킬, 색인 검색 엔진, 번들 설치 명령(`install-bundle`) | 포함 |
-| `devtools/engine/press_review/ingestion/` | 수집 어댑터(언론중재위원회·인터넷선거보도심의위원회·법제처·헌법재판소 API·법고을), 추출, 권리 장부, 구조화 호출 | 제외 |
+| `devtools/engine/press_review/ingestion/` | 수집 어댑터(인터넷선거보도심의위원회·법제처·헌법재판소 API·법고을), 추출, 권리 장부, 구조화 호출 | 제외 |
 | `devtools/engine/press_review/providers/deepseek.py` | DeepSeek 구조화 제공자 | 제외 |
 | `devtools/engine/press_review/prompts/`, `prices/` | 구조화 프롬프트와 DeepSeek 단가 snapshot | 제외 |
 | `devtools/engine/press_review/bundle_build.py` | 번들 색인 만들기 | 제외 |
@@ -20,7 +20,7 @@
 저장소에는 코퍼스가 없습니다. 실제 근거를 쓰려면 아래 순서로 로컬에 만듭니다. 각 기관 자료의 이용정책·권리 표시는 사용자가 직접 확인해야 하며, 수집물은 사용자 로컬에만 보관되고 저장소에 포함되지 않습니다. 신규 설치의 권리 기본값은 `unknown`이며 사용자가 `rights set`으로 직접 기록해야 외부 API 반출이 열립니다.
 
 - 실행 위치: 저장소 루트에서 `PYTHONPATH=plugins/press-check/engine:devtools/engine python3 -m press_review.ingestion <target>`. 수집물은 `<data>/corpus/`, 색인은 `<data>/index/`에 생기며 `<data>`는 `PRESS_DISPUTE_DATA_DIR`(기본 `~/.local/share/press-dispute-review`)입니다. 데이터 폴더 기본 이름은 이전 호환을 위해 press-dispute-review를 유지한다.
-- 수집·추출 target: `pac`, `iendc`, `lawapi`, `lawapi_body`, `fetch`, `extract`, `withhold`, `robots_check`. 상태 확인은 `status`, `export-inventory`, `export-coverage`, `admission`. 전체 목록은 `--help`로 확인하세요. 이 단계에는 DeepSeek 키가 필요하지 않습니다.
+- 수집·추출 target: `iendc`, `lawapi`, `lawapi_body`, `fetch`, `extract`, `withhold`, `robots_check`. 상태 확인은 `status`, `export-inventory`, `export-coverage`, `admission`. 전체 목록은 `--help`로 확인하세요. 이 단계에는 DeepSeek 키가 필요하지 않습니다. PAC 수집 코드(언론중재위원회 어댑터·구조화 프롬프트)는 UDEC-37로 공개 저장소에서 뺐다.
 - **권리 기록** `rights show`는 소스별 현재 권리 값과 기록자·시각·근거를 보여 줍니다. `rights set <source_family> --external-api allowed --note "근거 한 줄"`는 그 계열로 등록된 소스(수집 target을 한 번 실행해 소스가 장부에 있어야 합니다)에 결정을 기록합니다. 다른 권리 항목은 `--read`, `--store-raw`, `--create-derivatives`, `--redistribute-raw`, `--redistribute-derivatives`, `--fine-tune`이고 값은 `allowed|forbidden|permission_required|unknown`입니다. 지정하지 않은 항목은 그대로 두며, `forbidden`은 풀 수 없고, `unknown`을 허용으로 바꾸는 자동 경로는 없습니다. 이 결정은 법률 판단이 아니라 사용자의 기록이며 근거 메모에 책임이 따릅니다.
 - **구조화** `PYTHONPATH=plugins/press-check/engine:devtools/engine python3 -m press_review.ingestion.structure`: 색인은 구조화가 만든 chunk만 읽으므로, 구조화 없이는 색인에 자료가 들어가지 않습니다(코드 확인, 실행해 보지는 않았습니다). 심의기준·위원회 규정·PAC 연구자료는 모델 호출 없이 chunk만 만들 수 있고, PAC 사례집·IENDC·판례는 `DEEPSEEK_API_KEY`가 필요합니다. 이 단계는 소스의 `rights.external_api`가 `allowed`일 때만 외부로 전송하며, 신규 설치에서는 `unknown`이라 `rights set` 전에는 전송하지 않습니다.
 - 디스크 가드: 쓰기가 큰 target(`--dry-run` 제외)은 시작 전에 Windows C:(`/mnt/c`) 여유를 확인합니다. 환경변수 `PRESS_DISK_MIN_FREE_GB`(기본 10), `PRESS_DISK_MARGIN_GB`(기본 5), `PRESS_DISK_PATH`(측정 경로)로 조정하고, 부족하면 종료 코드 3, 측정 불가면 4로 멈춥니다. 진행 중 부족하면 `paused_disk_*` 상태로 정지해 이어받을 수 있습니다. `--force-disk`는 이 확인을 우회하며 기본은 꺼짐입니다.

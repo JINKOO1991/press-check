@@ -304,23 +304,23 @@ def local_client(tmp_path):
 def test_http01_timeout_while_reading_an_error_body_is_a_retried_ingestion_error(local_client):
     srv, cl = local_client(_slow_503)
     with pytest.raises(IngestionError):
-        cl.get("https://www.pac.or.kr/b.pdf")
+        cl.get("https://www.iendc.go.kr/b.pdf")
     assert srv.hits >= 2                                                  # 재시도했다
 
 
 def test_http01_transport_maps_error_body_timeout(local_client):
     srv, _cl = local_client(_slow_503)
     with pytest.raises(TransportError) as ei:
-        LocalTransport(srv.port).request("GET", "https://www.pac.or.kr/b.pdf", {}, 0.3, 1 << 20)
+        LocalTransport(srv.port).request("GET", "https://www.iendc.go.kr/b.pdf", {}, 0.3, 1 << 20)
     assert ei.value.kind == "timeout" and ei.value.retriable
 
 
 def test_http02_short_body_under_content_length_is_retried_and_never_cached(local_client):
     srv, cl = local_client(_short_200)
     with pytest.raises(IngestionError):
-        cl.get("https://www.pac.or.kr/a.pdf")
+        cl.get("https://www.iendc.go.kr/a.pdf")
     assert srv.hits >= 2
-    assert cl.cache.get("www.pac.or.kr", "GET", "https://www.pac.or.kr/a.pdf") is None
+    assert cl.cache.get("www.iendc.go.kr", "GET", "https://www.iendc.go.kr/a.pdf") is None
 
 
 def test_http02_complete_body_is_accepted(local_client):
@@ -329,13 +329,13 @@ def test_http02_complete_body_is_accepted(local_client):
     def ok(c, stop):
         c.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % len(body) + body)
     _srv, cl = local_client(ok)
-    r = cl.get("https://www.pac.or.kr/a.pdf")
+    r = cl.get("https://www.iendc.go.kr/a.pdf")
     assert r.ok and r.body == body
 
 
 # ---------------------------------------------------------------- FETCH-01
-ROB = {"https://www.pac.or.kr/robots.txt": ROBOTS_OK}
-U1 = "https://www.pac.or.kr/files/a.pdf"
+ROB = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
+U1 = "https://www.iendc.go.kr/files/a.pdf"
 PDF_A = make_pdf(["alpha page text for the first synthetic file"])
 
 

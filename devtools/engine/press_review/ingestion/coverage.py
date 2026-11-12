@@ -11,7 +11,7 @@ from typing import Any, Optional
 from .. import contracts
 from . import rights as rights_mod
 
-PAGE_SIZE = 10  # PAC 간행물 목록 페이지 크기(sources/pac.py)
+PAGE_SIZE = 10  # PAC 간행물 목록 페이지 크기(PAC 수집 어댑터는 UDEC-37로 공개 저장소에서 뺐다)
 
 
 def _year_dist(m: Any, sid: str) -> dict:

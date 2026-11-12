@@ -43,7 +43,7 @@ try:  # POSIX 전용. 없으면 프로세스 간 호스트 잠금은 건너뛴�
 except ImportError:  # pragma: no cover
     fcntl = None  # type: ignore
 
-ALLOWED_HOSTS = frozenset({"www.pac.or.kr", "pac.or.kr", "www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr", "apis.data.go.kr", "lx.scourt.go.kr"})
+ALLOWED_HOSTS = frozenset({"www.iendc.go.kr", "www.law.go.kr", "open.law.go.kr", "apis.data.go.kr", "lx.scourt.go.kr"})
 DRF_HOST = "www.law.go.kr"
 DRF_PATH_PREFIX = "/DRF/"
 USER_AGENT = "press-check/0.1 (+https://github.com/JINKOO1991/press-check)"

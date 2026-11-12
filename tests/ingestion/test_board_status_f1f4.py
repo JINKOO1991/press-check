@@ -1,20 +1,6 @@
 """2026-10-16 시정권고 현황 F1·F4(docs/coverage/P2_board_status_hwp_diagnosis.md). 합성 입력, 네트워크 없음."""
 import pdr_ing_paths  # noqa: F401
 from press_review.ingestion import admission
-from press_review.ingestion import structure as st
-from press_review.ingestion import structure_records as sr
-
-
-def test_f1_prompt_is_board_status_only():
-    """F1: 새 프롬프트는 시정권고 현황 소스에만 연결된다. 사례집 등 다른 소스의 프로필·프롬프트 파일은 그대로다."""
-    assert sr.SOURCE_PROFILE["pac_board_correction_status"] == "pac_board_status"
-    others = {k: v for k, v in sr.SOURCE_PROFILE.items() if k != "pac_board_correction_status"}
-    assert "pac_board_status" not in others.values()
-    assert sr.SOURCE_PROFILE["pac_correction_casebooks"] == "pac_correction"
-    assert sr.PROFILES["pac_correction"].prompt == "pac_correction.md"
-    board = st.load_prompt(sr.PROFILES["pac_board_status"]).system
-    assert "row-unique quote" in board and "null이라도" not in board and "still output it with an empty outcome" not in board
-    assert "still output it with an empty outcome" in st.load_prompt(sr.PROFILES["pac_correction"]).system   # 사례집 프롬프트는 불변
 
 
 def test_f4_statistics_attachment_is_not_applicable():

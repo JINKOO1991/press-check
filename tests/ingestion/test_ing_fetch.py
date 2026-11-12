@@ -1,6 +1,7 @@
 """다운로드 단계(P2_DESIGN §1): 원자적 저장·해시·중복 연결·크기/매직 검사·재개·순위. 네트워크 없음."""
 import io
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,10 +11,9 @@ from press_review.ingestion import __main__ as cli
 from press_review.ingestion import fetch as fetch_mod
 from press_review.ingestion import tiers
 from press_review.ingestion.manifest import Manifest
-from press_review.ingestion.sources import pac
 
-ROB = {"https://www.pac.or.kr/robots.txt": ROBOTS_OK, "https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
-U1, U2, U3 = ("https://www.pac.or.kr/files/%s.pdf" % n for n in ("a", "b", "c"))
+ROB = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
+U1, U2, U3 = ("https://www.iendc.go.kr/files/%s.pdf" % n for n in ("a", "b", "c"))
 PDF_A = make_pdf(["alpha page text for the first synthetic file", "second"])
 PDF_B = make_pdf(["beta page text for the second synthetic file"])
 
@@ -62,7 +62,7 @@ def test_restart_does_not_refetch_and_retry_only_failed(corpus, clock):
     t = FakeTransport({**ROB, U1: (200, PDF_A, {"Content-Type": "application/pdf"}), U2: (404, b"nf", {})})
     _, r1 = run_fetch(corpus, t, clock)
     assert r1["result"]["fetched"] == 1 and r1["result"]["errors"] == {"http_404": 1}
-    n = len(t.urls("www.pac.or.kr"))
+    n = len(t.urls("www.iendc.go.kr"))
     t.routes[U2] = (200, PDF_B, {"Content-Type": "application/pdf"})
     _, r2 = run_fetch(corpus, t, clock)
     assert r2["result"]["candidates"] == 1 and r2["result"]["fetched"] == 1       # 실패분만 재개
@@ -114,7 +114,7 @@ def test_same_hash_is_stored_once_and_linked(corpus, clock):
 
 
 def test_time_limit_pauses_and_resume_completes(corpus, clock):
-    urls = [f"https://www.pac.or.kr/files/f{i}.pdf" for i in range(6)]
+    urls = [f"https://www.iendc.go.kr/files/f{i}.pdf" for i in range(6)]
     bodies = {u: make_pdf([f"unique body number {i} " + "x" * 30]) for i, u in enumerate(urls)}
     seed_atts(corpus, [(i + 1, u, "full", None, "application/pdf", "PDF") for i, u in enumerate(urls)], clock)
     t = FakeTransport({**ROB, **{u: (200, b, {"Content-Type": "application/pdf"}) for u, b in bodies.items()}})
@@ -164,11 +164,11 @@ def test_limit_does_not_become_limit_pages_and_tier_filter(corpus, clock):
     seed_atts(corpus, [(1, U1, "full", None, "application/pdf", "PDF"), (2, U2, "full", None, "application/pdf", "PDF")], clock)
     m = Manifest(corpus / "manifest.sqlite", now=clock.now)
     seed(m, "200", source="pac_research_quarterly", family="pac_other",
-         atts=[(1, "https://www.pac.or.kr/files/q.pdf", "full", None, "application/pdf", "PDF")])
+         atts=[(1, "https://www.iendc.go.kr/files/q.pdf", "full", None, "application/pdf", "PDF")])
     seed(m, "300", source="made_up_source", family="pac_other",
-         atts=[(1, "https://www.pac.or.kr/files/z.pdf", "full", None, "application/pdf", "PDF")])
+         atts=[(1, "https://www.iendc.go.kr/files/z.pdf", "full", None, "application/pdf", "PDF")])
     m.close()
-    t = FakeTransport({**ROB, U1: (200, PDF_A, {}), U2: (200, PDF_B, {}), "https://www.pac.or.kr/files/q.pdf": (200, make_pdf(["q" * 40]), {})})
+    t = FakeTransport({**ROB, U1: (200, PDF_A, {}), U2: (200, PDF_B, {}), "https://www.iendc.go.kr/files/q.pdf": (200, make_pdf(["q" * 40]), {})})
     parser = cli.build_parser()
     from press_review.ingestion.sources import fetch as fetch_src
     fetch_src.add_arguments(parser)
@@ -177,13 +177,19 @@ def test_limit_does_not_become_limit_pages_and_tier_filter(corpus, clock):
     _, res = run_fetch(corpus, t, clock, "--limit", "1")
     assert res["result"]["attempted"] == 1 and res["result"]["unmapped_sources"] == ["made_up_source"]
     _, res = run_fetch(corpus, t, clock, "--tier", "A")
-    assert res["result"]["attempted"] == 1 and "https://www.pac.or.kr/files/q.pdf" not in t.urls()   # B 는 아직
+    assert res["result"]["attempted"] == 1 and "https://www.iendc.go.kr/files/q.pdf" not in t.urls()   # B 는 아직
     _, res = run_fetch(corpus, t, clock)
-    assert "https://www.pac.or.kr/files/q.pdf" in t.urls() and "https://www.pac.or.kr/files/z.pdf" not in t.urls()
+    assert "https://www.iendc.go.kr/files/q.pdf" in t.urls() and "https://www.iendc.go.kr/files/z.pdf" not in t.urls()
+
+
+def _ledger_source_ids():
+    """공개 권리 장부(docs/coverage/rights_ledger.json)의 source_id. PAC 수집 어댑터(MENUS)를 뺀 뒤의 소스 목록 원천(UDEC-37)."""
+    p = Path(__file__).resolve().parents[2] / "docs" / "coverage" / "rights_ledger.json"
+    return {r["source_id"] for r in json.loads(p.read_text(encoding="utf-8"))["sources"]}
 
 
 def test_every_adapter_source_id_has_a_tier():
-    ids = {m["source_id"] for m in pac.MENUS}
+    ids = {i for i in _ledger_source_ids() if i.startswith("pac_")}
     from press_review.ingestion.sources import iendc
     ids.add(iendc.SOURCE_ID)
     assert not [i for i in ids if tiers.tier_of(i) is None], "unmapped sources"
@@ -219,9 +225,9 @@ def test_disallowed_host_attachment_is_withheld_not_a_permanent_document_failure
 
 
 def test_xls_is_stored_under_its_declared_kind_not_as_hwp(corpus, clock):
-    _, (a1,) = seed_atts(corpus, [(1, "https://www.pac.or.kr/files/t.asp?menu=boardfile", "full", None, "application/octet-stream", "통계.xls")], clock)
+    _, (a1,) = seed_atts(corpus, [(1, "https://www.iendc.go.kr/files/t.asp?menu=boardfile", "full", None, "application/octet-stream", "통계.xls")], clock)
     ole = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1 workbook"
-    t = FakeTransport({**ROB, "https://www.pac.or.kr/files/t.asp?menu=boardfile": (200, ole, {"Content-Type": "application/octet-stream"})})
+    t = FakeTransport({**ROB, "https://www.iendc.go.kr/files/t.asp?menu=boardfile": (200, ole, {"Content-Type": "application/octet-stream"})})
     _, res = run_fetch(corpus, t, clock)
     row, _ = att(corpus, a1)
     assert res["result"]["fetched"] == 1 and row["detected_type"] == "xls" and row["raw_path"].endswith(".xls")

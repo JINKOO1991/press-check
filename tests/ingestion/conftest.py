@@ -23,6 +23,25 @@ def _clean_logsafe():
     logsafe.reset()
 
 
+# UDEC-37: 공개 저장소에서 PAC 구조화 프롬프트 파일을 뺐다. 구조화 공통 로직(작업 키·재개·게이트·인용 대조) 시험은
+# 프로필 레지스트리의 PAC 프로필 이름을 그대로 쓰므로, 시험 동안만 임시 프롬프트 폴더에 자리표시 파일을 둔다(저장소에 파일을 만들지 않는다).
+_STUB_PROMPTS = ("pac_adjustment", "pac_election", "pac_correction", "pac_board_status", "pac_judgment_cases")
+
+
+@pytest.fixture(autouse=True)
+def _stub_removed_profile_prompts(tmp_path_factory, monkeypatch):
+    import shutil
+
+    from press_review.ingestion import structure as S
+    d = tmp_path_factory.mktemp("prompts")
+    shutil.copytree(S.PROMPTS_DIR, d, dirs_exist_ok=True)
+    for name in _STUB_PROMPTS:
+        f = d / f"{name}.md"
+        if not f.exists():
+            f.write_text(f"version: stub-1\n## Source profile\n시험용 자리표시 프롬프트({name}).\n", encoding="utf-8")
+    monkeypatch.setattr(S, "PROMPTS_DIR", d)
+
+
 class FakeClock:
     """단조 시계 + 벽시계 겸용. sleep 은 시간을 앞으로 보낸다."""
 

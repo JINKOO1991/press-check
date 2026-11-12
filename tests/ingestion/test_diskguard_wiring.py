@@ -45,7 +45,7 @@ def run_cli(argv, tmp_path):
     return code, out.getvalue()
 
 
-@pytest.mark.parametrize("target", ["fetch", "extract", "build_index", "lawapi", "pac", "iendc", "lawapi_body"])
+@pytest.mark.parametrize("target", ["fetch", "extract", "build_index", "lawapi", "iendc", "lawapi_body"])
 def test_writing_subcommands_stop_with_3(target, guard_env, monkeypatch, tmp_path):
     fake, calls = guard_env
     fake(1 * GB)

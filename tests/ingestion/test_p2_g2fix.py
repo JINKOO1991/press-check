@@ -2,7 +2,6 @@
 
 테스트 이름은 ``test_vfidNN_`` / ``test_vconNN_`` 으로 시작한다(``-k vfid01`` 로 결함 하나만 고른다).
 """
-import re
 from pathlib import Path
 
 import pytest
@@ -372,18 +371,6 @@ def test_vcon01_chunk_only_authority_follows_gd21():
 def test_vcon01_index_accepts_guideline_chunks():
     from press_review import corpus
     assert "guideline" in corpus.AUTHORITY_TYPES
-
-
-# =====================================================================================================================
-# V-consistency-04  pac_adjustment 프롬프트의 pac_settlement 값 목록 == 계약 표 (G-D16)
-# =====================================================================================================================
-def test_vcon04_adjustment_prompt_lists_exactly_the_contract_values_for_pac_settlement():
-    body = S.load_prompt(sr.PROFILES["pac_adjustment"]).system.split("## Source profile", 1)[1]
-    lines = [l for l in body.splitlines() if "outcome_type for `pac_settlement`" in l]
-    assert len(lines) == 1
-    vals = set(re.findall(r"`([a-z_]+)`", lines[0].split(":", 1)[1].split(". ")[0]))
-    assert vals == contracts.AUTHORITY_OUTCOMES["pac_settlement"]
-    assert "is never a settlement" not in body
 
 
 # =====================================================================================================================

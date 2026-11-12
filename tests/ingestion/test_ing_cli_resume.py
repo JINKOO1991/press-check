@@ -12,7 +12,7 @@ from press_review.ingestion.manifest import Manifest
 
 PAGES = 6
 ITEMS = 3
-BASE = "https://www.pac.or.kr/kor/pages/?p=207&page="
+BASE = "https://www.iendc.go.kr/kor/pages/?p=207&page="
 
 
 def page_url(n):
@@ -52,7 +52,7 @@ def install_fake_source(monkeypatch, name="fakepac"):
 
 
 def make_transport():
-    routes = {"https://www.pac.or.kr/robots.txt": (404, b"", {})}
+    routes = {"https://www.iendc.go.kr/robots.txt": (404, b"", {})}
     for n in range(1, PAGES + 1):
         routes[page_url(n)] = (200, page_html(n), {})
     return FakeTransport(routes)
@@ -88,7 +88,7 @@ def test_max_seconds_stops_then_resume_has_no_duplicates_or_refetches(monkeypatc
         m.close()
     for n in range(1, PAGES + 1):
         assert t.counts[page_url(n)] == 1, n                                   # 어느 쪽도 두 번 받지 않는다
-    assert t.counts["https://www.pac.or.kr/robots.txt"] == 1
+    assert t.counts["https://www.iendc.go.kr/robots.txt"] == 1
 
 
 def test_resume_after_interruption_inside_a_page_is_idempotent(monkeypatch, corpus):
@@ -130,7 +130,7 @@ def test_limit_pages_and_status_and_export_inventory(monkeypatch, corpus, tmp_pa
     code, res = run_cli(["fakepac", "--limit-pages", "2"], corpus, t, clock)
     assert res["status"] == "completed" and res["result"] == {"pages": 2} and res["manifest_counts"]["documents"] == 2 * ITEMS
     code, st = run_cli(["status"], corpus, t, clock)
-    assert st["sources"]["fakepac_list"]["documents"] == 2 * ITEMS and st["robots"]["www.pac.or.kr"]["purpose_status"] == "no_rules"
+    assert st["sources"]["fakepac_list"]["documents"] == 2 * ITEMS and st["robots"]["www.iendc.go.kr"]["purpose_status"] == "no_rules"
     out_dir = tmp_path / "inv"
     code, ex = run_cli(["export-inventory", "--out-dir", str(out_dir)], corpus, t, clock)
     inv = json.loads((out_dir / "pac_cases.json").read_text(encoding="utf-8"))
@@ -200,17 +200,15 @@ def test_bad_marker_page_is_a_failure_row_not_a_success(monkeypatch, corpus):
 
 def test_robots_check_adapter_records_only_requested_hosts(corpus):
     clock = FakeClock()
-    t = FakeTransport({"https://www.pac.or.kr/robots.txt": (404, b"", {}),
-                       "https://www.iendc.go.kr/robots.txt": (200, "User-agent: *\nAllow: /\n", {}),
+    t = FakeTransport({"https://www.iendc.go.kr/robots.txt": (404, b"", {}),
                        "https://www.law.go.kr/robots.txt": (200, "User-agent: *\nAllow: /\n", {})})
     code, res = run_cli(["robots_check"], corpus, t, clock)
     r = res["result"]["robots"]
-    assert set(r) == {"www.pac.or.kr", "www.iendc.go.kr", "www.law.go.kr"}
-    assert r["www.pac.or.kr"]["http_status"] == 404 and r["www.iendc.go.kr"]["sha12"]
-    assert sorted(u for _, u in t.calls) == sorted(["https://www.pac.or.kr/robots.txt", "https://www.iendc.go.kr/robots.txt",
-                                                     "https://www.law.go.kr/robots.txt"])
+    assert set(r) == {"www.iendc.go.kr", "www.law.go.kr"}
+    assert r["www.iendc.go.kr"]["http_status"] == 404 and r["www.law.go.kr"]["sha12"]
+    assert sorted(u for _, u in t.calls) == sorted(["https://www.iendc.go.kr/robots.txt", "https://www.law.go.kr/robots.txt"])
     code, res = run_cli(["robots_check", "--host", "news.naver.com"], corpus, t, clock)
-    assert res["result"]["robots"]["news.naver.com"] == {"error": "host not allowed"} and len(t.calls) == 3
+    assert res["result"]["robots"]["news.naver.com"] == {"error": "host not allowed"} and len(t.calls) == 2
 
 
 def test_corpus_dir_ignores_foreign_plugin_data_env(monkeypatch, tmp_path):

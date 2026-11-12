@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from ..http import ALLOWED_HOSTS
 
-DEFAULT_HOSTS = ("www.pac.or.kr", "www.iendc.go.kr", "www.law.go.kr")
+DEFAULT_HOSTS = ("www.iendc.go.kr", "www.law.go.kr")
 
 
 def add_arguments(parser) -> None:
-    parser.add_argument("--host", action="append", dest="hosts", help="점검할 호스트(반복 가능, 기본: PAC·IENDC·법제처 3곳)")
+    parser.add_argument("--host", action="append", dest="hosts", help="점검할 호스트(반복 가능, 기본: IENDC·법제처 2곳)")
 
 
 def run(ctx, args) -> dict:

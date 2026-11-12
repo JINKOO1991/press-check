@@ -553,29 +553,6 @@ def test_gd8_fetch_never_selects_a_viewer_shell_even_if_it_is_still_discovered(c
     assert "pac_other:1#2" not in ids and "pac_other:2#1" not in ids and info["viewer_shells_skipped"] == 2
 
 
-def test_gd8_pac_adapter_withholds_a_newly_found_ebook_shell_and_a_rerun_keeps_it(corpus, monkeypatch):
-    import test_src_pac as P
-    monkeypatch.setattr(P.pac, "PAGE_SIZE", 2)
-    shell = "/kor/ebook/periodical/mz_per_2/2003_fall/index.html"
-    detail = P.DETAIL.replace('<li><a href="" target="_blank">링크 없는 항목</a></li>', f'<li><a href="{shell}">e-book</a></li>')
-    routes = P._routes()
-    for i in (1212, 1169, 793, 700):
-        routes[P.D.format(i=i)] = (200, detail, {})
-    clock = FakeClock()
-    t = FakeTransport(routes, clock=clock)
-    code, o = P._run(corpus, t, clock)
-    assert code == 0
-    m = Manifest(corpus / "manifest.sqlite")
-    shells = [a for d in ("pac_cases:1212", "pac_cases:1169") for a in m.attachments_for(d) if a["url"].endswith(shell)]
-    assert len(shells) == 2 and {a["status"] for a in shells} == {"withheld"} and {a["kind"] for a in shells} == {"other"}
-    assert not any(shell in u for u in t.urls())                                           # 뷰어 주소는 요청하지 않는다
-    m.close()
-    code, o2 = P._run(corpus, t, clock)
-    m = Manifest(corpus / "manifest.sqlite")
-    assert {a["status"] for d in ("pac_cases:1212",) for a in m.attachments_for(d) if a["url"].endswith(shell)} == {"withheld"}
-    m.close()
-
-
 # =====================================================================================================================
 # G-D9  IENDC POST 전용 HWP 의 첨부 행
 # =====================================================================================================================

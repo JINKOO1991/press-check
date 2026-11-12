@@ -96,7 +96,7 @@ def test_gd13_end_to_end_a_quote_with_different_line_breaks_is_kept_and_contract
 # =====================================================================================================================
 def _pac_pdf(env, n=2, source=None, family=None, doc_key="500"):
     kw = {"source": source, "family": family} if source else {}
-    doc, (a1,) = ext_seed(env.m, doc_key, atts=[(1, f"https://www.pac.or.kr/files/{doc_key}.pdf", "full", None, "application/pdf", "PDF")], **kw)
+    doc, (a1,) = ext_seed(env.m, doc_key, atts=[(1, f"https://www.iendc.go.kr/files/{doc_key}.pdf", "full", None, "application/pdf", "PDF")], **kw)
     blob = make_pdf([f"pac {doc_key} page {i + 1}" for i in range(n)])
     spec = {"pages": [page_text(i + 1, i + 1, doc_key) for i in range(n)], "kd_pages": KD_TEXT[:n]}
     place_raw(env.m, env.corpus, a1, blob, **({"family": family} if family else {}))
@@ -267,7 +267,7 @@ def test_gd15_short_cell_quote_lands_on_the_row_of_the_case_not_the_first_row():
 
 
 def test_gd15_prompts_tell_the_model_about_short_cell_quotes():
-    for name in ("iendc_table", "pac_correction"):
+    for name in ("iendc_table",):
         text = S.load_prompt(sr.PROFILES[name]).system
         assert re.search(r"exactly one (whole )?(table )?cell", text) and "shorter than 4" in text
 
@@ -310,8 +310,7 @@ def _outcome_values(text):
     return vals
 
 
-@pytest.mark.parametrize("profile,authorities", [("pac_election", ["pac_election_review"]), ("iendc_table", ["iendc_review"]),
-                                                  ("pac_correction", ["pac_decision"])])
+@pytest.mark.parametrize("profile,authorities", [("iendc_table", ["iendc_review"])])
 def test_gd16_pac_and_iendc_profiles_list_dismissal_and_withdrawal(profile, authorities):
     body = S.load_prompt(sr.PROFILES[profile]).system.split("## Source profile", 1)[1]
     vals = _outcome_values(body)
@@ -320,19 +319,7 @@ def test_gd16_pac_and_iendc_profiles_list_dismissal_and_withdrawal(profile, auth
     assert vals <= allowed, vals - allowed
 
 
-def test_gd16_adjustment_profile_never_offers_values_outside_the_table():
-    body = S.load_prompt(sr.PROFILES["pac_adjustment"]).system.split("## Source profile", 1)[1]
-    lines = [l for l in body.splitlines() if "outcome_type" in l]
-    assert any("pac_settlement" in l for l in lines) and any("pac_decision" in l for l in lines)
-    for l in lines:
-        vals = set(re.findall(r"`([a-z_]+)`", l)) & OUTCOME_VALUES
-        if "pac_settlement" in l:
-            assert vals <= G_D16_ALLOWED["pac_settlement"]
-        if "pac_decision" in l:
-            assert vals <= G_D16_ALLOWED["pac_decision"] and {"withdrawal", "dismissal_procedural", "dismissal_merits"} <= vals
-
-
-@pytest.mark.parametrize("profile,authority", [("pac_election", "pac_election_review"), ("iendc_table", "iendc_review"), ("pac_correction", "pac_decision")])
+@pytest.mark.parametrize("profile,authority", [("iendc_table", "iendc_review")])
 def test_gd16_prompt_values_are_accepted_by_the_current_contract_table(profile, authority):
     table = getattr(contracts, "AUTHORITY_OUTCOMES", None)
     if table is None:
@@ -348,14 +335,14 @@ def test_gd16_court_profile_still_forbids_dismissal_labels():
 
 
 def test_gd16_common_prompt_states_the_pairings_in_one_place():
-    common = S.load_prompt(sr.PROFILES["pac_election"]).system.split("## Source profile", 1)[0]
+    common = S.load_prompt(sr.PROFILES["iendc_table"]).system.split("## Source profile", 1)[0]
     assert re.search(r"outcome_scope `procedural`[^.]*only[^.]*`dismissal_procedural`, `withdrawal` or `unknown`", common)       # contracts.PROCEDURAL_SCOPE_OUTCOMES 와 같은 집합
     assert re.search(r"`dismissal_procedural` always takes outcome_scope `procedural`", common)
     assert re.search(r"`decision`, `correction` and `guideline`[^.]*(never|not)[^.]*`procedural`", common)
     assert re.search(r"`withdrawal`[^.]*settlement_or_adjudication `withdrawal`", common)
     assert re.search(r"`settlement`[^.]*settlement_or_adjudication `settlement`", common)
     assert "PAC and IENDC" in common
-    for name in ("pac_election", "iendc_table", "pac_correction", "pac_adjustment"):            # 짝 규칙은 common 한 곳에만 둔다
+    for name in ("iendc_table",):            # 짝 규칙은 common 한 곳에만 둔다
         prof = S.load_prompt(sr.PROFILES[name]).system.split("## Source profile", 1)[1]
         assert "outcome_scope `procedural`" not in prof
 
@@ -367,8 +354,7 @@ def test_gd16_pairing_logic_is_not_duplicated_in_ingestion_code():
 
 
 def test_gd16_changed_prompt_files_carry_new_version_lines():
-    for name, floor in (("common.md", "2026-10-09.3"), ("pac_election.md", "2026-10-09.2"), ("iendc_table.md", "2026-10-09.3"),
-                        ("pac_correction.md", "2026-10-09.2"), ("pac_adjustment.md", "2026-10-09.2")):
+    for name, floor in (("common.md", "2026-10-09.3"), ("iendc_table.md", "2026-10-09.3")):
         first = (S.PROMPTS_DIR / name).read_text(encoding="utf-8").splitlines()[0]
         assert first >= f"version: {floor}", (name, first)
 
@@ -503,8 +489,8 @@ def test_gd18_split_children_are_cached_on_rerun_without_calls(manifest, corpus)
 # =====================================================================================================================
 # G-D19  오래된 HWP: 매직 바이트 기록, HWP 3.x 면 kordoc 1회 시험
 # =====================================================================================================================
-ROB = {"https://www.pac.or.kr/robots.txt": ROBOTS_OK, "https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
-U_OLD = "https://www.pac.or.kr/files/old.hwp"
+ROB = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
+U_OLD = "https://www.iendc.go.kr/files/old.hwp"
 HWP3 = b"HWP Document File V3.00 \x1a\x01\x02\x03\x04\x05" + b"\x00" * 40 + "옛 한글 본문".encode("cp949")
 KD_OK = {"kordoc": {"success": True, "metadata": {"pageMode": "layout"}, "pages": [{"pageNumber": 1, "markdown": "옛 한글 문서의 본문이 충분히 길게 들어 있는 쪽입니다"}]}}
 
@@ -654,6 +640,6 @@ def test_gd20_the_reported_number_follows_the_ledger_not_a_constant(manifest):
 
 
 def test_gd20_non_law_sources_have_no_processing_tiers_entry(manifest):
-    manifest.ensure_source("pac_adjustment_casebooks", "pac_cases", "t", "https://www.pac.or.kr/")
+    manifest.ensure_source("pac_adjustment_casebooks", "pac_cases", "t", "https://www.iendc.go.kr/")
     cov = cov_mod.build_coverage(manifest, "t")
     assert "processing_tiers" not in cov["sources"][0]

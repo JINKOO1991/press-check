@@ -7,8 +7,8 @@ from conftest import ROBOTS_OK, FakeTransport
 from press_review.ingestion.http import FetchFailed, RobotsDisallowed
 from press_review.ingestion.robots import ALLOW_ALL, parse_robots
 
-PAC = "https://www.pac.or.kr"
-RB = PAC + "/robots.txt"
+IENDC = "https://www.iendc.go.kr"
+RB = IENDC + "/robots.txt"
 
 
 def test_parser_longest_match_wildcard_and_anchor():
@@ -38,10 +38,10 @@ def test_parser_detects_ai_rag_notice_only_with_prohibition():
 
 
 def test_missing_robots_404_allows_and_is_recorded(make_client, manifest):
-    t = FakeTransport({RB: (404, b"<html>not found</html>", {}), PAC + "/x": (200, b"ok", {})})
+    t = FakeTransport({RB: (404, b"<html>not found</html>", {}), IENDC + "/x": (200, b"ok", {})})
     c = make_client(t)
-    assert c.get(PAC + "/x").body == b"ok"
-    row = manifest.latest_robots("www.pac.or.kr")
+    assert c.get(IENDC + "/x").body == b"ok"
+    row = manifest.latest_robots("www.iendc.go.kr")
     assert row["http_status"] == 404 and row["purpose_status"] == "no_rules" and row["body_sha256"] is None
     assert manifest.failures() == [] and t.counts[RB] == 1               # 404는 백오프·실패 아님
 
@@ -56,25 +56,25 @@ def test_allow_all_robots_records_sha_and_status(make_client, manifest):
 
 
 def test_disallowed_path_is_never_requested(make_client):
-    t = FakeTransport({RB: (200, "User-agent: *\nDisallow: /kor/admin/\n", {}), PAC + "/kor/admin/x": (200, b"secret", {}),
-                       PAC + "/kor/ok": (200, b"ok", {})})
+    t = FakeTransport({RB: (200, "User-agent: *\nDisallow: /kor/admin/\n", {}), IENDC + "/kor/admin/x": (200, b"secret", {}),
+                       IENDC + "/kor/ok": (200, b"ok", {})})
     c = make_client(t)
     with pytest.raises(RobotsDisallowed):
-        c.get(PAC + "/kor/admin/x")
-    assert c.get(PAC + "/kor/ok").body == b"ok"
-    assert PAC + "/kor/admin/x" not in t.urls()
+        c.get(IENDC + "/kor/admin/x")
+    assert c.get(IENDC + "/kor/ok").body == b"ok"
+    assert IENDC + "/kor/admin/x" not in t.urls()
 
 
 def test_server_error_on_robots_is_fail_closed_and_refetched_next_time(make_client, manifest):
-    t = FakeTransport({RB: [(503, b"", {})] * 5 + [(200, "User-agent: *\nAllow: /\n", {})], PAC + "/x": (200, b"ok", {})})
+    t = FakeTransport({RB: [(503, b"", {})] * 5 + [(200, "User-agent: *\nAllow: /\n", {})], IENDC + "/x": (200, b"ok", {})})
     c = make_client(t)
     with pytest.raises(RobotsDisallowed):
-        c.get(PAC + "/x")
-    assert manifest.latest_robots("www.pac.or.kr")["purpose_status"] == "unknown"
-    assert PAC + "/x" not in t.urls()
+        c.get(IENDC + "/x")
+    assert manifest.latest_robots("www.iendc.go.kr")["purpose_status"] == "unknown"
+    assert IENDC + "/x" not in t.urls()
     c2 = make_client(t)                                                  # 새 프로세스: unknown은 신선하지 않다
-    assert c2.get(PAC + "/x").body == b"ok"
-    assert manifest.latest_robots("www.pac.or.kr")["purpose_status"] == "allowed"
+    assert c2.get(IENDC + "/x").body == b"ok"
+    assert manifest.latest_robots("www.iendc.go.kr")["purpose_status"] == "allowed"
 
 
 def test_html_robots_is_recorded_unparseable_and_blocks_collection(make_client, manifest):
@@ -103,52 +103,52 @@ def _doc(m):
 
 def test_ai_rag_prohibition_blocks_whole_host(make_client, manifest):
     body = "# AI TRAINING AND RAG IS PROHIBITED\nUser-agent: *\nAllow: /\n"
-    t = FakeTransport({RB: (200, body, {}), PAC + "/x": (200, b"ok", {})})
+    t = FakeTransport({RB: (200, body, {}), IENDC + "/x": (200, b"ok", {})})
     c = make_client(t)
     with pytest.raises(RobotsDisallowed):
-        c.get(PAC + "/x")
-    assert manifest.latest_robots("www.pac.or.kr")["purpose_status"] == "ai_rag_prohibited"
+        c.get(IENDC + "/x")
+    assert manifest.latest_robots("www.iendc.go.kr")["purpose_status"] == "ai_rag_prohibited"
 
 
 def test_root_disallow_is_recorded(make_client, manifest):
     t = FakeTransport({RB: (200, "User-agent: *\nDisallow: /\n", {})})
     with pytest.raises(RobotsDisallowed):
-        make_client(t).get(PAC + "/x")
-    assert manifest.latest_robots("www.pac.or.kr")["purpose_status"] == "root_disallowed"
+        make_client(t).get(IENDC + "/x")
+    assert manifest.latest_robots("www.iendc.go.kr")["purpose_status"] == "root_disallowed"
 
 
 def test_robots_fetched_once_per_day_per_host(make_client, manifest, clock):
-    t = FakeTransport({RB: ROBOTS_OK, PAC + "/a": (200, b"a", {}), PAC + "/b": (200, b"b", {}), PAC + "/c": (200, b"c", {})})
-    make_client(t).get(PAC + "/a")
-    make_client(t).get(PAC + "/b")                                       # 새 클라이언트, 23시간 이내 → 재조회 없음
+    t = FakeTransport({RB: ROBOTS_OK, IENDC + "/a": (200, b"a", {}), IENDC + "/b": (200, b"b", {}), IENDC + "/c": (200, b"c", {})})
+    make_client(t).get(IENDC + "/a")
+    make_client(t).get(IENDC + "/b")                                       # 새 클라이언트, 23시간 이내 → 재조회 없음
     assert t.counts[RB] == 1
     clock.advance(25 * 3600)
-    make_client(t).get(PAC + "/c")
+    make_client(t).get(IENDC + "/c")
     assert t.counts[RB] == 2
     assert len(manifest.robots_rows()) == 2                              # 이력 보존(해시 변화 추적)
 
 
 def test_cache_hit_does_not_touch_robots_or_network(make_client):
-    t = FakeTransport({RB: ROBOTS_OK, PAC + "/a": (200, b"a", {})})
+    t = FakeTransport({RB: ROBOTS_OK, IENDC + "/a": (200, b"a", {})})
     c = make_client(t)
-    c.get(PAC + "/a")
+    c.get(IENDC + "/a")
     t2 = FakeTransport({})
     c2 = make_client(t2)
-    assert c2.get(PAC + "/a").from_cache and t2.calls == []
+    assert c2.get(IENDC + "/a").from_cache and t2.calls == []
 
 
 def test_robots_request_itself_is_not_robots_gated_and_uses_interval(make_client, clock):
     t = FakeTransport({RB: (200, "User-agent: *\nDisallow: /\nDisallow: /robots.txt\n", {})})
     with pytest.raises(RobotsDisallowed):
-        make_client(t).get(PAC + "/x")
+        make_client(t).get(IENDC + "/x")
     assert t.counts[RB] == 1
 
 
 def test_missing_cached_body_forces_refetch(make_client, corpus):
-    t = FakeTransport({RB: ROBOTS_OK, PAC + "/a": (200, b"a", {}), PAC + "/b": (200, b"b", {})})
-    make_client(t).get(PAC + "/a")
-    for p in (corpus / "http_cache" / "www.pac.or.kr").glob("*"):
+    t = FakeTransport({RB: ROBOTS_OK, IENDC + "/a": (200, b"a", {}), IENDC + "/b": (200, b"b", {})})
+    make_client(t).get(IENDC + "/a")
+    for p in (corpus / "http_cache" / "www.iendc.go.kr").glob("*"):
         if p.read_bytes().startswith(b"User-agent"):
             p.unlink()
-    make_client(t).get(PAC + "/b")
+    make_client(t).get(IENDC + "/b")
     assert t.counts[RB] == 2

@@ -3,11 +3,11 @@ import pytest
 from conftest import ROBOTS_OK, FakeTransport
 from press_review.ingestion.http import BlockedURL, TransportError, validate_url
 
-P = "https://www.pac.or.kr/kor/pages/?p=207"
+P = "https://www.iendc.go.kr/kor/pages/?p=207"
 
 
 def routes_with_robots(**extra):
-    r = {"https://www.pac.or.kr/robots.txt": ROBOTS_OK, "https://www.iendc.go.kr/robots.txt": ROBOTS_OK,
+    r = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK,
          "https://www.law.go.kr/robots.txt": ROBOTS_OK}
     r.update(extra)
     return r
@@ -19,8 +19,8 @@ def routes_with_robots(**extra):
     "https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001556126",
     "https://news.daum.net/correct",
     "https://example.com/",
-    "https://www.pac.or.kr.evil.example/x",
-    "https://evilwww.pac.or.kr/x",
+    "https://www.iendc.go.kr.evil.example/x",
+    "https://evilwww.iendc.go.kr/x",
 ])
 def test_host_outside_allowlist_is_rejected_without_network(make_client, url):
     t = FakeTransport()
@@ -44,9 +44,9 @@ def test_private_and_loopback_addresses_are_rejected(make_client, url):
 
 
 @pytest.mark.parametrize("url", [
-    "https://user:pw@www.pac.or.kr/x", "https://user@www.pac.or.kr/x", "https://@www.pac.or.kr/x",
-    "ftp://www.pac.or.kr/x", "file:///etc/passwd", "javascript:alert(1)", "https://www.pac.or.kr:8443/x",
-    "http://www.pac.or.kr/x", "http://www.law.go.kr/LSW/precInfoP.do", "//www.pac.or.kr/x", "",
+    "https://user:pw@www.iendc.go.kr/x", "https://user@www.iendc.go.kr/x", "https://@www.iendc.go.kr/x",
+    "ftp://www.iendc.go.kr/x", "file:///etc/passwd", "javascript:alert(1)", "https://www.iendc.go.kr:8443/x",
+    "http://www.iendc.go.kr/x", "http://www.law.go.kr/LSW/precInfoP.do", "//www.iendc.go.kr/x", "",
 ])
 def test_credentials_scheme_port_and_plain_http_rejected(make_client, url):
     t = FakeTransport()
@@ -67,31 +67,31 @@ def test_plain_http_allowed_only_for_law_go_kr_drf_path():
 def test_error_message_does_not_echo_credentials(make_client):
     c = make_client(FakeTransport())
     with pytest.raises(BlockedURL) as e:
-        c.get("https://admin:s3cretpw@www.pac.or.kr/x")
+        c.get("https://admin:s3cretpw@www.iendc.go.kr/x")
     assert "s3cretpw" not in str(e.value) and "admin" not in str(e.value)
 
 
 @pytest.mark.parametrize("location", [
-    "http://127.0.0.1/admin", "https://10.1.1.1/", "https://news.naver.com/x", "https://user:pw@www.pac.or.kr/x",
-    "file:///etc/passwd", "http://www.pac.or.kr/plain-http", "https://[::1]/",
+    "http://127.0.0.1/admin", "https://10.1.1.1/", "https://news.naver.com/x", "https://user:pw@www.iendc.go.kr/x",
+    "file:///etc/passwd", "http://www.iendc.go.kr/plain-http", "https://[::1]/",
 ])
 def test_redirect_hops_get_the_same_checks(make_client, location):
     t = FakeTransport(routes_with_robots(**{P: (302, b"", {"Location": location})}))
     c = make_client(t)
     with pytest.raises(BlockedURL):
         c.get(P)
-    assert t.urls() == ["https://www.pac.or.kr/robots.txt", P]       # 리다이렉트 목적지에는 요청하지 않는다
+    assert t.urls() == ["https://www.iendc.go.kr/robots.txt", P]       # 리다이렉트 목적지에는 요청하지 않는다
 
 
 def test_relative_redirect_is_followed_and_checked_by_robots(make_client):
     t = FakeTransport(routes_with_robots(**{
         P: (301, b"", {"Location": "/kor/pages/?p=208"}),
-        "https://www.pac.or.kr/kor/pages/?p=208": (200, b"ok", {}),
+        "https://www.iendc.go.kr/kor/pages/?p=208": (200, b"ok", {}),
     }))
     c = make_client(t)
     r = c.get(P)
     assert r.status == 200 and r.body == b"ok"
-    assert r.final_url == "https://www.pac.or.kr/kor/pages/?p=208"
+    assert r.final_url == "https://www.iendc.go.kr/kor/pages/?p=208"
 
 
 def test_redirect_loop_is_capped(make_client):
@@ -100,12 +100,12 @@ def test_redirect_loop_is_capped(make_client):
     from press_review.ingestion.http import FetchFailed
     with pytest.raises(FetchFailed):
         c.get(P)
-    assert len(t.urls("www.pac.or.kr")) <= 8
+    assert len(t.urls("www.iendc.go.kr")) <= 8
 
 
 def test_redirect_hops_respect_host_interval(make_client, clock):
     t = FakeTransport(routes_with_robots(**{P: (302, b"", {"Location": "/b"}),
-                                            "https://www.pac.or.kr/b": (200, b"ok", {})}))
+                                            "https://www.iendc.go.kr/b": (200, b"ok", {})}))
     c = make_client(t)
     c.get(P)
     # robots, P, /b = 같은 호스트 3요청 → 사이마다 2초 간격
@@ -138,7 +138,7 @@ def test_oversized_response_is_reported_not_cached(make_client, corpus):
     c = make_client(Big(routes_with_robots()))
     with pytest.raises(ResponseTooLarge):
         c.get(P, max_bytes=10)
-    bodies = [p.read_bytes() for p in (corpus / "http_cache" / "www.pac.or.kr").glob("*.body")]
+    bodies = [p.read_bytes() for p in (corpus / "http_cache" / "www.iendc.go.kr").glob("*.body")]
     assert bodies == [ROBOTS_OK[1].encode()]            # robots만 캐시되고 초과 응답은 캐시에 없다
 
 

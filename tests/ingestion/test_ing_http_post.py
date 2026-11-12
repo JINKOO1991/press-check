@@ -5,7 +5,7 @@ from conftest import ROBOTS_OK, FakeTransport
 from press_review.ingestion.http import BlockedURL, FetchFailed
 
 DL = "https://www.iendc.go.kr/fileDownload.do"
-ROB = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK, "https://www.pac.or.kr/robots.txt": ROBOTS_OK}
+ROB = {"https://www.iendc.go.kr/robots.txt": ROBOTS_OK}
 
 
 def test_post_sends_body_and_caches_per_body(make_client):
@@ -24,7 +24,7 @@ def test_post_sends_body_and_caches_per_body(make_client):
 @pytest.mark.parametrize("url", [
     "https://www.iendc.go.kr/board.do?menuPos=45",
     "https://www.iendc.go.kr/fileDownload.do/x",
-    "https://www.pac.or.kr/fileDownload.do.evil",
+    "https://www.iendc.go.kr/fileDownload.do.evil",
     "http://www.iendc.go.kr/fileDownload.do",
     "https://news.naver.com/fileDownload.do",
     "https://www.law.go.kr/DRF/lawSearch.do",
@@ -58,7 +58,7 @@ def test_post_redirect_is_not_followed(make_client, manifest, code):
 
 
 def test_range_header_is_sent_and_never_cached(make_client):
-    u = "https://www.pac.or.kr/files/a.pdf"
+    u = "https://www.iendc.go.kr/files/a.pdf"
     t = FakeTransport({**ROB, u: (206, b"partial", {"Content-Range": "bytes 0-6/100"})})
     c = make_client(t)
     r = c.get(u, headers={"range": "bytes=0-6"})
@@ -73,10 +73,10 @@ def test_range_header_is_sent_and_never_cached(make_client):
 
 @pytest.mark.parametrize("hdr", [
     {"User-Agent": "x"}, {"Host": "evil.example"}, {"Cookie": "a=b"}, {"Authorization": "Bearer x"},
-    {"Range": "bytes=0-1\r\nX-Evil: 1"}, {"Referer": "https://www.pac.or.kr/\nX: y"}, {"Content-Type": "text/plain"},
+    {"Range": "bytes=0-1\r\nX-Evil: 1"}, {"Referer": "https://www.iendc.go.kr/\nX: y"}, {"Content-Type": "text/plain"},
 ])
 def test_extra_headers_are_allowlisted_and_sanitized(make_client, hdr):
     t = FakeTransport(ROB)
     with pytest.raises(BlockedURL):
-        make_client(t).get("https://www.pac.or.kr/x", headers=hdr)
+        make_client(t).get("https://www.iendc.go.kr/x", headers=hdr)
     assert t.calls == []

@@ -6,8 +6,8 @@ from conftest import ROBOTS_OK, FakeTransport
 from press_review.ingestion.context import Budget, TimeBudgetExceeded
 from press_review.ingestion.http import DryRunMiss, FetchFailed, TransportError
 
-U = "https://www.pac.or.kr/kor/pages/?p=207&magazine_new=M03&cate=MA04"
-RB = "https://www.pac.or.kr/robots.txt"
+U = "https://www.iendc.go.kr/kor/pages/?p=207&magazine_new=M03&cate=MA04"
+RB = "https://www.iendc.go.kr/robots.txt"
 
 
 def tr(**routes):
@@ -126,7 +126,7 @@ def test_cache_layout_and_meta(make_client, corpus):
     import hashlib
     t = tr(**{U: (200, b"body", {"Content-Type": "text/html", "Set-Cookie": "sid=1", "X-Other": "z"})})
     make_client(t).get(U)
-    d = corpus / "http_cache" / "www.pac.or.kr"
+    d = corpus / "http_cache" / "www.iendc.go.kr"
     h = hashlib.sha256(U.encode()).hexdigest()[:16]
     assert (d / f"{h}.body").read_bytes() == b"body"
     meta = json.loads((d / f"{h}.meta.json").read_text())
@@ -168,7 +168,7 @@ def test_corrupted_cache_body_is_a_miss(make_client, corpus):
     t = tr(**{U: (200, b"good", {})})
     c = make_client(t)
     c.get(U)
-    for p in (corpus / "http_cache" / "www.pac.or.kr").glob("*.body"):
+    for p in (corpus / "http_cache" / "www.iendc.go.kr").glob("*.body"):
         if p.read_bytes() == b"good":
             p.write_bytes(b"tampered")
     assert c.get(U).body == b"good" and t.counts[U] == 2

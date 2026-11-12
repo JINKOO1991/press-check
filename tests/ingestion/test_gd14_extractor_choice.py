@@ -3,13 +3,13 @@
 상수는 오프라인 대조율 비교(evals/extractor_compare.py)의 결과이고, 문서의 선택 표와 코드 상수가 어긋나지 않게 묶는다.
 합성 입력만 쓰며 장부·네트워크를 읽지 않는다.
 """
+import json
 import re
 import sys
 from pathlib import Path
 
 import pdr_ing_paths  # noqa: F401
 from press_review.ingestion import extract as ext
-from press_review.ingestion.sources import pac as pac_src
 
 REPO = Path(__file__).resolve().parents[2]
 DOC = REPO / "docs" / "coverage" / "P2_extractor_compare.md"
@@ -33,9 +33,15 @@ def test_gd14x_per_source_extractor_constant_is_the_offline_comparison_result():
         assert ext.pdf_extractor_for({"source_id": src}) == name
 
 
+def _ledger_source_ids():
+    """공개 권리 장부(docs/coverage/rights_ledger.json)의 source_id. PAC 수집 어댑터(MENUS)를 뺀 뒤의 소스 목록 원천(UDEC-37)."""
+    p = Path(__file__).resolve().parents[2] / "docs" / "coverage" / "rights_ledger.json"
+    return {r["source_id"] for r in json.loads(p.read_text(encoding="utf-8"))["sources"]}
+
+
 def test_gd14x_constant_keys_are_real_sources_and_values_are_known_extractors():
     from press_review.ingestion.sources import iendc as iendc_src
-    known = {iendc_src.SOURCE_ID} | {m["source_id"] for m in pac_src.MENUS}
+    known = {iendc_src.SOURCE_ID} | {i for i in _ledger_source_ids() if i.startswith("pac_")}
     for src, name in ext.PDF_EXTRACTOR_BY_SOURCE.items():
         assert name in ext.PDF_EXTRACTORS
         assert src in known, src

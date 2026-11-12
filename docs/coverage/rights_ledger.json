@@ -178,7 +178,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -191,6 +191,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -214,7 +220,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -227,6 +233,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -250,7 +262,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -263,6 +275,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -286,7 +304,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -299,6 +317,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -322,7 +346,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -335,6 +359,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -358,7 +388,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -371,6 +401,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -394,7 +430,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -407,6 +443,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:01+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -430,7 +472,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -443,6 +485,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -466,7 +514,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -479,6 +527,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -502,7 +556,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -515,6 +569,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -538,7 +598,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -551,6 +611,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -574,7 +640,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -587,6 +653,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -610,7 +682,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -623,6 +695,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -646,7 +724,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -659,6 +737,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -682,7 +766,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -695,6 +779,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
@@ -718,7 +808,7 @@
       "review_status": "pending",
       "rights": {
         "create_derivatives": "allowed",
-        "external_api": "allowed",
+        "external_api": "permission_required",
         "fine_tune": "permission_required",
         "read": "allowed",
         "redistribute_derivatives": "permission_required",
@@ -731,6 +821,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.law.go.kr/%EB%B2%95%EB%A0%B9/%EC%A0%80%EC%9E%91%EA%B6%8C%EB%B2%95"
+        },
+        {
+          "checked_at": "2026-11-12T06:42:02+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 언론중재위원회 회신 2026-11-11: 심의기준 외 저작물 이용 불허 (UDEC-36)",
+          "url": "https://www.pac.or.kr/"
         }
       ],
       "robots_host": "www.pac.or.kr",
