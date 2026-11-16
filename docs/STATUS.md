@@ -7,7 +7,7 @@
 | P0 플러그인·엔진·MCP | 구현 완료 | docs/P0_DESIGN.md, `claude plugin validate` 두 경로 통과 |
 | P1 자료 목록·권리 장부 | 완료 | docs/coverage/P1_inventory.md, rights_ledger.json |
 | P2 수집·추출·구조화 | 순위 A 통과 소스 4개 전량 완료, 미달 3개 보류 | docs/coverage/P2_minigate.md, P2_cost_estimate.md, 아래 표 |
-| P3 검색 색인 | 재빌드 완료·활성 전환(2026-10-19 갱신): 활성 snapshot idx-33cd25a510e8272f, passage 90,709, judgment 2,063(판례 1,678 + 헌재 385), 사건 단위 제외 8건. 이전 idx-2caa00753b47d3a9(2026-10-17, passage 90,326, 판례 passage 1,680, 인용 기반 선별 수집 판례 570건 반영)와 idx-06c1c3649636e7a2는 롤백용으로 `index/`에 보존(롤백: CURRENT를 이전 파일명으로 되쓴다). 2026-10-16 전환분 06c1: passage 89,756(같은 본문 3,834 제거·별칭 3,834 보존, chunk 종류 열, case_att_excluded 610), IENDC 사건 1,115·시정권고 현황 통과 181·제외 4·대상 아님 3·미평가 132 반영. 이전 idx-735c398068d7d35e(F1·F2 결함)·idx-34b8367d1dfe423d(76,066)는 롤백용으로 `~/.local/share/press-dispute-review/rollback_snapshots/`에 보존(롤백: 두 파일을 index/로 mv하고 CURRENT를 되돌린다). 형태소 분석·조사 토크나이저 이동은 미실시 | docs/coverage/P3_rebuild_result.md, docs/coverage/P3_citation_collection.md |
+| P3 검색 색인 | 재빌드 완료·활성 전환(2026-10-19 갱신): 활성 snapshot idx-eb609493fc571a3a(2026-11-16 재빌드, passage 90,841); 2026-10-19 갱신 당시 활성은 idx-33cd25a510e8272f(passage 90,709, judgment 2,063(판례 1,678 + 헌재 385), 사건 단위 제외 8건). 이전 idx-2caa00753b47d3a9(2026-10-17, passage 90,326, 판례 passage 1,680, 인용 기반 선별 수집 판례 570건 반영)와 idx-06c1c3649636e7a2는 롤백용으로 `index/`에 보존(롤백: CURRENT를 이전 파일명으로 되쓴다). 2026-10-16 전환분 06c1: passage 89,756(같은 본문 3,834 제거·별칭 3,834 보존, chunk 종류 열, case_att_excluded 610), IENDC 사건 1,115·시정권고 현황 통과 181·제외 4·대상 아님 3·미평가 132 반영. 이전 idx-735c398068d7d35e(F1·F2 결함)·idx-34b8367d1dfe423d(76,066)는 롤백용으로 `~/.local/share/press-dispute-review/rollback_snapshots/`에 보존(롤백: 두 파일을 index/로 mv하고 CURRENT를 되돌린다). 형태소 분석·조사 토크나이저 이동은 미실시 | docs/coverage/P3_rebuild_result.md, docs/coverage/P3_citation_collection.md |
 | P4 전문가 평가 | 설계·도구 구현, 첫 배치 10개로 설문 종료(사용자 결정) | 설계 문서, 검색 평가 하네스와 기준선 저장, 시나리오 스키마 v2·지표, 사건 그룹·분할 V1(T=2018-10-01), 시나리오 40개 구성안, 첫 배치 10개 기사·장부·신원 표기, 구글 폼 설문 스크립트. 설문은 10개 시나리오로 종료(사용자 결정)이고 40개 확장은 접었다. 전문가 라벨·평가 실행은 미착수 (docs/P4_DESIGN.md, P4_SCENARIO_PLAN.md) |
 | P5 공개 배포 | 미착수 | 코퍼스 재배포 정책 사용자 결정 필요(P3_DESIGN §5). 공개본 권리 기본값은 unknown이며 사용자가 `rights set`으로 직접 기록해야 외부 API 반출이 열린다(기관 이용 문의 회신 전). rights_ledger.json은 작성자 장부의 스냅샷이다 |
 
@@ -37,7 +37,7 @@
 ## 출시본 구조 분리 (2026-11-07, UDEC-25·26)
 
 - 구현됨(합성 색인 시험): 수집 어댑터·DeepSeek 구조화(`ingestion/`, `providers/deepseek.py`, `prompts/`, `prices/`)를 `plugins/press-check/` 밖 `devtools/engine/`으로 옮겼다. 플러그인 폴더에는 이 코드와 import가 없고(`tests/mcp/test_plugin_isolation.py`), 플러그인 폴더만 복사한 환경에서 MCP 서버가 뜨고 `search_cases`가 동작한다. 번들 만들기(`bundle_build.py`)와 설치 명령(`install-bundle`)을 만들었다.
-- 번들 색인 파일은 2026-11-07에 한 번 만들었다(건수는 플러그인 README '근거 자료 설치'). 미실시: 번들 배포. 기대 해시 고정 코드는 UDEC-34 로 들어가며 고정값은 릴리스 때 넣는다. 자연인 실명 문서는 전수 검수를 했고 180건을 뺐으며(제외 목록은 비공개 보관) 부분 가림 표기만 있는 58건은 유지했다(UDEC-29). 자동 탐지와 사람 판독의 한계로 놓친 실명이 남아 있을 수 있다. 릴리스 URL은 미정이라 `config.BUNDLE_RELEASE_BASE_URL`은 자리표시자이며 `install-bundle`은 지금 내려받지 않고 중단한다. 번들 사건 수(`cases_by_authority_type`)는 사건번호 기준 하한이다.
+- 번들 색인 파일은 2026-11-16에 다시 만들었다(`corpus-idx-bdbe3c3fae406ba4.sqlite`, 문서 2,108건, 건수는 플러그인 README '근거 자료 설치'). 미실시: 번들 배포. 기대 해시 고정 코드는 UDEC-34 로 들어가며 고정값은 릴리스 때 넣는다. 자연인 실명 문서는 전수 검수를 했고 판결·결정 180건과 선거심의 49건(UDEC-38, 공적 역할 예외 적용)을 뺐으며(제외 목록은 비공개 보관) 부분 가림 표기만 있는 58건은 유지했다(UDEC-29). 자동 탐지와 사람 판독의 한계로 놓친 실명이 남아 있을 수 있다. 릴리스 URL은 미정이라 `config.BUNDLE_RELEASE_BASE_URL`은 자리표시자이며 `install-bundle`은 지금 내려받지 않고 중단한다. 번들 사건 수(`cases_by_authority_type`)는 사건번호 기준 하한이다.
 
 ## 검증
 

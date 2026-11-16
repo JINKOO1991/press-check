@@ -103,8 +103,8 @@
         "external_api": "allowed",
         "fine_tune": "permission_required",
         "read": "allowed",
-        "redistribute_derivatives": "permission_required",
-        "redistribute_raw": "permission_required",
+        "redistribute_derivatives": "allowed",
+        "redistribute_raw": "allowed",
         "store_raw": "allowed"
       },
       "rights_basis": [
@@ -119,6 +119,12 @@
           "review_status": "pending",
           "scope": "사용자 결정 UDEC-5 (저작권법 제7조·제35조의5 판단)",
           "url": "https://www.iendc.go.kr/home/kor/contents.do?menuPos=66"
+        },
+        {
+          "checked_at": "2026-11-16T05:16:10+00:00",
+          "review_status": "pending",
+          "scope": "설치자 결정(기록자 작성자): 인터넷선거보도심의위원회 회신 2026-11-16: 왜곡 없음·비영리·출처 명시·공익 목적 조건으로 비영리 오픈소스화 제한 없음. 미세조정은 허락 필요 유지 (UDEC-38)",
+          "url": "https://www.iendc.go.kr/"
         }
       ],
       "robots_host": "www.iendc.go.kr",
