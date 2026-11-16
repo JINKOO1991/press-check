@@ -51,20 +51,20 @@ CREATE TABLE IF NOT EXISTS api_usage(
 def make_legacy(path, n_docs=50):
     con = sqlite3.connect(path)
     con.executescript(LEGACY_DDL)
-    con.execute("INSERT INTO sources VALUES('pac_adj','pac_cases','사례집','https://www.pac.or.kr/x',1,NULL,NULL)")
+    con.execute("INSERT INTO sources VALUES('pac_adj','pac_cases','사례집','https://www.synthetic.invalid/x',1,NULL,NULL)")
     con.execute("INSERT INTO sources VALUES('lawgo','law_go_kr','판례','https://www.law.go.kr/x',1,NULL,NULL)")
     for i in range(n_docs):
         extra = json.dumps({"list_page": 1 + i % 2, "att_files": {"a": [1]}}) if i < 10 else None
         con.execute("INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (f"pac_cases:{i}", "pac_adj", f"https://www.pac.or.kr/{i}", f"제목 {i}", None, None, 2000 + i % 20, "report",
+                    (f"pac_cases:{i}", "pac_adj", f"https://www.synthetic.invalid/{i}", f"제목 {i}", None, None, 2000 + i % 20, "report",
                      None, "2026-10-08T00:00:00+00:00", "2026-10-08T00:00:00+00:00", "discovered", extra))
     con.execute("INSERT INTO documents VALUES('law:1','lawgo',NULL,'판례',NULL,'2020-01-01',2020,NULL,NULL,'t','t','failed',NULL)")
     for i in range(5):
         con.execute("INSERT INTO attachments VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-                    (f"pac_cases:{i}#1", f"pac_cases:{i}", f"https://www.pac.or.kr/f{i}.pdf", "전체", "full", 100 + i,
+                    (f"pac_cases:{i}#1", f"pac_cases:{i}", f"https://www.synthetic.invalid/f{i}.pdf", "전체", "full", 100 + i,
                      "application/pdf", None, None, None, "discovered"))
     for p in (1, 2):
-        con.execute("INSERT INTO list_pages VALUES('pac_adj',?,?,?,200,5,'h',1)", (p, f"https://www.pac.or.kr/list?p={p}", "t"))
+        con.execute("INSERT INTO list_pages VALUES('pac_adj',?,?,?,200,5,'h',1)", (p, f"https://www.synthetic.invalid/list?p={p}", "t"))
     con.execute("INSERT INTO failures(target,stage,error_class,message,at) VALUES('pac_cases:3','head','x','m','t')")
     con.execute("INSERT INTO api_usage(provider,model,at) VALUES('deepseek','deepseek-v4-flash','t')")
     con.commit()
@@ -114,7 +114,7 @@ def test_migration_backfills_list_page_links_only_where_unique(tmp_path):
     make_legacy(db)
     m = Manifest(db)
     rows = m.select("SELECT doc_id, list_url FROM document_list_pages ORDER BY doc_id")
-    assert len(rows) == 10 and rows[0] == {"doc_id": "pac_cases:0", "list_url": "https://www.pac.or.kr/list?p=1"}
+    assert len(rows) == 10 and rows[0] == {"doc_id": "pac_cases:0", "list_url": "https://www.synthetic.invalid/list?p=1"}
     assert rows[1]["list_url"].endswith("p=2")
     m.close()
 
@@ -166,10 +166,10 @@ def seed(m):
     m.upsert_document("pac_cases:1", "s_cases", year=2001, extra={"case_no": "2001다1", "meta": {"k": "v"}})
     m.upsert_document("pac_cases:2", "s_cases", year=2002, extra={"case_no": "2002다2"})
     m.upsert_document("pac_other:3", "s_res", year=2003)
-    m.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.pac.or.kr/a1.pdf", kind="full")
-    m.upsert_attachment("pac_cases:1#2", "pac_cases:1", "https://www.pac.or.kr/a2.pdf", kind="chapter")
-    m.upsert_attachment("pac_cases:2#1", "pac_cases:2", "https://www.pac.or.kr/b.pdf", kind="full")
-    m.upsert_attachment("pac_other:3#1", "pac_other:3", "https://www.pac.or.kr/c.pdf", kind="full")
+    m.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.synthetic.invalid/a1.pdf", kind="full")
+    m.upsert_attachment("pac_cases:1#2", "pac_cases:1", "https://www.synthetic.invalid/a2.pdf", kind="chapter")
+    m.upsert_attachment("pac_cases:2#1", "pac_cases:2", "https://www.synthetic.invalid/b.pdf", kind="full")
+    m.upsert_attachment("pac_other:3#1", "pac_other:3", "https://www.synthetic.invalid/c.pdf", kind="full")
 
 
 def test_query_helpers(manifest):
@@ -228,9 +228,9 @@ def test_select_is_read_only(manifest, sql):
 
 def test_pages_cases_chunks_and_lineage(manifest):
     seed(manifest)
-    manifest.upsert_list_page("s_cases", 1, "https://www.pac.or.kr/list?p=1", http_status=200, item_count=2, body_sha256="h", ok=True)
-    assert manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.pac.or.kr/list?p=1")
-    assert not manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.pac.or.kr/list?p=1")
+    manifest.upsert_list_page("s_cases", 1, "https://www.synthetic.invalid/list?p=1", http_status=200, item_count=2, body_sha256="h", ok=True)
+    assert manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.synthetic.invalid/list?p=1")
+    assert not manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.synthetic.invalid/list?p=1")
     manifest.upsert_page("pac_cases:1#1@p3", "pac_cases:1", att_id="pac_cases:1#1", pdf_page_no=3, printed_page_no="5",
                          method="pdftotext", char_count=100, quality=0.9, quality_json={"hangul": 0.8}, extractor_version="e1")
     manifest.upsert_page("pac_cases:2#1@p1", "pac_cases:2", att_id="pac_cases:2#1", pdf_page_no=1, method="ocr",
@@ -244,7 +244,7 @@ def test_pages_cases_chunks_and_lineage(manifest):
     manifest.upsert_chunk("k2", "pac_cases:2", "연구", "pdf_page", "1", page_id="pac_cases:2#1@p1", authority_type="research")
     lin = manifest.lineage_of_chunk("k1")
     assert (lin["case_id"], lin["page_id"], lin["att_id"], lin["doc_id"], lin["list_url"], lin["list_page_no"]) == \
-        ("c1", "pac_cases:1#1@p3", "pac_cases:1#1", "pac_cases:1", "https://www.pac.or.kr/list?p=1", 1)
+        ("c1", "pac_cases:1#1@p3", "pac_cases:1#1", "pac_cases:1", "https://www.synthetic.invalid/list?p=1", 1)
     lin2 = manifest.lineage_of_chunk("k2")                                  # case 없는 chunk, 목록 연결 없음
     assert lin2["case_id"] is None and lin2["doc_id"] == "pac_cases:2" and lin2["list_url"] is None
     assert manifest.lineage_of_chunk("nope") is None
@@ -319,9 +319,9 @@ def test_data_dir_is_one_function_and_checks_plugin_name(monkeypatch, tmp_path):
 
 def test_upsert_document_links_list_page_idempotently(manifest):
     manifest.ensure_source("s", "pac_cases")
-    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.pac.or.kr/l?p=1") == "new"
-    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.pac.or.kr/l?p=1") == "seen"
-    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.pac.or.kr/l?p=2") == "seen"
+    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.synthetic.invalid/l?p=1") == "new"
+    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.synthetic.invalid/l?p=1") == "seen"
+    assert manifest.upsert_document("pac_cases:1", "s", list_url="https://www.synthetic.invalid/l?p=2") == "seen"
     assert manifest.p2_counts()["document_list_pages"] == 2
     assert manifest.upsert_document("pac_cases:2", "s") == "new" and manifest.p2_counts()["document_list_pages"] == 2
 
@@ -339,9 +339,9 @@ def test_upsert_job_never_returns_a_job_for_a_different_input(manifest):
 
 def test_lineage_prefers_a_resolvable_list_page_over_a_dangling_link(manifest):
     seed(manifest)
-    manifest.upsert_list_page("s_cases", 1, "https://www.pac.or.kr/list?p=9", http_status=200, item_count=1, body_sha256="h", ok=True)
-    manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.pac.or.kr/AAA-dangling")
-    manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.pac.or.kr/list?p=9")
+    manifest.upsert_list_page("s_cases", 1, "https://www.synthetic.invalid/list?p=9", http_status=200, item_count=1, body_sha256="h", ok=True)
+    manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.synthetic.invalid/AAA-dangling")
+    manifest.link_document_list_page("pac_cases:1", "s_cases", "https://www.synthetic.invalid/list?p=9")
     manifest.upsert_page("pg", "pac_cases:1", att_id="pac_cases:1#1", pdf_page_no=1, method="pdftotext")
     manifest.upsert_chunk("k", "pac_cases:1", "t", "pdf_page", "1", page_id="pg")
-    assert manifest.lineage_of_chunk("k")["list_url"] == "https://www.pac.or.kr/list?p=9"
+    assert manifest.lineage_of_chunk("k")["list_url"] == "https://www.synthetic.invalid/list?p=9"

@@ -68,13 +68,7 @@ def majority_guard(profile: Any) -> bool:
 
 
 PROFILES: dict[str, Profile] = {
-    "pac_adjustment": Profile("pac_adjustment", "pac_adjustment.md", ("pac",), ("pac_settlement", "pac_decision")),
-    "pac_election": Profile("pac_election", "pac_election.md", ("pac",), ("pac_election_review",)),
-    "pac_correction": Profile("pac_correction", "pac_correction.md", ("pac",), ("pac_decision",)),
-    # 2026-10-16: 시정권고 현황 전용(행 고유 인용 요구, 통계 요약은 사건 아님). pac_correction 사례집의 프롬프트·해시는 바뀌지 않는다.
-    "pac_board_status": Profile("pac_board_status", "pac_board_status.md", ("pac",), ("pac_decision",)),
     "iendc_table": Profile("iendc_table", "iendc_table.md", ("iendc",), ("iendc_review",), guard_shared_quotes=True),
-    "pac_judgment_cases": Profile("pac_judgment_cases", "pac_judgment_cases.md", ("pac", "other_body"), ("research",), links_ledger=True),
     # 의견 가드: 전원합의체의 반대·별개·보충의견 구간 인용이 법정의견으로 표시되지 않게 한다. 프로필 이름이 프롬프트 버전 문자열에 들어가므로 이름을 유지해 재호출 없이 다시 조립한다.
     "court_judgment": Profile("court_judgment", "court_judgment.md", COURT_INSTITUTIONS, ("judgment",), opinion_guard=True),
     # U3(2026-10-19): 헌법재판소 결정례(lawgo_detc). court_judgment 의 프롬프트·프로필은 해시가 바뀌면 판례 재구조화 대상이 되므로 건드리지 않고 따로 둔다.
@@ -83,16 +77,11 @@ PROFILES: dict[str, Profile] = {
 }
 # source_id -> 프로필. 여기에 없는 소스(연구 자료, 심의기준 고정 페이지 등)는 사건 구조화를 하지 않는다.
 SOURCE_PROFILE: dict[str, str] = {
-    "pac_adjustment_casebooks": "pac_adjustment",
-    "pac_election_whitepapers": "pac_election",
-    "pac_correction_casebooks": "pac_correction",
-    "pac_board_correction_status": "pac_board_status",
     "iendc_review_results": "iendc_table",
     "lawgo_prec_supreme": "court_judgment",
     "lx_prec": "court_judgment",
     "lawgo_detc": "constitutional_decision",
     "ccourt_detc": "constitutional_decision",
-    "pac_research_judgment_analysis": "pac_judgment_cases",
 }
 # 사건 구조화를 하지 않고 기준·규정 chunk 만 만드는 소스(G-D6): source_id -> chunk 의 authority_type.
 # G-D21: 심의기준·편람은 법령이 아니므로 guideline, 위원회 규칙은 statute 로 둔다(두 스키마의 authority_type 열거에 guideline 이 있다).

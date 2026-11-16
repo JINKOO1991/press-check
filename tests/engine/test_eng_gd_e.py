@@ -122,9 +122,9 @@ def _guideline_index(tmp_path):
     try:
         m.ensure_source("pac_standards_election_page", "pac_other", "합성 심의기준")
         doc = "pac_other:static16"
-        m.upsert_document(doc, "pac_standards_election_page", canonical_url="https://www.pac.or.kr/kor/pages/?p=1&idx=16&m=view", title="합성 가이드북")
+        m.upsert_document(doc, "pac_standards_election_page", canonical_url="https://www.synthetic.invalid/kor/pages/?p=1&idx=16&m=view", title="합성 가이드북")
         m.set_document_status(doc, "structured")
-        m.upsert_attachment(f"{doc}#1", doc, "https://www.pac.or.kr/_common/new_download_file.asp?sub_idx=16", kind="full")
+        m.upsert_attachment(f"{doc}#1", doc, "https://www.synthetic.invalid/_common/new_download_file.asp?sub_idx=16", kind="full")
         m.upsert_page(f"{doc}#1:p0003", doc, att_id=f"{doc}#1", pdf_page_no=3, method="pdftotext")
         m.upsert_chunk(f"{doc}#1:p0003#pc", doc, "선거기사 심의기준은 후보자 동등 취급을 요구한다. 합성 문장.", "pdf_page", "3", page_id=f"{doc}#1:p0003",
                        authority_type="guideline", decision_date=None)
@@ -159,7 +159,7 @@ def _big_ledger(tmp_path, n_judgment, n_decision, n_settlement=0, chunks_per_jud
         def add(kind, i, auth, fam, otype, k=1):
             doc = f"{kind}:{i:05d}"
             m.upsert_document(doc, fam, canonical_url=f"https://www.law.go.kr/LSW/precInfoP.do?precSeq={i}" if kind == "lawgo_prec"
-                              else f"https://www.pac.or.kr/kor/pages/?p=207&idx={i}&m=view", title=f"합성 {i}")
+                              else f"https://www.synthetic.invalid/kor/pages/?p=207&idx={i}&m=view", title=f"합성 {i}")
             m.set_document_status(doc, "structured")
             cid = f"{doc}:c"
             m.upsert_case(cid, doc, {"case_id": cid, "doc_id": doc, "issue_tags": ["정정보도"], "outcome": None, "legal_reasoning": [],
@@ -267,7 +267,7 @@ def _date_ledger(tmp_path):
 
         def add(name, *, decision, pub, case_decision=None, authority="pac_settlement"):
             doc = f"pac_cases:7{len(ids):03d}"
-            m.upsert_document(doc, "pac_adjustment_casebooks", canonical_url=f"https://www.pac.or.kr/kor/pages/?p=207&idx=7{len(ids):03d}&m=view",
+            m.upsert_document(doc, "pac_adjustment_casebooks", canonical_url=f"https://www.synthetic.invalid/kor/pages/?p=207&idx=7{len(ids):03d}&m=view",
                               title=name, publication_date=pub)
             m.set_document_status(doc, "structured")
             cid = f"{doc}:c"

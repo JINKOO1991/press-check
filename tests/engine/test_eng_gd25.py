@@ -132,7 +132,7 @@ def _ledger(tmp_path):
         def add(name, source, title, *, pub=None, year=None, decision=None):
             fam = "pac_election" if source == WHITEPAPERS else ("pac_other" if "research" in source else "pac_cases")
             doc = f"{fam}:{3000 + len(ids)}"
-            m.upsert_document(doc, source, canonical_url=f"https://www.pac.or.kr/kor/pages/?p=207&idx={3000 + len(ids)}&m=view",
+            m.upsert_document(doc, source, canonical_url=f"https://www.synthetic.invalid/kor/pages/?p=207&idx={3000 + len(ids)}&m=view",
                               title=title, publication_date=pub, year=year)
             m.set_document_status(doc, "structured")
             cid = f"{doc}:c"

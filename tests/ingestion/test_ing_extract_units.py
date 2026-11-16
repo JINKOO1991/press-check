@@ -76,7 +76,7 @@ def test_kind_of_ported_and_detect_kind_ignores_extension():
     assert kind_of(b"%PDF-1.7", "") == "pdf" and kind_of(b"\xd0\xcf\x11\xe0xx", ".hwp") == "hwp"
     assert kind_of(b"PK\x03\x04", "") == "hwpx" and kind_of(b"PK\x03\x04", ".docx") == "docx" and kind_of(b"zzz", "") == "unknown"
     assert detect_kind(b"\xef\xbb\xbf <!DOCTYPE html><html>") == "html" and detect_kind(b"plain text") == "unknown"
-    att = {"url": "https://www.pac.or.kr/a", "label": "PDF", "content_type": "application/pdf"}
+    att = {"url": "https://www.synthetic.invalid/a", "label": "PDF", "content_type": "application/pdf"}
     assert check_content(att, b"%PDF-1.4 x", {}) is None
     assert check_content(att, b"%PDF-1.4 x", {"content-type": "text/html"}).startswith("magic_mismatch")
     assert check_content({"url": "https://x/a.hwp", "label": None}, b"PK\x03\x04..", {}) is None      # hwp 선언 + hwpx(zip) 본문 허용

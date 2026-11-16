@@ -9,6 +9,8 @@ from press_review.ingestion import structure as S
 from press_review.providers import deepseek as ds
 from test_ing_structure import go, handler_for, make_run
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 # ------------------------------------------------------------------ V-resume-G3
 def test_window_cache_is_scoped_to_the_job_not_just_the_input(manifest, corpus):

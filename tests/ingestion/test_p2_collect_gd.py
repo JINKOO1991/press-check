@@ -27,10 +27,12 @@ from test_gd import IENDC_FAM, IENDC_SRC, KD_TEXT, KdRunner, _iendc_pdf, prov_fo
 from test_ing_extract_run import env  # noqa: F401  (fixture)
 from test_ing_structure import go, make_run, pids_of
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 SPEC = {"version": "v", "model": "m", "input_sha256": "0" * 64}
 
 
-def ctx_for(page_texts, profile="pac_adjustment", source_id="", **kw):
+def ctx_for(page_texts, profile="synthetic_casebook", source_id="", **kw):
     pages = {pid: sr.PageText(t) for pid, t in page_texts.items()}
     return sr.WindowCtx(profile=sr.PROFILES[profile], doc_id="d:1", att_id=None, target_key="k", unit="w0000", pages=pages, page_meta={},
                         structurer=SPEC, **({"source_id": source_id} if source_id else {}), **kw)
@@ -241,7 +243,7 @@ def test_gd15_short_quote_that_is_not_exactly_one_cell_is_still_too_short():
 
 
 def test_gd15_non_table_sources_and_pages_without_table_markup_get_no_exemption():
-    ctx = ctx_for({"pg": HTML_TABLE}, profile="pac_adjustment", source_id="pac_adjustment_casebooks")
+    ctx = ctx_for({"pg": HTML_TABLE}, profile="synthetic_casebook", source_id="synthetic_casebook_set_a")
     assert sr.locate_quote({"page_id": "pg", "quote": "주의"}, ctx)[1] == "quote_too_short"
     flat = "가상일보      「A시장 공사비 의혹」      주 의\n다른일보      「B군수 인사 의혹」      주 의\n"
     ctx2 = ctx_for({"pg": flat}, profile="iendc_table", source_id="iendc_review_results")           # pdftotext 식 평문: 칸 경계를 모른다
@@ -384,7 +386,7 @@ def test_gd17_pair_value_is_derived_from_the_quoted_original(model, orig, corr, 
 
 def test_gd17_a_contradictory_model_value_does_not_quarantine_the_case():
     page = "정정 전 기사: 가상시 시장이 공사비를 빼돌렸다고 보도했다.\n정정 후: 사실과 다르다."
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id="pac_correction_casebooks")
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id="synthetic_correction_set")
     d = {"case_number": None, "institution": "pac", "authority_type": "pac_decision", "first_page_id": "pg",
          "outcome_type": "correction", "outcome_scope": "whole", "correction_pair_confidence": "before_missing",
          "original_article": {"status": "quoted_in_source", "quote": {"page_id": "pg", "quote": "가상시 시장이 공사비를 빼돌렸다고 보도했다."}},
@@ -397,7 +399,7 @@ def test_gd17_a_contradictory_model_value_does_not_quarantine_the_case():
 
 def test_gd17_no_original_quote_means_before_missing_even_if_model_claims_partial():
     page = "정정 후: 사실과 다르다. 정정 전 기사의 원문은 싣지 않았다."
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id="pac_correction_casebooks")
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id="synthetic_correction_set")
     d = {"case_number": None, "institution": "pac", "authority_type": "pac_decision", "first_page_id": "pg",
          "outcome_type": "correction", "outcome_scope": "whole", "correction_pair_confidence": "partial_quote",
          "corrected_article": {"status": "quoted_in_source", "quote": {"page_id": "pg", "quote": "정정 후: 사실과 다르다."}},
@@ -408,7 +410,7 @@ def test_gd17_no_original_quote_means_before_missing_even_if_model_claims_partia
 
 def test_gd17_merging_windows_never_leaves_before_missing_next_to_a_quoted_original():
     pa, pb = "사건 가-1 정정 후: 사실과 다르다. 정정 전 기사는 싣지 않았다.", "사건 가-1 계속. 정정 전 기사: 가상시 시장이 공사비를 빼돌렸다고 보도했다."
-    ctx_a, ctx_b = ctx_for({"a": pa}, profile="pac_correction"), ctx_for({"b": pb}, profile="pac_correction")
+    ctx_a, ctx_b = ctx_for({"a": pa}, profile="synthetic_correction"), ctx_for({"b": pb}, profile="synthetic_correction")
     base = {"case_number": None, "institution": "pac", "authority_type": "pac_decision", "outcome_type": "correction", "outcome_scope": "whole",
             "correction_pair_confidence": "before_missing"}
     da = {**base, "first_page_id": "a", "corrected_article": {"status": "quoted_in_source", "quote": {"page_id": "a", "quote": "정정 후: 사실과 다르다."}},
@@ -640,6 +642,6 @@ def test_gd20_the_reported_number_follows_the_ledger_not_a_constant(manifest):
 
 
 def test_gd20_non_law_sources_have_no_processing_tiers_entry(manifest):
-    manifest.ensure_source("pac_adjustment_casebooks", "pac_cases", "t", "https://www.iendc.go.kr/")
+    manifest.ensure_source("synthetic_casebook_set_a", "pac_cases", "t", "https://www.iendc.go.kr/")
     cov = cov_mod.build_coverage(manifest, "t")
     assert "processing_tiers" not in cov["sources"][0]

@@ -11,7 +11,7 @@ from press_review.ingestion import extract as ext
 from press_review.ingestion.extract.tools import ToolError
 from press_review.ingestion.manifest import Manifest
 
-U = "https://www.pac.or.kr/files/%s.pdf"
+U = "https://www.synthetic.invalid/files/%s.pdf"
 
 
 @pytest.fixture()
@@ -328,7 +328,7 @@ def test_kordoc_failures_are_recorded(env, spec, cls):
 
 def test_html_attachment_keeps_header_footer_and_table_cells(env):
     doc, (a1,) = seed(env.m, "900", source="pac_research_quarterly", family="pac_other",
-                      atts=[(1, "https://www.pac.or.kr/x.html", "other", None, "text/html", "x.html")])
+                      atts=[(1, "https://www.synthetic.invalid/x.html", "other", None, "text/html", "x.html")])
     html = ("<html><head><title>t</title><script>var x=1;</script></head><body><header>기관 머리말 텍스트</header>"
             "<h2>판시사항</h2><p>첫째 단락입니다.</p><table><tr><td>사건</td><td>2019다1234</td></tr>"
             "<tr><td>결과</td><td>기각</td></tr></table><h2>판결요지</h2><p>둘째 단락.</p><footer>꼬리말 출처 표시</footer></body></html>").encode()

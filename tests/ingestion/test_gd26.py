@@ -15,6 +15,8 @@ from test_gd import KdRunner
 from test_ing_extract_run import env  # noqa: F401  (fixture)
 from test_p2_collect_gd import ctx_for
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 STATUS_SRC, STATUS_FAM = "pac_board_correction_status", "pac_cases"
 
 
@@ -74,7 +76,7 @@ def test_gd26_input_hash_tag_names_the_policy_not_the_detected_result():
 
 
 def _status_pdf(env, pages, *, key="500", n=None):
-    doc, (a1,) = ext_seed(env.m, key, source=STATUS_SRC, family=STATUS_FAM, atts=[(1, "https://www.pac.or.kr/files/S.pdf", "full", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, key, source=STATUS_SRC, family=STATUS_FAM, atts=[(1, "https://www.synthetic.invalid/files/S.pdf", "full", None, "application/pdf", "PDF")])
     blob = make_pdf([f"status table {key} page {i + 1}" for i in range(len(pages))])
     place_raw(env.m, env.corpus, a1, blob, family=STATUS_FAM)
     kd = [f"| 순번 | 의결번호 |\n| --- | --- |\n| {i + 1} | 제2021-{800 + i}호 |" for i in range(len(pages))]
@@ -117,7 +119,7 @@ def test_gd26_explicit_extractor_option_wins_and_skips_detection(env):
 
 
 def test_gd26_other_sources_are_not_inspected(env):
-    doc, (a1,) = ext_seed(env.m, "503", source="pac_adjustment_casebooks", family=STATUS_FAM, atts=[(1, "https://www.pac.or.kr/files/C.pdf", "full", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, "503", source="pac_adjustment_casebooks", family=STATUS_FAM, atts=[(1, "https://www.synthetic.invalid/files/C.pdf", "full", None, "application/pdf", "PDF")])
     blob = make_pdf(["casebook page 1"])
     place_raw(env.m, env.corpus, a1, blob, family=STATUS_FAM)
     r = KdRunner({blob: {"pages": [table_text(8)], "kd_pages": ["x"]}})
@@ -146,7 +148,7 @@ def _case(ctx, k, *, case_number=None, quotes=(), outcome=None):
 
 
 def _check(quote_sets, page=HEADER_PAGE_TAIL, source_id=STATUS_SRC):
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id=source_id)
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id=source_id)
     cases = [_case(ctx, k, **kw) for k, kw in enumerate(quote_sets)]
     pages = {pid: pt for pid, pt in ctx.pages.items()}
     n = sr.require_row_unique_quote(cases, pages, source_id)
@@ -184,7 +186,7 @@ def test_gd26_a_case_with_one_row_unique_quote_among_shared_ones_passes():
 def test_gd26_rule_is_limited_to_table_sources_and_leaves_other_quarantine_reasons_alone():
     cases, n = _check([{"case_number": None, "quotes": ["■ 시정권고 결정 3건"]}], source_id="pac_correction_casebooks")
     assert n == 0 and cases[0].record["verification_status"] == "unverified"
-    ctx = ctx_for({"pg": HEADER_PAGE_TAIL}, profile="pac_correction", source_id=STATUS_SRC)
+    ctx = ctx_for({"pg": HEADER_PAGE_TAIL}, profile="synthetic_correction", source_id=STATUS_SRC)
     already = _case(ctx, 0, case_number=None, quotes=["제목이 없는 문장입니다"])            # 근거 없음으로 이미 격리
     assert already.record["verification_status"] == "quarantined"
     before = list(already.errors)

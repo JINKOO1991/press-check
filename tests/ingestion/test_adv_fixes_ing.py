@@ -23,6 +23,8 @@ from press_review.ingestion.http import FetchFailed, HttpClient, IngestionError,
 from press_review.ingestion.manifest import Manifest
 from press_review.providers import deepseek as ds
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 def prov_for(fake, **kw):
     return ds.DeepSeekProvider(api_key=TEST_KEY, transport=fake, sleep=lambda s: None, now=lambda: FRI_PEAK, budget=ds.BudgetGuard(None),
@@ -78,9 +80,9 @@ LAW_B = f"{LAW} 2009. 7. 31. 개정 이후 조정 결과 양측은 정정보도�
 
 def _ctx(pages, unit, pids):
     meta = {"p1": {"pdf_page_no": 1}, "p2": {"pdf_page_no": 2}}
-    return sr.WindowCtx(profile=sr.PROFILES["pac_adjustment"], doc_id="d", att_id="a", target_key="a", unit=unit,
+    return sr.WindowCtx(profile=sr.PROFILES["synthetic_casebook"], doc_id="d", att_id="a", target_key="a", unit=unit,
                         pages={p: pages[p] for p in pids}, page_meta=meta, structurer={"version": "v", "model": "m", "input_sha256": "0" * 64},
-                        source_id="pac_adjustment_casebooks")
+                        source_id="synthetic_casebook_set_a")
 
 
 def test_sr02_continuation_merge_keeps_case_number_and_number_based_id():
@@ -158,11 +160,11 @@ def test_sr04_unexpected_error_after_the_paid_call_marks_the_job_not_running(man
 def test_ds01_source_forbidden_after_document_override_blocks_egress(manifest, corpus):
     doc, att, _ = seed(manifest, corpus)
     fake = DSFake(lambda b, n: (200, chat_payload({"cases": [good_case([f"{att}@p1", f"{att}@p2"])]}), {}))
-    src = manifest.get_rights("source", "pac_adjustment_casebooks")
+    src = manifest.get_rights("source", "synthetic_casebook_set_a")
     rights = {k: src[k] for k in R.RIGHT_KEYS}
     R.set_document_override(manifest, doc, dict(rights), src["rights_basis"])
     assert S.egress_reason(manifest, doc) is None
-    manifest.set_rights("source", "pac_adjustment_casebooks", dict(rights, external_api="forbidden"), src["rights_basis"], "verified")
+    manifest.set_rights("source", "synthetic_casebook_set_a", dict(rights, external_api="forbidden"), src["rights_basis"], "verified")
     assert S.egress_reason(manifest, doc) == "external_api_forbidden"
     res = S.Structurer(manifest, prov_for(fake), corpus).run(S.find_targets(manifest))
     assert fake.n_chat == 0 and res["refused"] == 1
@@ -175,7 +177,7 @@ def test_ds01_both_rows_allowed_still_sends(manifest, corpus):
 
 def test_ds01_document_row_forbidden_blocks_even_if_source_allowed(manifest, corpus):
     doc, att, _ = seed(manifest, corpus)
-    src = manifest.get_rights("source", "pac_adjustment_casebooks")
+    src = manifest.get_rights("source", "synthetic_casebook_set_a")
     R.set_document_override(manifest, doc, {k: src[k] for k in R.RIGHT_KEYS}, src["rights_basis"])
     own = manifest.get_rights("document", doc)
     manifest.set_rights("document", doc, dict({k: own[k] for k in R.RIGHT_KEYS}, external_api="forbidden"), own["rights_basis"], "verified")

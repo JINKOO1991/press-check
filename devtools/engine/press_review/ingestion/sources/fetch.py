@@ -8,7 +8,7 @@ from .. import fetch as fetch_stage
 
 
 def add_arguments(parser) -> None:
-    parser.add_argument("--source", default=None, help="source_id 하나만 처리(예: pac_adjustment_casebooks)")
+    parser.add_argument("--source", default=None, help="source_id 하나만 처리(예: iendc_review_results)")
     parser.add_argument("--tier", default=None, help="처리 순위 A,B,C (쉼표로 여러 개, 기본 전부 A->B->C 순)")
     parser.add_argument("--limit", type=int, default=None, help="이번 실행에서 시도할 첨부 수 상한")
     parser.add_argument("--att", action="append", dest="atts", help="att_id 하나만(반복 가능). 순위·소스 지정 없이도 고른다(게이트 표본용)")

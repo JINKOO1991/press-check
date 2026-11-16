@@ -79,7 +79,7 @@ def test_oc_written_in_url_without_with_oc_is_refused(make_client):
 def test_with_oc_refused_outside_law_go_kr_drf(make_client):
     t = FakeTransport()
     c = make_client(t)
-    for u in ("https://www.pac.or.kr/kor/pages/?p=207", "https://open.law.go.kr/LSO/openApi/guideResult.do",
+    for u in ("https://www.synthetic.invalid/kor/pages/?p=207", "https://open.law.go.kr/LSO/openApi/guideResult.do",
               "https://www.law.go.kr/LSW/precInfoP.do?precSeq=1"):
         with pytest.raises(BlockedURL):
             c.get(u, with_oc=True)
@@ -87,13 +87,13 @@ def test_with_oc_refused_outside_law_go_kr_drf(make_client):
 
 
 def test_redirect_leaving_drf_does_not_carry_oc(make_client):
-    t = FakeTransport({"https://www.law.go.kr/robots.txt": ROBOTS_OK, "https://www.pac.or.kr/robots.txt": ROBOTS_OK,
-                       SENT: (302, b"", {"Location": "https://www.pac.or.kr/x?OC=" + FAKE_OC})})
+    t = FakeTransport({"https://www.law.go.kr/robots.txt": ROBOTS_OK, "https://www.synthetic.invalid/robots.txt": ROBOTS_OK,
+                       SENT: (302, b"", {"Location": "https://www.synthetic.invalid/x?OC=" + FAKE_OC})})
     c = make_client(t)
     with pytest.raises(BlockedURL) as e:
         c.get(LIST, with_oc=True)
     assert FAKE_OC not in str(e.value)
-    assert all(FAKE_OC not in u for u in t.urls("www.pac.or.kr"))
+    assert all(FAKE_OC not in u for u in t.urls("www.synthetic.invalid"))
 
 
 def test_redirect_inside_drf_reinjects_oc_and_drops_server_echo(make_client):

@@ -11,6 +11,8 @@ from press_review.ingestion import structure_records as sr
 from press_review.ingestion.http import TransportError
 from press_review.providers import deepseek as ds
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 MSGS = [{"role": "system", "content": "Answer in json."}, {"role": "user", "content": "문서 본문 " * 20}]
 
 
@@ -45,7 +47,7 @@ def test_cx1_1_invalid_rerun_keeps_previous_cases_and_state(manifest, corpus, tm
     assert old_att["status"] == "structured"
     copy = tmp_path / "prompts2"
     shutil.copytree(S.PROMPTS_DIR, copy)
-    (copy / "pac_adjustment.md").write_text((S.PROMPTS_DIR / "pac_adjustment.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
+    (copy / "synthetic_casebook.md").write_text((S.PROMPTS_DIR / "synthetic_casebook.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
     monkeypatch.setattr(S, "PROMPTS_DIR", copy)
     fake.handler = lambda b, n: (200, chat_payload({}), {})
     res = S.Structurer(manifest, prov_for(fake), corpus, force=True).run(S.find_targets(manifest))

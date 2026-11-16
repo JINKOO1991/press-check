@@ -51,7 +51,7 @@ def _installer_rights_opt_in(request, monkeypatch):
         if source_family in rights_mod.COLLECTED_FAMILIES:
             return {"rights": dict(opted_in),
                     "rights_basis": [{"scope": "테스트 전제: 설치자 결정 기록", "review_status": "pending",
-                                      "url": "https://www.pac.or.kr/"}],
+                                      "url": "https://www.synthetic.invalid/"}],
                     "review_status": "pending"}
         return real(source_family)
 

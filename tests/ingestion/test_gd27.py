@@ -9,6 +9,8 @@ from press_review import contracts
 from press_review.ingestion import structure_records as sr
 from test_p2_collect_gd import ctx_for
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 def test_gd27_br_variants_are_ignored_on_the_page_side_and_offsets_stay_in_the_original():
     page = "제2021<br>-813호 사건은<br/>다음과 같이<br />결정되었다."
@@ -73,7 +75,7 @@ def test_gd27_short_cell_rule_still_applies_when_the_model_quote_carries_br(sour
     ctx = ctx_for({"pg": md}, source_id=source_id)
     loc, why = sr.locate_quote({"page_id": "pg", "quote": "주의<br>"}, ctx)
     assert why == "ok_cell" and md[loc["start"]:loc["end"]] == "주의"
-    ctx2 = ctx_for({"pg": md}, source_id="pac_adjustment_casebooks")
+    ctx2 = ctx_for({"pg": md}, source_id="synthetic_casebook_set_a")
     assert sr.locate_quote({"page_id": "pg", "quote": "주의<br>"}, ctx2)[1] == "quote_too_short"
 
 

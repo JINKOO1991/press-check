@@ -10,6 +10,8 @@ from press_review.ingestion import structure_records as SR
 from press_review.ingestion.sources import lx_prec as X
 from test_src_lx_prec import Server, detail_html, doc, failures, list_html, one, run_cli, title, _indexed, _passage
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 # ------------------------------------------------------------------ F1 등록 검증
 def test_f1_detail_without_the_requested_number_is_not_registered_even_if_a_list_number_overlaps(corpus):

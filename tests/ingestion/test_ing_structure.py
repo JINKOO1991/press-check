@@ -12,6 +12,8 @@ from press_review.ingestion import structure as S
 from press_review.ingestion import structure_records as sr
 from press_review.providers import deepseek as ds
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 def make_run(manifest, corpus, handler, *, pages=None, budget=None, concurrency=2, seed_kw=None, **skw):
     doc, att, texts = seed(manifest, corpus, pages, **(seed_kw or {}))
@@ -287,10 +289,10 @@ def test_family_outside_allowlist_is_refused_before_any_request(manifest, corpus
 @pytest.mark.parametrize("value", ["unknown", "forbidden", "permission_required"])
 def test_external_api_must_be_exactly_allowed(manifest, corpus, value):
     doc, att, texts, fake, prov, st = make_run(manifest, corpus, lambda b, n: pytest.fail("must not send"))
-    r = manifest.get_rights("source", "pac_adjustment_casebooks")
+    r = manifest.get_rights("source", "synthetic_casebook_set_a")
     rights = {k: r[k] for k in ("read", "store_raw", "create_derivatives", "external_api", "redistribute_raw", "redistribute_derivatives", "fine_tune")}
     rights["external_api"] = value
-    manifest.set_rights("source", "pac_adjustment_casebooks", rights, r["rights_basis"], r["review_status"])
+    manifest.set_rights("source", "synthetic_casebook_set_a", rights, r["rights_basis"], r["review_status"])
     res = go(st, manifest)
     assert fake.calls == [] and res["refused"] == 1
     assert f"external_api_{value}" in manifest.failures()[0]["message"]
@@ -298,7 +300,7 @@ def test_external_api_must_be_exactly_allowed(manifest, corpus, value):
 
 def test_document_override_is_checked_first(manifest, corpus):
     doc, att, texts, fake, prov, st = make_run(manifest, corpus, lambda b, n: pytest.fail("must not send"))
-    src = manifest.get_rights("source", "pac_adjustment_casebooks")
+    src = manifest.get_rights("source", "synthetic_casebook_set_a")
     rights = {k: src[k] for k in ("read", "store_raw", "create_derivatives", "external_api", "redistribute_raw", "redistribute_derivatives", "fine_tune")}
     rights["external_api"] = "permission_required"
     manifest.set_rights("document", doc, rights, src["rights_basis"], "pending")
@@ -309,7 +311,7 @@ def test_document_override_is_checked_first(manifest, corpus):
 def test_naver_family_never_sent(manifest, corpus):
     doc, att, texts, fake, prov, st = make_run(manifest, corpus, lambda b, n: pytest.fail("must not send"),
                                                seed_kw=dict(source_id="naver_news", family="naver"))
-    res = go(st, manifest, profile="pac_adjustment")
+    res = go(st, manifest, profile="synthetic_casebook")
     assert fake.calls == [] and res["refused"] == 1
 
 
@@ -470,7 +472,7 @@ def test_changed_prompt_changes_job_key_and_calls_again(manifest, corpus, tmp_pa
     assert fake.n_chat == 1
     copy = tmp_path / "prompts2"
     shutil.copytree(S.PROMPTS_DIR, copy)
-    (copy / "pac_adjustment.md").write_text((S.PROMPTS_DIR / "pac_adjustment.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
+    (copy / "synthetic_casebook.md").write_text((S.PROMPTS_DIR / "synthetic_casebook.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
     monkeypatch.setattr(S, "PROMPTS_DIR", copy)
     res = go(S.Structurer(manifest, prov, corpus), manifest)
     assert fake.n_chat == 2 and res["windows_called"] == 1 and res["skipped_unchanged"] == 0
@@ -483,9 +485,9 @@ def test_changed_page_text_reprocesses(manifest, corpus):
     fake.handler = handler_for(att)
     go(st, manifest)
     new = PAGE2 + "추가 문장이 붙었다.\n"
-    p = corpus / "text" / "pac_adjustment_casebooks" / "1_2.txt"
+    p = corpus / "text" / "synthetic_casebook_set_a" / "1_2.txt"
     p.write_text(new, encoding="utf-8")
-    manifest.upsert_page(f"{att}@p2", doc, att_id=att, pdf_page_no=2, method="pdftotext", text_path="text/pac_adjustment_casebooks/1_2.txt",
+    manifest.upsert_page(f"{att}@p2", doc, att_id=att, pdf_page_no=2, method="pdftotext", text_path="text/synthetic_casebook_set_a/1_2.txt",
                          text_sha256=__import__("hashlib").sha256(new.encode()).hexdigest(), char_count=len(new))
     res = go(S.Structurer(manifest, prov, corpus), manifest)
     assert res["skipped_unchanged"] == 0 and fake.n_chat == 2
@@ -493,7 +495,7 @@ def test_changed_page_text_reprocesses(manifest, corpus):
 
 def test_page_text_hash_mismatch_is_a_failure_not_a_send(manifest, corpus):
     doc, att, texts, fake, prov, st = make_run(manifest, corpus, lambda b, n: pytest.fail("must not send"))
-    (corpus / "text" / "pac_adjustment_casebooks" / "1_1.txt").write_text("바뀐 내용", encoding="utf-8")
+    (corpus / "text" / "synthetic_casebook_set_a" / "1_1.txt").write_text("바뀐 내용", encoding="utf-8")
     res = go(st, manifest)
     assert res["failed"] == 1 and fake.calls == [] and manifest.failures()[0]["error_class"] == "page_text_changed"
 
@@ -566,8 +568,8 @@ def test_lineage_roundtrip_chunk_to_list_page(manifest, corpus):
     chunk_id = manifest.select("SELECT chunk_id FROM chunks")[0]["chunk_id"]
     lin = S.lineage(chunk_id, manifest)
     assert lin["case_id"] == f"{att}:2001-조정-1" and lin["att_id"] == att and lin["doc_id"] == doc
-    assert lin["list_url"] == "https://www.pac.or.kr/list?p=1" and lin["list_page_no"] == 1 and lin["source_id"] == "pac_adjustment_casebooks"
-    assert lin["pdf_page_no"] == 1 and lin["att_url"] == "https://www.pac.or.kr/f.pdf"
+    assert lin["list_url"] == "https://www.synthetic.invalid/list?p=1" and lin["list_page_no"] == 1 and lin["source_id"] == "synthetic_casebook_set_a"
+    assert lin["pdf_page_no"] == 1 and lin["att_url"] == "https://www.synthetic.invalid/f.pdf"
     assert S.lineage("no-such-chunk", manifest) is None
     # 파일 경로로도 조회된다(읽기 전용 사본)
     assert S.lineage(chunk_id, corpus_dir=corpus)["doc_id"] == doc
@@ -581,7 +583,7 @@ def test_page_chunks_option_and_page_level_lineage(manifest, corpus):
     page_chunk = manifest.select("SELECT * FROM chunks WHERE case_id IS NULL ORDER BY chunk_id")[0]
     assert page_chunk["text"] == PAGE1 and page_chunk["page_id"] == f"{att}@p1"
     lin = S.lineage(page_chunk["chunk_id"], manifest)
-    assert lin["case_id"] is None and lin["att_id"] == att and lin["list_url"] == "https://www.pac.or.kr/list?p=1"
+    assert lin["case_id"] is None and lin["att_id"] == att and lin["list_url"] == "https://www.synthetic.invalid/list?p=1"
     go(S.Structurer(manifest, prov, corpus, force=True, page_chunks=True), manifest)           # 재조립해도 chunk 가 중복되지 않는다
     assert len(manifest.select("SELECT * FROM chunks")) == 3
 
@@ -615,7 +617,7 @@ def test_split_windows_wrapper_prefers_page_boundary_and_covers_everything():
 
 def test_locate_quote_whitespace_collapse_and_offsets():
     page = "첫 줄입니다.\n  둘째   줄은\t여기 있습니다.\n끝."
-    ctx = sr.WindowCtx(profile=sr.PROFILES["pac_adjustment"], doc_id="d:1", att_id=None, target_key="k", unit="w0000",
+    ctx = sr.WindowCtx(profile=sr.PROFILES["synthetic_casebook"], doc_id="d:1", att_id=None, target_key="k", unit="w0000",
                        pages={"pg": sr.PageText(page)}, page_meta={}, structurer={"version": "v", "model": "m", "input_sha256": "0" * 64})
     loc, why = sr.locate_quote({"page_id": "pg", "quote": "둘째 줄은 여기 있습니다."}, ctx)
     assert why == "ok" and page[loc["start"]:loc["end"]] == loc["quote"] == "둘째   줄은\t여기 있습니다."
@@ -633,7 +635,7 @@ def test_prompts_exist_versioned_and_hashed():
         ps = S.load_prompt(p)
         assert ps.version.startswith("common@") and p.name in ps.version and re.fullmatch(r"[0-9a-f]{8}", ps.sha8)
         assert "json" in ps.system.lower()
-    v = S.structurer_version(sr.PROFILES["pac_adjustment"], S.load_prompt(sr.PROFILES["pac_adjustment"]), "deepseek-flash", "disabled", 20000, 600)
+    v = S.structurer_version(sr.PROFILES["synthetic_casebook"], S.load_prompt(sr.PROFILES["synthetic_casebook"]), "deepseek-flash", "disabled", 20000, 600)
     assert v.startswith("s3|common@") and "|deepseek-flash|think=disabled|w20000s600" in v
 
 
@@ -719,14 +721,14 @@ def test_document_level_target_without_attachment(manifest, corpus):
 
 def test_find_targets_skips_duplicates_and_pageless_attachments(manifest, corpus):
     doc, att, texts = seed(manifest, corpus)
-    manifest.upsert_attachment(f"{doc}#2", doc, "https://www.pac.or.kr/g.pdf", kind="chapter")
+    manifest.upsert_attachment(f"{doc}#2", doc, "https://www.synthetic.invalid/g.pdf", kind="chapter")
     manifest.set_attachment_status(f"{doc}#2", "extracted")                                      # 쪽 행이 없다
-    manifest.upsert_attachment(f"{doc}#3", doc, "https://www.pac.or.kr/h.pdf", kind="chapter")
+    manifest.upsert_attachment(f"{doc}#3", doc, "https://www.synthetic.invalid/h.pdf", kind="chapter")
     manifest.set_attachment_status(f"{doc}#3", "extracted")
     manifest.update_attachment_fields(f"{doc}#3", dedup_of=att)
     manifest.upsert_page(f"{doc}#3@p1", doc, att_id=f"{doc}#3", pdf_page_no=1, method="pdftotext", text_path="x", text_sha256="0" * 64, char_count=1)
     ts = S.find_targets(manifest)
-    assert [t.key for t in ts] == [att] and ts[0].profile == "pac_adjustment"
+    assert [t.key for t in ts] == [att] and ts[0].profile == "synthetic_casebook"
     assert S.find_targets(manifest, att_ids=["nope"]) == [] and S.find_targets(manifest, source_ids=["other"]) == []
     assert S.find_targets(manifest, profile="iendc_table")[0].profile == "iendc_table"
 
@@ -789,7 +791,7 @@ def test_incomplete_rerun_of_structured_target_keeps_previous_cases(manifest, co
     # 프롬프트를 바꾼 뒤 예산이 모자라 한 창도 못 보낸다
     copy = tmp_path / "prompts2"
     shutil.copytree(S.PROMPTS_DIR, copy)
-    (copy / "pac_adjustment.md").write_text((S.PROMPTS_DIR / "pac_adjustment.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
+    (copy / "synthetic_casebook.md").write_text((S.PROMPTS_DIR / "synthetic_casebook.md").read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
     monkeypatch.setattr(S, "PROMPTS_DIR", copy)
     poor = ds.DeepSeekProvider(api_key=TEST_KEY, transport=fake, sleep=lambda s: None, now=lambda: FRI_PEAK, budget=ds.BudgetGuard(0.000001))
     n = fake.n_chat

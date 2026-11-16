@@ -30,7 +30,7 @@ def build(tmp_path):
         for name, auth, text, cn, date in (("b", "pac_settlement", SAME, "2012서울조정101", "2012-04-01"),
                                            ("c", "pac_decision", SAME, None, "2012-05-01"), ("d", "pac_decision", "다른 사건 본문이다.", None, "2012-05-01")):
             doc = f"pac_adj:{name}"
-            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.pac.or.kr/synthetic/{name}", title="합성 사례집 2012", year=2012)
+            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.synthetic.invalid/synthetic/{name}", title="합성 사례집 2012", year=2012)
             m.set_document_status(doc, "structured")
             cid = f"{doc}:case"
             m.upsert_case(cid, doc, {"case_id": cid, "doc_id": doc, "issue_tags": [], "legal_reasoning": [], "institution": "pac", "case_number": cn,
@@ -40,9 +40,9 @@ def build(tmp_path):
         m.upsert_chunk("pac_adj:c:case#a0", "pac_adj:c", SAME, "pdf_page", "pa", case_id="pac_adj:c:case", authority_type="pac_decision", decision_date="2012-05-01")
         ids["a"] = "pac_adj:c:case#a0"
         doc = "pac_adj:a"
-        m.upsert_document(doc, FAMILY, canonical_url="https://www.pac.or.kr/synthetic/a", title="합성 사례집 2012", year=2012)
+        m.upsert_document(doc, FAMILY, canonical_url="https://www.synthetic.invalid/synthetic/a", title="합성 사례집 2012", year=2012)
         m.set_document_status(doc, "structured")
-        m.upsert_attachment(f"{doc}#1", doc, "https://www.pac.or.kr/synthetic/a.pdf", label="전체 목록")
+        m.upsert_attachment(f"{doc}#1", doc, "https://www.synthetic.invalid/synthetic/a.pdf", label="전체 목록")
         m.upsert_page(f"{doc}#1:p1", doc, att_id=f"{doc}#1", pdf_page_no=1, method="pdftotext")
         m.upsert_chunk(f"{doc}#1:p1#pc", doc, "2012서울조정100 반론보도 취하 ", "pdf_page", "1", page_id=f"{doc}#1:p1", authority_type="pac_decision")
         ids["list"] = f"{doc}#1:p1#pc"
@@ -66,7 +66,7 @@ def test_same_text_and_metadata_keeps_earliest_chunk_and_alias_resolves_to_its_o
         assert idx.get_passage("pac_adj:c", ids["c"])["text"] == SAME                    # created_at 이 가장 이른 c 가 남는다(chunk_id 순서는 a)
         p = idx.get_passage("pac_adj:c", ids["a"])                                       # 옛 id: 정본 본문 + 옛 passage 자신의 출처·url·위치
         assert p["text"] == SAME and p["alias_of"] == ids["c"] and p["passage_id"] == ids["a"]
-        assert (p["url"], p["locator"], p["authority_type"]) == ("https://www.pac.or.kr/synthetic/c", {"kind": "pdf_page", "value": "pa"}, "pac_decision")
+        assert (p["url"], p["locator"], p["authority_type"]) == ("https://www.synthetic.invalid/synthetic/c", {"kind": "pdf_page", "value": "pa"}, "pac_decision")
         assert idx.get_passage("pac_adj:b", ids["a"]) is None                             # 출처가 다르면 해석하지 않는다
         got = [h["passage_id"] for h in idx.search("반론보도", limit=10)]
         assert len(got) == 2 and got[0] in (ids["b"], ids["c"]) and got[1] == ids["list"]     # 같은 본문 b·c 는 결과 단계에서 하나로 접힌다, 별칭 a 는 나오지 않는다
@@ -98,13 +98,13 @@ def test_alias_lookup_keeps_its_own_rights_display_cap_and_rights_change_moves_s
         m.ensure_source(FAMILY, "pac", "합성 사례집")
         for name in ("x", "y"):
             doc = f"pac_adj:{name}"
-            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.pac.or.kr/synthetic/{name}", title="합성", year=2012)
+            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.synthetic.invalid/synthetic/{name}", title="합성", year=2012)
             m.set_document_status(doc, "structured")
-            m.upsert_attachment(f"{doc}#1", doc, f"https://www.pac.or.kr/synthetic/{name}.pdf", label="본문")
+            m.upsert_attachment(f"{doc}#1", doc, f"https://www.synthetic.invalid/synthetic/{name}.pdf", label="본문")
             m.upsert_page(f"{doc}#1:p1", doc, att_id=f"{doc}#1", pdf_page_no=1, method="pdftotext")
             m.upsert_chunk(f"{doc}#p1", doc, text, "pdf_page", "1", page_id=f"{doc}#1:p1", authority_type="pac_decision", decision_date="2012-05-01")
         m.set_rights("document", "pac_adj:x", sl._rights(redistribute_raw="allowed", redistribute_derivatives="allowed"),
-                     [{"scope": "시험", "review_status": "verified", "url": "https://www.pac.or.kr/"}], "verified")
+                     [{"scope": "시험", "review_status": "verified", "url": "https://www.synthetic.invalid/"}], "verified")
     finally:
         m.close()
     a = cs.build_index(corpus / "manifest.sqlite", tmp_path / "ia", now=NOW)
@@ -117,7 +117,7 @@ def test_alias_lookup_keeps_its_own_rights_display_cap_and_rights_change_moves_s
         idx.close()
     m = Manifest(corpus / "manifest.sqlite")
     m.set_rights("document", "pac_adj:y", sl._rights(redistribute_raw="allowed", redistribute_derivatives="allowed"),
-                 [{"scope": "시험", "review_status": "verified", "url": "https://www.pac.or.kr/"}], "verified")
+                 [{"scope": "시험", "review_status": "verified", "url": "https://www.synthetic.invalid/"}], "verified")
     m.close()
     b = cs.build_index(corpus / "manifest.sqlite", tmp_path / "ib", now=NOW, dry_run=True)
     assert b["snapshot_id"] != a["snapshot_id"]
@@ -131,10 +131,10 @@ def test_page_chunk_without_case_stays_indexed_even_if_its_attachment_is_admissi
     try:
         m.ensure_source(FAMILY, "pac", "합성 사례집")
         doc = "pac_adj:z"
-        m.upsert_document(doc, FAMILY, canonical_url="https://www.pac.or.kr/synthetic/z", title="합성", year=2012)
+        m.upsert_document(doc, FAMILY, canonical_url="https://www.synthetic.invalid/synthetic/z", title="합성", year=2012)
         m.set_document_status(doc, "structured")
         for k in ("1", "2"):
-            m.upsert_attachment(f"{doc}#{k}", doc, f"https://www.pac.or.kr/synthetic/z{k}.pdf", label="본문")
+            m.upsert_attachment(f"{doc}#{k}", doc, f"https://www.synthetic.invalid/synthetic/z{k}.pdf", label="본문")
             m.upsert_page(f"{doc}#{k}:p1", doc, att_id=f"{doc}#{k}", pdf_page_no=1, method="pdftotext")
             m.upsert_chunk(f"{doc}#{k}:p1#pc", doc, f"첨부 {k} 쪽 본문", "pdf_page", "1", page_id=f"{doc}#{k}:p1", authority_type="pac_decision")
         m.record_failure(f"{doc}#2", "admission", "attachment_excluded", "G-D33 합성")
@@ -153,7 +153,7 @@ def test_case_counts_equal_eligible_case_keys_when_cases_share_text(tmp_path):
         m.ensure_source(FAMILY, "pac", "합성 사례집")
         for name in ("x", "y"):                      # 사건만 다르고 본문·제목·권위·결정일·결과가 같다
             doc = f"pac_adj:{name}"
-            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.pac.or.kr/synthetic/{name}", title="합성", year=2012)
+            m.upsert_document(doc, FAMILY, canonical_url=f"https://www.synthetic.invalid/synthetic/{name}", title="합성", year=2012)
             m.set_document_status(doc, "structured")
             cid = f"{doc}:case"
             m.upsert_case(cid, doc, {"case_id": cid, "doc_id": doc, "issue_tags": [], "legal_reasoning": [], "institution": "pac",

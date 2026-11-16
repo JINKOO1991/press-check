@@ -17,7 +17,7 @@ from press_review.ingestion import fetch as fetch_mod
 from press_review.ingestion.extract.tools import ToolResult
 from press_review.ingestion.manifest import Manifest
 
-U = "https://www.pac.or.kr/files/%s.pdf"
+U = "https://www.synthetic.invalid/files/%s.pdf"
 MARK = "ARCHIVE_ROOT\\pac_cases\\x.pdf"
 
 

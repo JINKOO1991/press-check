@@ -95,8 +95,8 @@ def build_ledger(corpus_dir: Path) -> Path:
                        case_id="lawgo_prec:900004:2020다40004", authority_type="judgment", decision_date="2020-08-20")
 
         # ---- PAC 조정(날짜 없음, pdf_page 위치 -> 첨부 URL)
-        doc("pac_cases:5001", "pac_adjustment_casebooks", canonical="https://www.pac.or.kr/kor/pages/?p=207&idx=5001&m=view", title="합성 사례집")
-        m.upsert_attachment("pac_cases:5001#1", "pac_cases:5001", "https://www.pac.or.kr/_common/new_download_file.asp?sub_idx=5001", kind="full")
+        doc("pac_cases:5001", "pac_adjustment_casebooks", canonical="https://www.synthetic.invalid/kor/pages/?p=207&idx=5001&m=view", title="합성 사례집")
+        m.upsert_attachment("pac_cases:5001#1", "pac_cases:5001", "https://www.synthetic.invalid/_common/new_download_file.asp?sub_idx=5001", kind="full")
         m.upsert_page("pac_cases:5001#1:p0003", "pac_cases:5001", att_id="pac_cases:5001#1", pdf_page_no=3, method="pdftotext")
         case("pac_cases:5001#1:2025서울조정101·102/103", "pac_cases:5001", {
             "institution": "pac", "case_number": "2025서울조정101·102/103", "decision_date": None, "authority_type": "pac_settlement",
@@ -115,8 +115,8 @@ def build_ledger(corpus_dir: Path) -> Path:
                        case_id="iendc:7001#1:w0000n00", authority_type="iendc_review", decision_date="2022-05-31")
 
         # ---- 연구 chunk(case 없음)
-        doc("pac_research_quarterly:9001", "pac_research_quarterly", canonical="https://www.pac.or.kr/kor/pages/?p=300&idx=9001&m=view", title="합성 계간지")
-        m.upsert_attachment("pac_research_quarterly:9001#1", "pac_research_quarterly:9001", "https://www.pac.or.kr/_common/new_download_file.asp?sub_idx=9001", kind="full")
+        doc("pac_research_quarterly:9001", "pac_research_quarterly", canonical="https://www.synthetic.invalid/kor/pages/?p=300&idx=9001&m=view", title="합성 계간지")
+        m.upsert_attachment("pac_research_quarterly:9001#1", "pac_research_quarterly:9001", "https://www.synthetic.invalid/_common/new_download_file.asp?sub_idx=9001", kind="full")
         m.upsert_page("pac_research_quarterly:9001#1:p0012", "pac_research_quarterly:9001", att_id="pac_research_quarterly:9001#1", pdf_page_no=12, method="pdftotext")
         m.upsert_chunk(R1, "pac_research_quarterly:9001", "학술 논문의 의견: 추후보도 제도의 운용 현황과 입법 과제를 논한 합성 글이며 현행 법리가 아니다.", "pdf_page", "12",
                        page_id="pac_research_quarterly:9001#1:p0012", authority_type="research", decision_date=None)

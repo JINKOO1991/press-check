@@ -227,7 +227,7 @@ def test_gd28_broken_page_without_ocr_tools_or_with_ocr_disabled_is_marked_for_r
 
 
 def test_gd28_kordoc_page_with_a_broken_text_falls_back_to_pdftotext_and_ocr_for_the_election_source(env):
-    doc, (a1,) = ext_seed(env.m, "700", source=ELECTION, family=FAMILY, atts=[(1, "https://www.pac.or.kr/files/K.pdf", "chapter", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, "700", source=ELECTION, family=FAMILY, atts=[(1, "https://www.synthetic.invalid/files/K.pdf", "chapter", None, "application/pdf", "PDF")])
     blob = make_pdf(["election kordoc broken"])
     place_raw(env.m, env.corpus, a1, blob, family=FAMILY)
     r = KdRunner({blob: {"pages": [CLEAN], "kd_pages": [BROKEN]}})
@@ -253,7 +253,7 @@ def test_gd28_broken_layer_ocr_is_limited_to_the_election_source(env, source, fa
 
 
 def test_gd28_extraction_records_which_pages_had_a_broken_text_layer(env):
-    doc, (a1,) = ext_seed(env.m, "701", source=ELECTION, family=FAMILY, atts=[(1, "https://www.pac.or.kr/files/E.pdf", "chapter", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, "701", source=ELECTION, family=FAMILY, atts=[(1, "https://www.synthetic.invalid/files/E.pdf", "chapter", None, "application/pdf", "PDF")])
     blob = make_pdf(["e1", "e2", "e3"])
     place_raw(env.m, env.corpus, a1, blob, family=FAMILY)
     ocr_text = [[("공직선거법 제18조 위반으로 결정한다 심의대상 기사를 통해 특정 후보예정자의 칼럼을 게재하였다", 90)] * 3]
@@ -268,7 +268,7 @@ def test_gd28_extraction_records_which_pages_had_a_broken_text_layer(env):
 # ------------------------------------------------------------------ 추출 단계 연결과 소스 기본값
 @pytest.mark.parametrize("name,method", [("pdftotext_raw", "pdftotext_raw"), ("column_crop", "pdftotext_columns")])
 def test_gd28_extract_run_accepts_the_new_extractors_and_the_choice_enters_the_input_hash(env, name, method):
-    doc, (a1,) = ext_seed(env.m, "702" + name[-1], source=ELECTION, family=FAMILY, atts=[(1, "https://www.pac.or.kr/files/E2.pdf", "chapter", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, "702" + name[-1], source=ELECTION, family=FAMILY, atts=[(1, "https://www.synthetic.invalid/files/E2.pdf", "chapter", None, "application/pdf", "PDF")])
     blob = make_pdf([f"e {name}"])
     place_raw(env.m, env.corpus, a1, blob, family=FAMILY)
     r = GeoRunner({blob: geo_spec(raw={1: "원시 순서 합성 문장입니다 가나다라마바사아자차카타파하 " * 2})})

@@ -15,6 +15,8 @@ from test_gd import prov_for
 from test_ing_structure import go, handler_for, make_run
 from test_p2_collect_gd import ctx_for
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -93,7 +95,7 @@ BOARD = ("시정권고 현황(제8차)\n\n■ 시정권고 결정 67건\n\n 1   
 
 
 def _board_batch():
-    ctx = ctx_for({"pg": BOARD}, profile="pac_correction", source_id="pac_board_correction_status")
+    ctx = ctx_for({"pg": BOARD}, profile="synthetic_correction", source_id="pac_board_correction_status")
     out = []
     for k, extra in enumerate((None, None, "가상연예뉴스")):
         kw = {"outcome_type": "correction", "outcome_scope": "whole", "outcome": item("시정권고 결정", "institution", "pg", "시정권고 결정")}
@@ -124,7 +126,7 @@ def test_vfid02_a_case_with_its_own_fact_quote_keeps_the_shared_outcome():
 
 def test_vfid02_distinct_outcome_spans_are_not_touched():
     page = "사건 하나는 조정이 성립하였다.\n사건 둘은 조정이 성립하지 않았다.\n"
-    ctx = ctx_for({"pg": page}, profile="pac_adjustment")
+    ctx = ctx_for({"pg": page}, profile="synthetic_casebook")
     batch = [sr.assemble_case(draft("pac_settlement", "pac", "pg", outcome_type="settlement", outcome_scope="whole",
                                     outcome=item("o", "institution", "pg", q)), ctx, k)
              for k, q in enumerate(("조정이 성립하였다.", "조정이 성립하지 않았다."))]
@@ -156,7 +158,7 @@ LAYOUT_NO = ("순번   의결번호        매체명\n"
 
 
 def _cn_case(number):
-    ctx = ctx_for({"pg": LAYOUT_NO}, profile="pac_correction", source_id="pac_board_correction_status")
+    ctx = ctx_for({"pg": LAYOUT_NO}, profile="synthetic_correction", source_id="pac_board_correction_status")
     d = draft("pac_decision", "pac", "pg", case_number=number, outcome_type="correction", outcome_scope="whole",
               factual_background=[item("매체", "record", "pg", "가상일간지")])
     return sr.assemble_case(d, ctx, 0)
@@ -176,14 +178,14 @@ def test_vfid03_the_tail_must_follow_the_head_closely_and_in_order():
 
 def test_vfid03_dash_at_the_end_of_the_head_is_also_a_valid_split():
     page = "     제2018-      인터넷\n  59       내외일보\n     1265호     뉴스\n"
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id="pac_board_correction_status")
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id="pac_board_correction_status")
     d = draft("pac_decision", "pac", "pg", case_number="제2018-1265호", factual_background=[item("매체", "record", "pg", "내외일보")])
     assert sr.assemble_case(d, ctx, 0).record["case_number"] == "제2018-1265호"
 
 
 def test_vfid03_later_history_case_numbers_use_the_same_rule():
     page = "     제2099      본건\n     -901호    후속\n"
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id="pac_board_correction_status")
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id="pac_board_correction_status")
     d = draft("pac_decision", "pac", "pg", factual_background=[item("본건", "record", "pg", "본건")],
               later_history=[{"relation": "related_case", "case_number": "제2099-901호", "note": "관련", "quote": None}])
     assert sr.assemble_case(d, ctx, 0).record["appeal_or_later_history"][0]["case_number"] == "제2099-901호"
@@ -196,7 +198,7 @@ GARBLED = "【가상선거보도법 저 18조(가상 보도의무)， 가상기�
 BENIGN = "가상심의기준\n제1조(가상 보호 조항)\n② 언론은 가상의 자료나 서신 내용 등을 당사자의 동의 없이 공표하여서는 아니 된다.\n"
 
 
-def _prov(page, citation, quote, profile="pac_election", authority="pac_election_review", inst="pac"):
+def _prov(page, citation, quote, profile="synthetic_election", authority="pac_election_review", inst="pac"):
     ctx = ctx_for({"pg": page}, profile=profile, source_id="")
     d = draft(authority, inst, "pg", factual_background=[item("본문", "record", "pg", page.splitlines()[-1] if page.splitlines()[-1] else page.splitlines()[0])],
               legal_provisions=[{"citation": citation, "quote": Q("pg", quote)}])
@@ -212,7 +214,7 @@ def test_vfid04_article_number_misread_from_a_garbled_text_layer_is_dropped():
 
 def test_vfid04_a_citation_whose_article_is_printed_on_the_page_is_kept_even_if_the_quote_is_only_the_clause():
     co = _prov(BENIGN, "가상심의기준 제1조 (가상 보호 조항) 제2항", "② 언론은 가상의 자료나 서신 내용 등을 당사자의 동의 없이 공표하여서는 아니 된다.",
-               profile="pac_correction", authority="pac_decision")
+               profile="synthetic_correction", authority="pac_decision")
     assert len(co.record["legal_provisions"]) == 1
 
 
@@ -241,7 +243,7 @@ COLS = _two_col(LEFT, RIGHT)
 
 
 def _col_case(page, quote, source_id=""):
-    ctx = ctx_for({"pg": page}, profile="pac_election", source_id=source_id)
+    ctx = ctx_for({"pg": page}, profile="synthetic_election", source_id=source_id)
     d = draft("pac_election_review", "pac", "pg", original_article={"status": "quoted_in_source", "quote": Q("pg", quote)},
               outcome_type="decision", outcome_scope="whole", outcome=item("o", "institution", "pg", "우리 고장을 분열과 배신의 땅으로 만들어 버린"))
     return sr.assemble_case(d, ctx, 0)
@@ -263,21 +265,21 @@ def test_vfid05_a_quote_inside_one_column_line_passes():
 def test_vfid05_two_aligned_redaction_blanks_on_an_otherwise_gapless_page_are_not_columns():
     a, b = "원고 소유의 이 사건 건물과 소외 신", "이라는 위 신"
     page = a + " " * 6 + "소유토지를 배경으로 한 영상 및 사람이\n" + b.ljust(len(a)) + " " * 6 + "의 인터뷰 내용을 방송함으로써\n그 밖의 서술은 평범한 한 줄이다.\n"
-    ctx = ctx_for({"pg": page}, profile="pac_judgment_cases", source_id="")
+    ctx = ctx_for({"pg": page}, profile="synthetic_judgment_cases", source_id="")
     d = draft("research", "pac", "pg", original_article={"status": "quoted_in_source", "quote": Q("pg", page.strip())})
     assert sr.assemble_case(d, ctx, 0).record["available_original_article"]["status"] == "quoted_in_source"
 
 
 def test_vfid05_redaction_blanks_that_do_not_line_up_are_not_columns():
     page = "원고 조      가 실제로 세계 최초로 제작하였고\n위 광고에는 이         가 소개되어 있는데도 피고들이\n그 밖의 일부 보도기사 중 위 원고       가 라고 일부 소개되어 있음을\n"
-    ctx = ctx_for({"pg": page}, profile="pac_judgment_cases", source_id="")
+    ctx = ctx_for({"pg": page}, profile="synthetic_judgment_cases", source_id="")
     d = draft("research", "pac", "pg", original_article={"status": "quoted_in_source", "quote": Q("pg", page.strip())})
     assert sr.assemble_case(d, ctx, 0).record["available_original_article"]["status"] == "quoted_in_source"
 
 
 def test_vfid05_table_sources_are_exempt():
     page = _two_col(["제2099-901호 가상일간지", "제2099-902호 예시신문"], ["시정권고 결정", "시정권고 결정"])
-    ctx = ctx_for({"pg": page}, profile="pac_correction", source_id="pac_board_correction_status")
+    ctx = ctx_for({"pg": page}, profile="synthetic_correction", source_id="pac_board_correction_status")
     d = draft("pac_decision", "pac", "pg", factual_background=[item("행", "record", "pg", page.strip())])
     assert len(sr.assemble_case(d, ctx, 0).record["factual_background"]) == 1
 
@@ -310,7 +312,7 @@ DESC = "위 기사는 가상의 사건과 관련해 가상인물 갑이 소유�
 
 
 def test_vfid07_commission_description_of_the_article_is_not_speaker_article():
-    ctx = ctx_for({"pg": DESC}, profile="pac_correction", source_id="pac_correction_casebooks")
+    ctx = ctx_for({"pg": DESC}, profile="synthetic_correction", source_id="synthetic_correction_set")
     d = draft("pac_decision", "pac", "pg", disputed_spans=[item("기사 요지", "article", "pg", "위 기사는 가상의 사건과 관련해 가상인물 갑이 소유한 건물의 사진을 동의 없이 보도하였다.")],
               claims_or_requested_remedy=[item("주장", "claimant", "pg", "신청인은 기사가 사실과 다르다고 주장한다.")])
     co = sr.assemble_case(d, ctx, 0)

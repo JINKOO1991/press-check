@@ -22,7 +22,7 @@ def _ledger(tmp_path):
 
         def add(name, *, doc_pub, rec_pub, decision=None):
             doc = f"pac_cases:8{len(ids):03d}"
-            m.upsert_document(doc, "pac_adjustment_casebooks", canonical_url=f"https://www.pac.or.kr/kor/pages/?p=207&idx=8{len(ids):03d}&m=view",
+            m.upsert_document(doc, "pac_adjustment_casebooks", canonical_url=f"https://www.synthetic.invalid/kor/pages/?p=207&idx=8{len(ids):03d}&m=view",
                               title=name, publication_date=doc_pub)
             m.set_document_status(doc, "structured")
             cid = f"{doc}:c"

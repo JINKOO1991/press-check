@@ -60,7 +60,7 @@ def test_no_ledger_write_and_no_stored_url_with_oc(built):
     c = sqlite3.connect(data / "index" / (Path(built[1]["path"]).name))
     urls = [r[0] for r in c.execute("SELECT url FROM passages")]
     assert urls and not any("oc=" in u.lower() for u in urls)
-    assert "https://www.pac.or.kr/_common/new_download_file.asp?sub_idx=5001" in urls       # pdf_page 는 첨부 URL
+    assert "https://www.synthetic.invalid/_common/new_download_file.asp?sub_idx=5001" in urls       # pdf_page 는 첨부 URL
     assert "https://www.law.go.kr/LSW/precInfoP.do?precSeq=900001" in urls                  # text_range 는 문서 정본 URL
     c.close()
 

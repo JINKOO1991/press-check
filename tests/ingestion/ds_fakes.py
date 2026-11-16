@@ -72,18 +72,18 @@ def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def seed(manifest, corpus, pages=None, *, source_id="pac_adjustment_casebooks", family="pac_cases", doc_n=1, att_status="extracted",
+def seed(manifest, corpus, pages=None, *, source_id="synthetic_casebook_set_a", family="pac_cases", doc_n=1, att_status="extracted",
          with_list=True, title="언론조정중재사례집"):
     """문서 1건·첨부 1건·쪽 N개. pages: {키: 텍스트}(순서 유지). 반환 (doc_id, att_id, {page_id: 텍스트})."""
     pages = pages if pages is not None else {"p1": PAGE1, "p2": PAGE2}
-    manifest.ensure_source(source_id, family, title, "https://www.pac.or.kr/x")
+    manifest.ensure_source(source_id, family, title, "https://www.synthetic.invalid/x")
     doc_id = f"{source_id}:{doc_n}"
-    list_url = "https://www.pac.or.kr/list?p=1"
+    list_url = "https://www.synthetic.invalid/list?p=1"
     if with_list:
         manifest.upsert_list_page(source_id, 1, list_url, http_status=200, item_count=1, body_sha256="a" * 64, ok=True)
     manifest.upsert_document(doc_id, source_id, title=title, list_url=list_url if with_list else None)
     att_id = f"{doc_id}#1"
-    manifest.upsert_attachment(att_id, doc_id, "https://www.pac.or.kr/f.pdf", label="전체", kind="full")
+    manifest.upsert_attachment(att_id, doc_id, "https://www.synthetic.invalid/f.pdf", label="전체", kind="full")
     out = {}
     for i, (key, text) in enumerate(pages.items(), start=1):
         pid = f"{att_id}@p{i}"

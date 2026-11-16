@@ -30,6 +30,8 @@ from test_ing_structure import go, handler_for, make_run, pids_of
 from test_src_iendc import detail_html, routes as iendc_routes, run as iendc_run
 from test_src_lawapi_body import Server, doc as law_doc, run_cli as law_run, seed as law_seed, prec_json
 
+pytestmark = pytest.mark.usefixtures("synthetic_profiles")
+
 
 def prov_for(fake, **kw):
     return ds.DeepSeekProvider(api_key=TEST_KEY, transport=fake, sleep=lambda s: None, now=lambda: FRI_PEAK, budget=ds.BudgetGuard(None), **kw)
@@ -227,7 +229,7 @@ def test_gd4_without_kordoc_everything_falls_back_and_a_later_run_with_kordoc_re
 
 def test_gd4_extractor_choice_is_a_per_source_constant_and_pac_stays_on_pdftotext(env):
     assert ext.PDF_EXTRACTOR_BY_SOURCE[IENDC_SRC] == "kordoc" and ext.pdf_extractor_for({"source_id": "pac_board_committee_rules"}) == "pdftotext_layout"
-    doc, (a1,) = ext_seed(env.m, "300", atts=[(1, "https://www.pac.or.kr/files/Z.pdf", "full", None, "application/pdf", "PDF")])
+    doc, (a1,) = ext_seed(env.m, "300", atts=[(1, "https://www.synthetic.invalid/files/Z.pdf", "full", None, "application/pdf", "PDF")])
     blob = make_pdf(["pac page 1", "pac page 2"])
     spec = {"pages": [page_text(1, 1, "P"), page_text(2, 2, "P")], "kd_pages": KD_TEXT[:2]}
     place_raw(env.m, env.corpus, a1, blob)
@@ -342,11 +344,11 @@ def _law_ledger(manifest):
 
 
 def test_gd6_judgment_analysis_source_gets_a_research_profile_and_ledger_links(manifest, corpus):
-    assert sr.SOURCE_PROFILE["pac_research_judgment_analysis"] == "pac_judgment_cases"
-    prof = sr.PROFILES["pac_judgment_cases"]
+    assert sr.SOURCE_PROFILE["synthetic_judgment_cases_src"] == "synthetic_judgment_cases"
+    prof = sr.PROFILES["synthetic_judgment_cases"]
     assert prof.authority_types == ("research",) and "judgment_cases" in S.load_prompt(prof).version
     _law_ledger(manifest)
-    doc, att, texts = seed(manifest, corpus, {"p1": RESEARCH_PAGE}, source_id="pac_research_judgment_analysis", family="pac_other", title="판결분석")
+    doc, att, texts = seed(manifest, corpus, {"p1": RESEARCH_PAGE}, source_id="synthetic_judgment_cases_src", family="pac_other", title="판결분석")
     page = f"{att}@p1"
     fake = DSFake(lambda b, n: (200, chat_payload({"cases": _research_cases(page)}), {}))
     res = go(S.Structurer(manifest, prov_for(fake), corpus), manifest)
@@ -405,7 +407,7 @@ def test_gd6_chunk_only_respects_the_derivative_right(manifest, corpus):
 def _changed_prompt(tmp_path, monkeypatch):
     copy = tmp_path / "prompts_gd7"
     shutil.copytree(S.PROMPTS_DIR, copy)
-    p = copy / "pac_adjustment.md"
+    p = copy / "synthetic_casebook.md"
     p.write_text(p.read_text(encoding="utf-8") + "\n- extra rule\n", encoding="utf-8")
     monkeypatch.setattr(S, "PROMPTS_DIR", copy)
 

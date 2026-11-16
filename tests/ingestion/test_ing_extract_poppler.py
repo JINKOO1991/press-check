@@ -21,7 +21,7 @@ def run(corpus, clock, *argv):
 
 
 def setup(manifest, corpus, pages):
-    doc, (a1,) = seed(manifest, atts=[(1, "https://www.pac.or.kr/f.pdf", "full", None, "application/pdf", "PDF")])
+    doc, (a1,) = seed(manifest, atts=[(1, "https://www.synthetic.invalid/f.pdf", "full", None, "application/pdf", "PDF")])
     blob = make_pdf(pages)
     place_raw(manifest, corpus, a1, blob)
     manifest.close()

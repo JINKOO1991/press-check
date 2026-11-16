@@ -146,7 +146,7 @@ class FakeRunner(ToolRunner):
 
 def seed(manifest, doc_key="100", *, source=SOURCE, family=FAMILY, atts=(), title="doc"):
     """문서 하나와 첨부들을 시드. atts: [(번호, url, kind, content_length, content_type, label)]. 반환 (doc_id, [att_id])."""
-    manifest.ensure_source(source, family, source, "https://www.pac.or.kr/")
+    manifest.ensure_source(source, family, source, "https://www.synthetic.invalid/")
     doc_id = f"{family}:{doc_key}"
     manifest.upsert_document(doc_id, source, title=title, year=2020)
     ids = []

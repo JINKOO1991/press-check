@@ -22,7 +22,7 @@ def build(tmp_path, cases, lists=()):
     try:
         m.ensure_source(FAMILY, "pac", "합성 사례집")
         doc = "pac_adj:9001"
-        m.upsert_document(doc, FAMILY, canonical_url="https://www.pac.or.kr/synthetic/9001", title="합성 사례집", year=2012)
+        m.upsert_document(doc, FAMILY, canonical_url="https://www.synthetic.invalid/synthetic/9001", title="합성 사례집", year=2012)
         m.set_document_status(doc, "structured")
         for i, (name, text, *auth) in enumerate(cases):
             auth = auth[0] if auth else "pac_decision"
@@ -33,7 +33,7 @@ def build(tmp_path, cases, lists=()):
             m.upsert_chunk(f"{cid}#c1", doc, text, "pdf_page", f"p{10 + i}", case_id=cid, authority_type=auth, decision_date="2012-05-01")
             ids[name] = f"{cid}#c1"
         if lists:
-            m.upsert_attachment(f"{doc}#1", doc, "https://www.pac.or.kr/synthetic/9001.pdf", label="제5부 언론조정·중재사건 전체 목록")
+            m.upsert_attachment(f"{doc}#1", doc, "https://www.synthetic.invalid/synthetic/9001.pdf", label="제5부 언론조정·중재사건 전체 목록")
         for i, (name, text) in enumerate(lists):
             page = f"{doc}#1:p{500 + i:04d}"
             m.upsert_page(page, doc, att_id=f"{doc}#1", pdf_page_no=500 + i, method="pdftotext")

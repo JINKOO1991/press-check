@@ -25,7 +25,7 @@ def build(tmp_path, cases):
     try:
         m.ensure_source(FAMILY, "pac", "합성 사례집")
         doc = "pac_adj:9001"
-        m.upsert_document(doc, FAMILY, canonical_url="https://www.pac.or.kr/synthetic/9001", title="합성 사례집", year=2012)
+        m.upsert_document(doc, FAMILY, canonical_url="https://www.synthetic.invalid/synthetic/9001", title="합성 사례집", year=2012)
         m.set_document_status(doc, "structured")
         for i, (name, number, text) in enumerate(cases):
             cid = f"{doc}:case{i:03d}"

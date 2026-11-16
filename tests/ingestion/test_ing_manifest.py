@@ -7,7 +7,7 @@ from press_review.ingestion.manifest import DOC_STATUSES, Manifest
 
 
 def mk_src(m, sid="pac_casebooks", fam="pac_cases"):
-    m.ensure_source(sid, fam, "사례집", "https://www.pac.or.kr/kor/pages/?p=207")
+    m.ensure_source(sid, fam, "사례집", "https://www.synthetic.invalid/kor/pages/?p=207")
 
 
 def test_rediscovery_changes_only_last_seen_at(manifest, clock):
@@ -43,7 +43,7 @@ def test_transaction_rollback_leaves_no_partial_rows(manifest):
     with pytest.raises(RuntimeError):
         with manifest.transaction():
             manifest.upsert_document("pac_cases:9", "pac_casebooks")
-            manifest.upsert_attachment("pac_cases:9#1", "pac_cases:9", "https://www.pac.or.kr/f")
+            manifest.upsert_attachment("pac_cases:9#1", "pac_cases:9", "https://www.synthetic.invalid/f")
             manifest.record_failure("t", "s", "e", "m")
             raise RuntimeError("boom")
     assert manifest.get_document("pac_cases:9") is None
@@ -92,9 +92,9 @@ def test_failures_one_row_per_target_stage_and_retry_count_increments(manifest, 
 def test_list_page_upsert_is_idempotent_and_keyed_by_url(manifest):
     mk_src(manifest)
     for _ in range(3):
-        manifest.upsert_list_page("pac_casebooks", 1, "https://www.pac.or.kr/l?p=1", http_status=200, item_count=10,
+        manifest.upsert_list_page("pac_casebooks", 1, "https://www.synthetic.invalid/l?p=1", http_status=200, item_count=10,
                                   body_sha256="ab" * 32, ok=True)
-    manifest.upsert_list_page("pac_casebooks", 1, "https://www.pac.or.kr/l?p=1&q=2", http_status=200, item_count=3,
+    manifest.upsert_list_page("pac_casebooks", 1, "https://www.synthetic.invalid/l?p=1&q=2", http_status=200, item_count=3,
                               body_sha256=None, ok=False)
     pages = manifest.list_pages("pac_casebooks")
     assert len(pages) == 2 and pages[0]["ok"] == 1
@@ -103,8 +103,8 @@ def test_list_page_upsert_is_idempotent_and_keyed_by_url(manifest):
 def test_attachment_idempotent_and_head_update(manifest):
     mk_src(manifest)
     manifest.upsert_document("pac_cases:1", "pac_casebooks")
-    assert manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.pac.or.kr/f1", label="전체", kind="full") == "new"
-    assert manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.pac.or.kr/f1", label=None, kind="full") == "seen"
+    assert manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.synthetic.invalid/f1", label="전체", kind="full") == "new"
+    assert manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.synthetic.invalid/f1", label=None, kind="full") == "seen"
     manifest.update_attachment_head("pac_cases:1#1", content_length=2136847, content_type="application/octet-stream")
     a = manifest.attachments_for("pac_cases:1")
     assert len(a) == 1 and a[0]["content_length"] == 2136847 and a[0]["label"] == "전체" and a[0]["head_checked_at"]
@@ -141,7 +141,7 @@ def test_update_document_fields_enrich_and_extra_merge(manifest):
 
 @pytest.mark.parametrize("fam", ["pac_cases", "pac_election", "pac_other", "iendc", "law_go_kr"])
 def test_new_install_default_rights_are_all_unknown(manifest, fam, real_default_rights):
-    manifest.ensure_source(f"s_{fam}", fam, "t", "https://www.pac.or.kr/")
+    manifest.ensure_source(f"s_{fam}", fam, "t", "https://www.synthetic.invalid/")
     r = manifest.get_rights("source", f"s_{fam}")
     assert all(r[k] == "unknown" for k in ("read", "store_raw", "create_derivatives", "external_api",
                                            "redistribute_raw", "redistribute_derivatives", "fine_tune"))
@@ -173,9 +173,9 @@ def test_ensure_source_does_not_overwrite_a_reviewed_rights_row(manifest):
 
 
 def test_robots_and_api_usage_tables(manifest):
-    manifest.record_robots("www.pac.or.kr", "2026-10-08T00:00:00+00:00", 404, None, "no_rules")
-    manifest.record_robots("www.pac.or.kr", "2026-10-09T00:00:00+00:00", 200, "ab" * 32, "allowed")
-    assert manifest.latest_robots("www.pac.or.kr")["fetched_at"].startswith("2026-10-09")
+    manifest.record_robots("www.synthetic.invalid", "2026-10-08T00:00:00+00:00", 404, None, "no_rules")
+    manifest.record_robots("www.synthetic.invalid", "2026-10-09T00:00:00+00:00", 200, "ab" * 32, "allowed")
+    assert manifest.latest_robots("www.synthetic.invalid")["fetched_at"].startswith("2026-10-09")
     manifest.record_api_usage("deepseek", "deepseek-v4-flash", price_snapshot={"in": 1}, prompt_tokens=5, cost_usd=0.001, job_id="j")
     assert manifest._q("SELECT COUNT(*) FROM api_usage")[0][0] == 1
 
@@ -205,11 +205,11 @@ def test_dry_run_with_no_existing_file_creates_nothing(corpus):
 
 def test_inventory_counts_come_from_the_ledger(manifest):
     mk_src(manifest)
-    manifest.upsert_list_page("pac_casebooks", 1, "https://www.pac.or.kr/l?p=1", http_status=200, item_count=2, body_sha256="a", ok=True)
+    manifest.upsert_list_page("pac_casebooks", 1, "https://www.synthetic.invalid/l?p=1", http_status=200, item_count=2, body_sha256="a", ok=True)
     manifest.upsert_document("pac_cases:1", "pac_casebooks", year=2020, doc_type="casebook")
     manifest.upsert_document("pac_cases:2", "pac_casebooks", year=2021, doc_type="casebook")
     manifest.set_document_status("pac_cases:2", "withheld")
-    manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.pac.or.kr/f", kind="full")
+    manifest.upsert_attachment("pac_cases:1#1", "pac_cases:1", "https://www.synthetic.invalid/f", kind="full")
     manifest.update_attachment_head("pac_cases:1#1", content_length=1000, content_type="application/pdf")
     manifest.record_failure("pac_cases:2", "head", "http", "x")
     inv = manifest.inventory("pac_cases")
