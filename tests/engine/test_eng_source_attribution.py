@@ -18,6 +18,7 @@ from press_review.ingestion.manifest import Manifest  # noqa: E402
 NOW = dt.datetime(2026, 10, 19, 9, 0, tzinfo=dt.timezone(dt.timedelta(hours=9)))
 PHRASE = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
 PREC_PHRASE = "법원 판결, 법제처 국가법령정보센터 제공"
+IENDC_PHRASE = "인터넷선거보도심의위원회 심의결과, 중앙선거관리위원회 인터넷선거보도심의위원회 제공"      # IENDC 회신 2026-11-16 조건(출처 명시), UDEC-38
 DETC_WORD = "합성헌재독자어휘"
 
 
@@ -86,6 +87,13 @@ def test_search_response_prec_passage_gets_prec_phrase():
     assert PREC_PHRASE == "법원 판결, 법제처 국가법령정보센터 제공"
 
 
+def test_search_response_iendc_passage_gets_iendc_phrase():
+    ps = [passage("iendc:12", "i1"), passage("pac_cases:1", "p1")]
+    out = review.search_cases(FakeCorpus(ps), query="x")
+    assert out["source_attribution"] == {"text": IENDC_PHRASE, "source_ids": ["iendc:12"], "passage_ids": ["i1"]}
+    assert cs.attribution_for("iendc_review_results") == IENDC_PHRASE and cs.attribution_for("iendc_cases:2") is None
+
+
 def test_search_response_mixed_prec_and_detc_has_both_phrases():
     ps = [passage("lawgo_prec:7", "j1"), passage("lawgo_detc:1", "d1"), passage("pac_cases:1", "p1")]
     out = review.search_cases(FakeCorpus(ps), query="x")
@@ -137,7 +145,8 @@ def test_corpus_status_source_line_has_attribution(tmp_path):
         c.close()
     assert st["sources"]["lawgo_detc"]["attribution"] == PHRASE
     assert st["sources"]["lawgo_prec_supreme"]["attribution"] == PREC_PHRASE
-    assert all("attribution" not in v for k, v in st["sources"].items() if k not in ("lawgo_detc", "lawgo_prec_supreme"))
+    assert all("attribution" not in v for k, v in st["sources"].items() if k not in ("lawgo_detc", "lawgo_prec_supreme", "iendc_review_results"))
+    assert st["sources"]["iendc_review_results"]["attribution"] == IENDC_PHRASE
     assert st["case_admission_pending"] == 0
     assert not any("case_admission_pending" in w or "인입 평가" in w for w in st["warnings"])
 

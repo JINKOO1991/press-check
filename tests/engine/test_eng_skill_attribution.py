@@ -7,6 +7,7 @@ SKILLS = paths.REPO / "plugins" / "press-check" / "skills"
 PHRASE = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
 PREC_PHRASE = "법원 판결, 법제처 국가법령정보센터 제공"
 LX_PHRASE = "법원 판결, 법원도서관 법고을 제공"
+IENDC_PHRASE = "인터넷선거보도심의위원회 심의결과, 중앙선거관리위원회 인터넷선거보도심의위원회 제공"
 
 
 def _text(name):
@@ -15,7 +16,8 @@ def _text(name):
 
 def test_phrase_constant_is_exact():
     assert corpus_sqlite.SOURCE_ATTRIBUTION == {"lawgo_detc": PHRASE, "ccourt_detc": "헌법재판소 결정, 헌법재판소 제공", "lawgo_prec_supreme": PREC_PHRASE,
-                                                "lawgo_prec_refs": PREC_PHRASE, "lx_prec": LX_PHRASE}
+                                                "lawgo_prec_refs": PREC_PHRASE, "lx_prec": LX_PHRASE,
+                                                "iendc": IENDC_PHRASE, "iendc_review_results": IENDC_PHRASE}
 
 
 def test_explain_skill_requires_attribution_for_detc():

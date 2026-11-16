@@ -50,7 +50,9 @@ _ATTR_DETC = "헌법재판소 결정, 법제처 국가법령정보센터 제공"
 _ATTR_PREC = "법원 판결, 법제처 국가법령정보센터 제공"
 _ATTR_CCOURT = "헌법재판소 결정, 헌법재판소 제공"      # 헌법재판소 판례정보 API(공공데이터포털, 공공누리 제1유형 출처표시)
 _ATTR_LX = "법원 판결, 법원도서관 법고을 제공"            # 법원도서관 법고을(lx.scourt.go.kr) 비회원 범위 판례(UDEC-24)
-SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "ccourt_detc": _ATTR_CCOURT, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC, "lx_prec": _ATTR_LX}
+_ATTR_IENDC = "인터넷선거보도심의위원회 심의결과, 중앙선거관리위원회 인터넷선거보도심의위원회 제공"   # IENDC 심의결과(iendc:<번호> 문서, 소스 iendc_review_results). 위원회 회신 조건: 왜곡 없음·비영리·출처 명시·공익 목적(UDEC-38)
+SOURCE_ATTRIBUTION = {"lawgo_detc": _ATTR_DETC, "ccourt_detc": _ATTR_CCOURT, "lawgo_prec_supreme": _ATTR_PREC, "lawgo_prec_refs": _ATTR_PREC, "lx_prec": _ATTR_LX,
+                      "iendc": _ATTR_IENDC, "iendc_review_results": _ATTR_IENDC}
 # 판례 문서 id 는 소스 id 가 아니라 ``lawgo_prec:<일련번호>`` 접두를 쓴다(passage source_id 조회 전용).
 _DOC_PREFIX_ATTRIBUTION = {"lawgo_prec": _ATTR_PREC}
 
